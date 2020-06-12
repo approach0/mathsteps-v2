@@ -1,0 +1,35 @@
+?start: sum
+      | sum "=" sum                       -> eq
+
+?sum:                                     -> null_reduce
+    | term
+    | sum "-" term                        -> minus
+    | sum "+" term                        -> add
+
+?term: product
+     | term "\\div" product               -> div
+
+?product: factor
+        | product factor                  -> mul
+        | product "\\times" factor        -> mul
+        | product "\\cdot" factor         -> mul
+
+?factor: atom
+       | atom "^" "{" sum "}"             -> sup
+       | "\\frac" "{" sum "}" "{" sum "}" -> frac
+
+?atom: NUMBER                             -> number
+     | VAR                                -> var
+     | WILDCARDS                          -> var
+     | "\\sqrt" "{" sum "}"               -> sqrt
+     | "(" sum ")"                        -> par_grp
+     | "[" sum "]"                        -> sq_grp
+     | "\\left" "|" sum "\\right" "|"     -> abs
+
+VAR: "a".."z" | "A".."Z"
+WILDCARDS: "*"
+
+%import common.NUMBER
+
+%import common.WS_INLINE
+%ignore WS_INLINE

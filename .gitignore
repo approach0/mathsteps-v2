@@ -1,0 +1,10 @@
+*.pyc
+*.swp
+*.html
+*.log
+*.pt
+*.pkl
+node_modules/
+output/
+__pycache__/
+package-lock.json
