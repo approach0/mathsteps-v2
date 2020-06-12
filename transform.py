@@ -1,6 +1,6 @@
 from lark import Lark, UnexpectedInput
 from lark import Transformer
-from functools import reduce
+import rich
 
 lark = Lark.open('grammar.lark', rel_to=__file__, parser='lalr', debug=True)
 
@@ -40,7 +40,7 @@ class Tree2NestedArr(Transformer):
         for i in range(len(x)):
             child_root = x[i][0]
             child_sign, child_type = child_root
-            sign *= child_sign
+            if reduce_sign: sign *= child_sign
             if child_type == ifis:
                 ret += Tree2NestedArr().children(x[i])
             else:
@@ -90,7 +90,7 @@ class Tree2NestedArr(Transformer):
         """
         转换 a * b （满足交换律）
         """
-        x = self.passchildren(x, 'mul')
+        x = self.passchildren(x, 'mul', reduce_sign=True)
         return x
 
     def div(self, x):
@@ -169,15 +169,22 @@ def tex2narr(tex):
     return tree2narr(tex_parse(tex))
 
 
-def sign_wrap(sign, expr):
-    return '-(' + expr + ')' if sign < 0 else expr
+def sign_wrap(root, expr):
+    sign, Type = root
+    if sign > 0:
+        return expr
+    elif Type in ['add']:
+        return '-(' + expr + ')'
+    else:
+        return '-' + expr
 
 
 def narr2tex(arr):
     """
     narr (nested array) 换成 TeX
     """
-    sign, token = arr[0]
+    root = arr[0]
+    sign, token = root
 
     # HANDLE: number, var
     if token in ['NUMBER', 'VAR', 'WILDCARDS']:
@@ -194,13 +201,19 @@ def narr2tex(arr):
         operands = arr[1:]
         for i, child in enumerate(operands):
             to_append = narr2tex(child)
+            child_sign, child_type = child[0]
+
+            if token == 'mul' and child_type == 'add':
+                to_append = '(' + to_append + ')'
+
             if i == 0:
                 expr += to_append
             elif to_append[0] == '-':
                 expr += to_append
             else:
                 expr += sep_op + to_append
-        return sign_wrap(sign, expr)
+
+        return sign_wrap(root, expr)
 
     # HANDLE: div, frac, sup
     elif token in ['div', 'frac', 'sup', 'eq']:
@@ -208,11 +221,11 @@ def narr2tex(arr):
         expr2 = narr2tex(arr[2])
 
         if token == 'div':
-            return sign_wrap(sign, expr1 + ' \\div ' + expr2)
+            return sign_wrap(root, expr1 + ' \\div ' + expr2)
         elif token == 'frac':
-            return sign_wrap(sign, '\\frac{' + expr1 + '}{' + expr2 + '}')
+            return sign_wrap(root, '\\frac{' + expr1 + '}{' + expr2 + '}')
         elif token == 'sup':
-            return sign_wrap(sign, expr1 + '^{' + expr2 + '}')
+            return sign_wrap(root, expr1 + '^{' + expr2 + '}')
         elif token == 'eq':
             return expr1 + ' = ' + expr2
         else:
@@ -222,13 +235,13 @@ def narr2tex(arr):
         expr = narr2tex(arr[1])
 
         if token == 'abs':
-            return sign_wrap(sign, '\\left|' + expr + '\\right|')
+            return sign_wrap(root, '\\left|' + expr + '\\right|')
         elif token == 'sq_grp':
-            return sign_wrap('[' + expr + ']')
+            return sign_wrap(root, '[' + expr + ']')
         elif token == 'par_grp':
-            return sign_wrap('(' + expr + ')')
+            return sign_wrap(root, '(' + expr + ')')
         elif token == 'sqrt':
-            return sign_wrap('\sqrt{' + expr + '}')
+            return sign_wrap(root, '\sqrt{' + expr + '}')
         else:
             raise Exception('unexpected token: ' + token)
 
@@ -253,9 +266,10 @@ def narr_prettyprint(arr, level=0):
 
 if __name__ == '__main__':
     test_expressions = ['2 -(-3)']
-    test_expressions = ['-(- 1 + (-2 \cdot b) \cdot a - 3)']
     test_expressions = ['-2b + 1']
     test_expressions = ['(-2 \cdot b) c']
+    test_expressions = ['-(- 1 + (-2 \cdot b) \cdot a - 3)']
+    test_expressions = ['a(-2 \cdot b) c']
 
     for expr in test_expressions:
         print(expr, end="\n\n")
@@ -268,9 +282,10 @@ if __name__ == '__main__':
             continue
 
         narr = tree2narr(tree)
-        print('[narr]', narr)
+        #print('[narr]', narr)
 
         tex = narr2tex(narr)
-        print('[TeX]', tex)
+        rich.print('[red]TeX:[/]', end=' ')
+        print(tex)
 
         narr_prettyprint(narr)
