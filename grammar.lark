@@ -22,8 +22,8 @@
      | VAR                                -> var
      | WILDCARDS                          -> var
      | "\\sqrt" "{" sum "}"               -> sqrt
-     | "(" sum ")"                        -> par_grp
-     | "[" sum "]"                        -> sq_grp
+     | "(" sum ")"                        -> grp
+     | "[" sum "]"                        -> grp
      | "\\left" "|" sum "\\right" "|"     -> abs
 
 VAR: "a".."z" | "A".."Z"

@@ -2,7 +2,9 @@ from lark import Lark, UnexpectedInput
 from lark import Transformer
 import rich
 
+
 lark = Lark.open('grammar.lark', rel_to=__file__, parser='lalr', debug=True)
+
 
 class Tree2NestedArr(Transformer):
     """
@@ -40,7 +42,9 @@ class Tree2NestedArr(Transformer):
         for i in range(len(x)):
             child_root = x[i][0]
             child_sign, child_type = child_root
-            if reduce_sign: sign *= child_sign
+            if reduce_sign:
+                sign *= child_sign
+                x[i][0] = +1, child_type
             if child_type == ifis:
                 ret += Tree2NestedArr().children(x[i])
             else:
@@ -135,15 +139,9 @@ class Tree2NestedArr(Transformer):
         """
         return [(+1, 'abs'), x[0]]
 
-    def par_grp(self, x):
+    def grp(self, x):
         """
-        转换 圆括号
-        """
-        return x[0]
-
-    def sq_grp(self, x):
-        """
-        转换 方括号
+        转换 括号
         """
         return x[0]
 
@@ -169,93 +167,127 @@ def tex2narr(tex):
     return tree2narr(tex_parse(tex))
 
 
-def sign_wrap(root, expr):
-    sign, Type = root
-    if sign > 0:
-        return expr
-    elif Type in ['add']:
-        return '-(' + expr + ')'
+def terminal_tokens():
+    return ['NUMBER', 'VAR', 'WILDCARDS']
+
+
+def commutative_operators():
+    return ['add', 'mul']
+
+
+def binary_operators():
+    return ['div', 'frac', 'sup', 'eq']
+
+
+def need_inner_fence(narr):
+    """
+    表达式 narr 在符号和本身之间，须不须要包裹括号
+    """
+    sign, Type = narr[0]
+
+    #print('inner fence?', narr)
+
+    if sign < 0 and len(narr) > 2: # non-unary
+        if Type in ['frac', 'mul']:
+            return False
+        else:
+            return True
     else:
-        return '-' + expr
+        return False
 
 
-def narr2tex(arr):
+def need_outter_fence(root, child_narr):
+    """
+    子表达式 child_narr 在挂到 root 下时，须不须要包裹括号
+    """
+    child_root = child_narr[0]
+
+    #print('outter fence?', root, '@@@', child_narr)
+
+    if root == None:
+        return False
+    elif root[1] in ['frac', 'abs', 'sqrt', 'add', 'eq', 'sup']:
+        return False
+    elif child_root[0] == +1:
+        if len(child_narr) <= 2: # unary
+            return False
+        elif child_root[1] in ['mul', 'frac', 'sup']:
+            return False
+    return True
+
+
+def narr2tex(narr, parentRoot=None):
     """
     narr (nested array) 换成 TeX
     """
-    root = arr[0]
+    root = narr[0]
     sign, token = root
+    sign = '' if sign > 0 else '-'
 
-    # HANDLE: number, var
-    if token in ['NUMBER', 'VAR', 'WILDCARDS']:
-        val = arr[1]
+    if token in terminal_tokens():
+        val = narr[1]
         # omit decimal point
         val = int(val) if token == 'NUMBER' and val.is_integer() else val
-        sign = '' if sign > 0 else '-'
         return sign + str(val)
 
-    # HANDLE: add, mul
-    if token in ['add', 'mul']:
+    elif token in commutative_operators():
         expr = ''
-        sep_op = ' + ' if token == 'add' else ' \\cdot '
-        operands = arr[1:]
+        sep_op = ' + ' if token == 'add' else ' \\times '
+        operands = narr[1:]
         for i, child in enumerate(operands):
-            to_append = narr2tex(child)
-            child_sign, child_type = child[0]
-
-            if token == 'mul' and child_type == 'add':
-                to_append = '(' + to_append + ')'
+            to_append = narr2tex(child, parentRoot=root)
 
             if i == 0:
                 expr += to_append
             elif to_append[0] == '-':
-                expr += to_append
+                expr += ' - ' + to_append[1:]
             else:
                 expr += sep_op + to_append
 
-        return sign_wrap(root, expr)
+    elif token in binary_operators():
+        expr1 = narr2tex(narr[1], parentRoot=root)
+        expr2 = narr2tex(narr[2], parentRoot=root)
 
-    # HANDLE: div, frac, sup
-    elif token in ['div', 'frac', 'sup', 'eq']:
-        expr1 = narr2tex(arr[1])
-        expr2 = narr2tex(arr[2])
-
+        expr = None
         if token == 'div':
-            return sign_wrap(root, expr1 + ' \\div ' + expr2)
+            expr = expr1 + ' \\div ' + expr2
         elif token == 'frac':
-            return sign_wrap(root, '\\frac{' + expr1 + '}{' + expr2 + '}')
+            expr = '\\frac{' + expr1 + '}{' + expr2 + '}'
         elif token == 'sup':
-            return sign_wrap(root, expr1 + '^{' + expr2 + '}')
+            expr = root, expr1 + '^{' + expr2 + '}'
         elif token == 'eq':
-            return expr1 + ' = ' + expr2
+            expr = expr1 + ' = ' + expr2
         else:
             raise Exception('unexpected token: ' + token)
-    # HANDLE: abs, sq_grp, par_grp, sqrt
+
     else:
-        expr = narr2tex(arr[1])
+        expr = narr2tex(narr[1], parentRoot=root)
 
         if token == 'abs':
-            return sign_wrap(root, '\\left|' + expr + '\\right|')
-        elif token == 'sq_grp':
-            return sign_wrap(root, '[' + expr + ']')
-        elif token == 'par_grp':
-            return sign_wrap(root, '(' + expr + ')')
+            expr = '\\left|' + expr + '\\right|'
         elif token == 'sqrt':
-            return sign_wrap(root, '\sqrt{' + expr + '}')
+            expr = '\sqrt{' + expr + '}'
         else:
             raise Exception('unexpected token: ' + token)
 
+    if need_inner_fence(narr):
+        expr = '(' + expr + ')'
+    expr = sign + expr
+    if need_outter_fence(parentRoot, narr):
+        expr = '(' + expr + ')'
+    return expr
 
-def narr_prettyprint(arr, level=0):
+
+def narr_prettyprint(narr, level=0):
     """
     narr 的美化版打印
     """
-    root = arr[0]
-    children = arr[1:]
+    root = narr[0]
+    children = narr[1:]
 
-    sign, token = arr[0]
+    sign, token = narr[0]
     if token in ['NUMBER', 'VAR', 'WILDCARDS']:
-        print('    ' * level, arr)
+        print('    ' * level, narr)
         return
 
     print('    ' * level, root)
@@ -265,18 +297,24 @@ def narr_prettyprint(arr, level=0):
 
 
 if __name__ == '__main__':
+    test_expressions = ['-(a+b)']
     test_expressions = ['2 -(-3)']
+    test_expressions = ['2 -(-3b)']
     test_expressions = ['-2b + 1']
     test_expressions = ['(-2 \cdot b) c']
     test_expressions = ['-(- 1 + (-2 \cdot b) \cdot a - 3)']
     test_expressions = ['a(-2 \cdot b) c']
+    test_expressions = ['-c(a \div b)']
+    test_expressions = ['-c\\frac{a}{b}']
+    test_expressions = ['-c(-\\frac{a}{b})']
 
     for expr in test_expressions:
+        rich.print('[bold yellow]original:[/]', end=' ')
         print(expr, end="\n\n")
         tree = None
         try:
             tree = tex_parse(expr)
-            #print(tree.pretty())
+            print(tree.pretty())
         except UnexpectedInput as error:
             print(error)
             continue
@@ -285,7 +323,7 @@ if __name__ == '__main__':
         #print('[narr]', narr)
 
         tex = narr2tex(narr)
-        rich.print('[red]TeX:[/]', end=' ')
+        rich.print('[bold yellow]TeX:[/]', end=' ')
         print(tex)
 
         narr_prettyprint(narr)
