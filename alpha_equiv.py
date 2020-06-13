@@ -3,16 +3,16 @@ import expression
 from copy import deepcopy
 
 
-def operator_identical(root1, root2, strict=False):
-    if strict:
+def operator_identical(root1, root2, same_sign=True):
+    if same_sign:
         return root1 == root2
     else:
         return root1[1] == root2[1]
 
 
-def narr_identical(narr1, narr2):
+def narr_identical(narr1, narr2, same_sign=True):
     """
-    递归比较两个表达式 (nested arrary) 是否相等（按照顺序不交换）
+    递归比较两个表达式 (nested arrary) 是否相等（按照顺序匹配，不考虑交换）
     """
     root1, root2 = narr1[0], narr2[0]
     children1, children2 = narr1[1:], narr2[1:]
@@ -22,60 +22,34 @@ def narr_identical(narr1, narr2):
     elif len(children1) != len(children2):
         return False
 
-    for i, c1 in enumerate(children1):
-        c2 = children2[i]
+    for c1, c2 in zip(children1, children2):
         is_identical = False
         if isinstance(c1, float) or isinstance(c1, str):
             is_identical = (c1 == c2)
         else:
-            is_identical = narr_identical(c1, c2)
+            is_identical = narr_identical(c1, c2, same_sign=same_sign)
 
         if not is_identical:
             return False
     return True
 
 
-def reverse_sign(narr):
+def apply_sign(narr, product):
     """
     表达式变号，从加号变成减号或者减号改成加号。加法会让每一项变号。
     """
     root = narr[0]
-    sign, t = root[0], root[1]
-    # handle addition
-    if t == 'add':
+    old_sign, Type = root[0], root[1]
+    if Type == 'add':
         for i, c in enumerate(narr[1:]):
-            narr[1 + i] = reverse_sign(c)
-        return narr
+            apply_sign(c, old_sign * product)
     else:
-        # handle others
-        if sign == '+':
-            narr[0] = ('-', t)
-        else:
-            narr[0] = ('+', t)
-        return narr
-
-
-def test_polynomial_var(narr):
-    """
-    检测表达式是不是多项式的未知数项
-    """
-    # either [('+', 'VAR'), 'x']
-    # or [('+', 'sup'), [('+', 'VAR'), 'x'], [('+', 'NUMBER'), 2.0]]
-    root = narr[0]
-    sign, Type = root
-    if Type == 'VAR' and sign == '+':
-        return True
-    elif Type == 'sup':
-        child1 = narr[1]
-        return child1[0][1] == 'VAR'
-    else:
-        return False
+        narr[0] = (old_sign * product, Type)
 
 
 def test_alpha_equiv(narr1, narr2, alpha={}):
     """
     测试表达式的替换相似性，在变量可以替换的情况下是否表达式结构相等。
-    （不考虑内部顺序）
     """
     root1, root2 = narr1[0], narr2[0]
     sign1, sign2 = root1[0], root2[0]
@@ -85,31 +59,24 @@ def test_alpha_equiv(narr1, narr2, alpha={}):
 
     if type1 == 'NUMBER':
         return type1 == type2 and sign1 == sign2 and narr1[1] == narr2[1], alpha
+
     elif type1 in ['VAR', 'WILDCARDS']:
 
         name1 = narr1[1]
         narr2 = deepcopy(narr2[:])
 
-        #print(name1, sign1, sign2)
-        #print(narr2)
-        #print()
+        # handle sign
+        apply_sign(narr2, sign1 * sign2)
 
-        if sign1 == '-' and sign2 == '+':
-            narr2 = reverse_sign(narr2)
-        elif sign1 == '+' and sign2 == '-':
-            pass
-        elif sign1 == '-' and sign2 == '-':
-            narr2 = reverse_sign(narr2)
-
-        if name1 in alpha and not narr_identical(alpha[name1], narr2):
+        # uppercase pattern such as X, Y only match variables
+        if name1.isupper() and type2 == 'NUMBER':
+            return False, alpha
+        # same variables must match same structures
+        elif name1 in alpha and not narr_identical(alpha[name1], narr2):
             return False, alpha
         else:
-            # uppercase pattern such as X, Y only match variables
-            if name1.isupper() and not test_polynomial_var(narr2):
-                return False, alpha
-            else:
-                alpha[name1] = narr2
-                return True, alpha
+            alpha[name1] = narr2
+            return True, alpha
 
     children_tokens = [c[0][1] for c in narr1[1:]]
     has_wildcards = ('WILDCARDS' in children_tokens)
@@ -124,14 +91,7 @@ def test_alpha_equiv(narr1, narr2, alpha={}):
 
         if c1[0][1] == 'WILDCARDS':
             # wildcards match
-            c2 = [narr2[0]] + narr2[1 + i:]
-            #rich.print('[yellow] wildcards match:[/]')
-            #print(c1)
-            #print(c2)
-            #print()
-
-            # ensure matched group is positive
-            if sign2 == '-': c2 = reverse_sign(c2)
+            c2 = [(+1, type2)] + narr2[1 + i:]
             # unwrap matched group if necessary
             if len(c2[1:]) == 1:
                 c2 = c2[1]
@@ -177,10 +137,8 @@ def rewrite_by_alpha(narr, alpha):
     if Type in ['VAR', 'WILDCARDS']:
         name = children[0]
         subst = deepcopy(alpha[name])
-        if sign == '+':
-            return subst
-        else:
-            return reverse_sign(subst)
+        apply_sign(subst, sign)
+        return subst
 
     elif Type == 'NUMBER':
         return deepcopy(narr)
@@ -193,21 +151,29 @@ def rewrite_by_alpha(narr, alpha):
         new_narr.append(None)
         replace_or_pass_children(new_narr, i, substitute)
 
-        #print('[rewrite from]', expression.narr2tex(c))
-        #print('[root]', root)
-        #print('[alpha]', alpha)
-        #print('[new_narr]', new_narr)
-        #print()
-
     return new_narr
 
 
 if __name__ == '__main__':
-    narr1 = expression.tex2narr('\\frac{a}{b}')
-    narr2 = expression.tex2narr('-\\frac{1+x}{x^{2}}')
+    #narr1 = expression.tex2narr('\\frac{a}{b}')
+    #narr2 = expression.tex2narr('\\frac{1+x}{x^{2}}')
+
+    narr1 = expression.tex2narr('x + x')
+    narr2 = expression.tex2narr('y^{2} + y^{2}')
+
+    narr1 = expression.tex2narr('x + K')
+    narr2 = expression.tex2narr('x - y^{2}')
+
+    narr1 = expression.tex2narr('x + *')
+    narr2 = expression.tex2narr('x - 12 + 3')
+
     is_equiv, rewrite_rules = test_alpha_equiv(narr1, narr2)
     if is_equiv:
         print('alpha-equivalent')
         print(rewrite_rules)
+        #construct_narr = expression.tex2narr('x \\times *')
+        construct_narr = expression.tex2narr('* + 123')
+        new_narr = rewrite_by_alpha(construct_narr, rewrite_rules)
+        expression.narr_prettyprint(new_narr)
     else:
         print('Not alpha-equivalent')
