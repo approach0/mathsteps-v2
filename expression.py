@@ -325,7 +325,9 @@ if __name__ == '__main__':
         'a-(-b + 3a)',
         '-x^{2}',
         '-3x^{2}',
-        'x-\\left| -ab \\right|'
+        'x-\\left| -ab \\right|',
+        '1 +a*',
+        '+(i+j)x',
     ]
 
     for expr in test_expressions:
