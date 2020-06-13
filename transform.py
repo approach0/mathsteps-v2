@@ -4,6 +4,7 @@ import rich
 
 
 lark = Lark.open('grammar.lark', rel_to=__file__, parser='lalr', debug=True)
+debug = False
 
 
 class Tree2NestedArr(Transformer):
@@ -31,26 +32,36 @@ class Tree2NestedArr(Transformer):
             return x
 
     @staticmethod
-    def passchildren(x, ifis, reduce_sign=False):
+    def passchildren(x, op_type):
         """
-        如果子二叉树的 token 是 ifis 的话，将子二叉树合并到当前节点（扁平化）
+        如果二叉树子树的 token 是 op_type 的话，将子树的孩子合并上来
         """
         x = Tree2NestedArr().unwrap_null_reduce(x)
         # handle two commutative tree of the same type
         sign = 1
-        ret = []
-        for i in range(len(x)):
-            child_root = x[i][0]
+        new_narr = []
+        for child in x:
+            child_root = child[0]
             child_sign, child_type = child_root
-            if reduce_sign:
-                sign *= child_sign
-                x[i][0] = +1, child_type
-            if child_type == ifis:
-                ret += Tree2NestedArr().children(x[i])
-            else:
-                ret.append(x[i])
 
-        return [(sign, ifis)] + ret
+            if child_type == op_type:
+                distribute_sign = 1
+
+                if op_type == 'mul':
+                    # reduce sign
+                    sign *= child_sign
+                elif op_type == 'add':
+                    # distribute sign
+                    distribute_sign = child_sign
+
+                for grand_child in Tree2NestedArr().children(child):
+                    grand_sign, grand_type = grand_child[0]
+                    grand_child[0] = (grand_sign * distribute_sign, grand_type)
+                    new_narr.append(grand_child)
+            else:
+                new_narr.append(child)
+
+        return [(sign, op_type)] + new_narr
 
     @staticmethod
     def negate(x):
@@ -60,6 +71,7 @@ class Tree2NestedArr(Transformer):
         sign, Type = x[0]
         sign = sign * (-1)
         x[0] = sign, Type
+        if debug: print('negated', x)
         return x
 
     def null_reduce(self, x):
@@ -94,7 +106,7 @@ class Tree2NestedArr(Transformer):
         """
         转换 a * b （满足交换律）
         """
-        x = self.passchildren(x, 'mul', reduce_sign=True)
+        x = self.passchildren(x, 'mul')
         return x
 
     def div(self, x):
@@ -185,7 +197,7 @@ def need_inner_fence(narr):
     """
     sign, Type = narr[0]
 
-    #print('inner fence?', narr)
+    if debug: print('inner fence?', narr)
 
     if sign < 0 and len(narr) > 2: # non-unary
         if Type in ['frac', 'mul']:
@@ -202,7 +214,7 @@ def need_outter_fence(root, child_narr):
     """
     child_root = child_narr[0]
 
-    #print('outter fence?', root, '@@@', child_narr)
+    if debug: print('outter fence?', root, '@@@', child_narr)
 
     if root == None:
         return False
@@ -295,18 +307,21 @@ def narr_prettyprint(narr, level=0):
         narr_prettyprint(c, level + 1)
 
 
-
 if __name__ == '__main__':
-    test_expressions = ['-(a+b)']
-    test_expressions = ['2 -(-3)']
-    test_expressions = ['2 -(-3b)']
-    test_expressions = ['-2b + 1']
-    test_expressions = ['(-2 \cdot b) c']
-    test_expressions = ['-(- 1 + (-2 \cdot b) \cdot a - 3)']
-    test_expressions = ['a(-2 \cdot b) c']
-    test_expressions = ['-c(a \div b)']
-    test_expressions = ['-c\\frac{a}{b}']
-    test_expressions = ['-c(-\\frac{a}{b})']
+    test_expressions = [
+        '-(a+b)',
+        '2 -(-3)',
+        '2 -(-3b)',
+        '-2b + 1',
+        '(-2 \cdot b) c',
+        '-(- 1 + (-2 \cdot b) \cdot a - 3)',
+        'a(-2 \cdot b) c',
+        '-c(a \div b)',
+        '-c(-ad \div b)',
+        '-c\\frac{a}{b}',
+        '-c(-\\frac{a}{b})',
+        'a-(-b + 3a)'
+    ]
 
     for expr in test_expressions:
         rich.print('[bold yellow]original:[/]', end=' ')
@@ -327,3 +342,4 @@ if __name__ == '__main__':
         print(tex)
 
         narr_prettyprint(narr)
+        print()
