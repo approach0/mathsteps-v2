@@ -200,7 +200,7 @@ def need_inner_fence(narr):
     if debug: print('inner fence?', narr)
 
     if sign < 0 and len(narr) > 2: # non-unary
-        if Type in ['frac', 'mul']:
+        if Type in ['mul', 'frac', 'sup']:
             return False
         else:
             return True
@@ -266,7 +266,7 @@ def narr2tex(narr, parentRoot=None):
         elif token == 'frac':
             expr = '\\frac{' + expr1 + '}{' + expr2 + '}'
         elif token == 'sup':
-            expr = root, expr1 + '^{' + expr2 + '}'
+            expr = expr1 + '^{' + expr2 + '}'
         elif token == 'eq':
             expr = expr1 + ' = ' + expr2
         else:
@@ -308,6 +308,8 @@ def narr_prettyprint(narr, level=0):
 
 
 if __name__ == '__main__':
+    debug = True
+
     test_expressions = [
         '-(a+b)',
         '2 -(-3)',
@@ -320,7 +322,10 @@ if __name__ == '__main__':
         '-c(-ad \div b)',
         '-c\\frac{a}{b}',
         '-c(-\\frac{a}{b})',
-        'a-(-b + 3a)'
+        'a-(-b + 3a)',
+        '-x^{2}',
+        '-3x^{2}',
+        'x-\\left| -ab \\right|'
     ]
 
     for expr in test_expressions:
