@@ -47,12 +47,8 @@ def apply_sign(narr, product):
         narr[0] = (old_sign * product, Type)
 
 
-def children_permutation(narr, wildcards_index):
+def children_wildcards_permutation(narr):
     children = narr[1:]
-
-    if wildcards_index is None:
-        return [children]
-
     permutations = []
     for i, a in enumerate(children):
         brothers = [b for j, b in enumerate(children) if i != j]
@@ -112,7 +108,8 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
         return False, []
 
     alpha_universe_new = []
-    for perm_children in children_permutation(narr2, wildcards_index):
+    permutations = [narr2[1:]] if wildcards_index == -1 else children_wildcards_permutation(narr2)
+    for perm_children in permutations:
         match_perm = True
         alpha_universe_copy = deepcopy(alpha_universe)
         for i, c1 in enumerate(narr1[1:]):

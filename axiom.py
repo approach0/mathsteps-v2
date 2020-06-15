@@ -1,7 +1,8 @@
 import rich
 import itertools
 import expression
-from alpha_equiv import rewrite_by_alpha, test_alpha_equiv, alpha_prettyprint
+from copy import deepcopy
+from alpha_equiv import rewrite_by_alpha, test_alpha_equiv, alpha_prettyprint, replace_or_pass_children
 
 somelists = [
    [1, 2, 3],
@@ -68,7 +69,7 @@ class Axiom:
         return retstr
 
 
-    def match(self, narr, debug=False):
+    def _exact_apply(self, narr, debug=False):
         for origin in self.rules:
             # Example:
             # Axiom: (a+b)(a-b) => (a)^{2} - (b)^{2}
@@ -104,9 +105,95 @@ class Axiom:
         return narr, False
 
 
-a = Axiom(recursive_match=True)
-a.add_rule('a *{1} + a *{2}', '(*{1} + *{2})a')
+    @staticmethod
+    def children_choose_two(children, is_commutative):
+        """
+        选取一对子表达式的组合
 
-b = expression.tex2narr('xaz + yaw')
+        1. 符合交换律的，会输出全组合
+        2. 不符合交换律的，会输出顺序对
 
-a.match(b, debug=True)
+        """
+        if is_commutative:
+            for i, a in enumerate(children):
+                for j, b in enumerate(children[i+1:]):
+                    yield (a, b), (i, i + j + 1)
+                    yield (b, a), (i + j + 1, i)
+        else:
+            for i, a in enumerate(children):
+                if i + 1 < len(children):
+                    b = children[i + 1]
+                    yield (a, b), (i, i + 1)
+
+
+    @staticmethod
+    def children_permutation(narr):
+        root = narr[0]
+        children = narr[1:]
+        # generate unary operations
+        if len(children) == 1:
+            construct_tree = deepcopy(narr)
+            yield construct_tree, []
+        else:
+            is_commutative = True if root[1] in expression.commutative_operators() else False
+            # generate binary operations
+            for (cl, cr), (i, j) in Axiom().children_choose_two(children, is_commutative):
+                construct_tree = deepcopy([root, cl, cr])
+                brothers = [c for k, c in enumerate(children) if k != i and k != j and j >= 0]
+                brothers = deepcopy(brothers)
+                yield construct_tree, brothers
+
+
+    def apply(self, narr, debug=False):
+        possible_applied_narrs = []
+        tex_set = set()
+        root_sign, root_type = narr[0]
+
+        # for recursive sub-expressions
+        if root_type not in expression.terminal_tokens():
+            children = deepcopy(narr[1:])
+            for i, child in enumerate(children):
+                applied_narrs = self.apply(child)
+                for applied_narr in applied_narrs:
+                    # substitute with sub-routine expression
+                    new_narr = deepcopy(narr)
+                    replace_or_pass_children(new_narr, i, applied_narr)
+                    # append result
+                    possible_applied_narrs.append(new_narr)
+
+        # match in this level
+        for construct_tree, brothers in Axiom().children_permutation(narr):
+            rewritten_narr, is_applied = self._exact_apply(construct_tree, debug=debug)
+            if is_applied:
+                new_narr = [] # construct a new father
+                if len(brothers) > 0:
+                    # always postive new father, in case the negative
+                    # sign of father is also reduced, e.g. -abc => (ab)c
+                    positive_root = ('+', root_type)
+
+                    new_narr = [positive_root] + [rewritten_narr] + brothers
+                else:
+                    # the entire expression in this level gets reduced
+
+                    new_narr = rewritten_narr
+
+                possible_applied_narrs.append(new_narr)
+        return possible_applied_narrs
+
+
+if __name__ == '__main__':
+    ## test-1
+    #a = Axiom(recursive_match=True)
+    #a.add_rule('a *{1} + a *{2}', '(*{1} + *{2})a')
+
+    #test = expression.tex2narr('xaz + yaw')
+    #a._exact_apply(test, debug=True)
+
+    # test-2
+    b = Axiom(recursive_match=True)
+    b.add_rule('\\frac{x}{y} + *{1} = z', 'x + *{1} y = z y')
+
+    test = expression.tex2narr('x + \\frac{x}{2} + 1 = 3')
+    possible_applied_narrs = b.apply(test, debug=True)
+    for narr in possible_applied_narrs:
+        print(expression.narr2tex(narr))
