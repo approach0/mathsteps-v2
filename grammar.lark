@@ -20,14 +20,14 @@
 
 ?atom: NUMBER                             -> number
      | VAR                                -> var
-     | WILDCARDS                          -> var
+     | ASTERISK "{" NUMBER "}"            -> wildcards
      | "\\sqrt" "{" sum "}"               -> sqrt
      | "(" sum ")"                        -> grp
      | "[" sum "]"                        -> grp
      | "\\left" "|" sum "\\right" "|"     -> abs
 
 VAR: "a".."z" | "A".."Z"
-WILDCARDS: "*"
+ASTERISK: "*"
 
 %import common.NUMBER
 

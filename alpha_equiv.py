@@ -47,7 +47,30 @@ def apply_sign(narr, product):
         narr[0] = (old_sign * product, Type)
 
 
-def test_alpha_equiv(narr1, narr2, alpha={}):
+def children_permutation(narr, wildcards_index):
+    children = narr[1:]
+
+    if wildcards_index is None:
+        return [children]
+
+    permutations = []
+    for i, a in enumerate(children):
+        brothers = [b for j, b in enumerate(children) if i != j]
+        permutations.append([a, *brothers])
+    return permutations
+
+
+def alpha_universe_add_constraint(alpha_universe, name, narr):
+    tmp_universe = deepcopy(alpha_universe)
+    new_universe = []
+    for alpha in tmp_universe:
+        if name not in alpha or narr_identical(alpha[name], narr):
+            alpha[name] = narr
+            new_universe.append(alpha)
+    return len(new_universe) > 0, new_universe
+
+
+def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
     """
     测试表达式的替换相似性，在变量可以替换的情况下是否表达式结构相等。
     """
@@ -55,14 +78,19 @@ def test_alpha_equiv(narr1, narr2, alpha={}):
     sign1, sign2 = root1[0], root2[0]
     type1, type2 = root1[1], root2[1]
 
-    alpha = deepcopy(alpha)
+    if debug:
+        for alpha in alpha_universe:
+            alpha_prettyprint(alpha)
+        expression.narr_prettyprint(narr1)
+        expression.narr_prettyprint(narr2)
+        print()
 
     if type1 == 'NUMBER':
-        return type1 == type2 and sign1 == sign2 and narr1[1] == narr2[1], alpha
+        return type1 == type2 and sign1 == sign2 and narr1[1] == narr2[1], alpha_universe
 
     elif type1 in ['VAR', 'WILDCARDS']:
 
-        name1 = narr1[1]
+        name1 = narr1[1] if type1 == 'VAR' else '*' + narr1[1]
         narr2 = deepcopy(narr2[:])
 
         # handle sign
@@ -70,43 +98,56 @@ def test_alpha_equiv(narr1, narr2, alpha={}):
 
         # uppercase pattern such as X, Y only match variables
         if name1.isupper() and type2 == 'NUMBER':
-            return False, alpha
+            return False, []
         # same variables must match same structures
-        elif name1 in alpha and not narr_identical(alpha[name1], narr2):
-            return False, alpha
         else:
-            alpha[name1] = narr2
-            return True, alpha
+            return alpha_universe_add_constraint(alpha_universe, name1, narr2)
 
     children_tokens = [c[0][1] for c in narr1[1:]]
-    has_wildcards = ('WILDCARDS' in children_tokens)
+    try:
+        wildcards_index = children_tokens.index('WILDCARDS')
+    except ValueError:
+        wildcards_index = None
 
     if not operator_identical(root1, root2):
-        return False, alpha
-    elif len(narr1[1:]) != len(narr2[1:]) and not has_wildcards:
-        return False, alpha
+        return False, []
+    elif len(narr1[1:]) != len(narr2[1:]) and wildcards_index is None:
+        return False, []
 
-    for i, c1 in enumerate(narr1[1:]):
-        if 1 + i >= len(narr2): return False, alpha # safe-guard
+    alpha_universe_new = []
+    for perm_children in children_permutation(narr2, wildcards_index):
+        match_all = True
+        alpha_universe_copy = deepcopy(alpha_universe)
+        for i, c1 in enumerate(narr1[1:]):
+            # safe-guard for long wildcards
+            if i >= len(perm_children):
+                match_all = False
+                break
 
-        if c1[0][1] == 'WILDCARDS':
-            # wildcards match
-            c2 = [(+1, type2)] + narr2[1 + i:]
-            # unwrap matched group if necessary
-            if len(c2[1:]) == 1:
-                c2 = c2[1]
-        else:
-            c2 = narr2[1 + i]
+            if c1[0][1] == 'WILDCARDS':
+                # wildcards match
+                c2 = [(+1, type2)] + perm_children[i:]
+                # unwrap matched group if necessary
+                if len(c2[1:]) == 1:
+                    c2 = c2[1]
+            else:
+                c2 = perm_children[i]
 
-        is_instance, new_alpha = test_alpha_equiv(
-            c1, c2, alpha=alpha
-        )
-        if not is_instance:
-            return False, alpha
-        else:
-            alpha = new_alpha
+            match_any, alpha_universe_copy = test_alpha_equiv(
+                c1, c2, alpha_universe=alpha_universe_copy
+            )
 
-    return True, alpha
+            if match_any:
+                if c1[0][1] == 'WILDCARDS':
+                    break
+            else:
+                match_all = False
+                break
+
+        if match_all:
+            alpha_universe_new += alpha_universe_copy
+
+    return len(alpha_universe_new) > 0, alpha_universe_new
 
 
 def replace_or_pass_children(narr, i, substitute):
@@ -135,7 +176,7 @@ def rewrite_by_alpha(narr, alpha):
     children = narr[1:]
 
     if Type in ['VAR', 'WILDCARDS']:
-        name = children[0]
+        name = children[0] if Type == 'VAR' else "*" + children[0]
         subst = deepcopy(alpha[name])
         apply_sign(subst, sign)
         return subst
@@ -152,6 +193,15 @@ def rewrite_by_alpha(narr, alpha):
         replace_or_pass_children(new_narr, i, substitute)
 
     return new_narr
+
+def alpha_prettyprint(alpha):
+    print('rewrite rules:')
+    if len(alpha) == 0:
+        print('\t(empty)')
+    else:
+        for key in alpha:
+            print(f'\t[{key}]:', end=' ')
+            print(expression.narr2tex(alpha[key]))
 
 
 if __name__ == '__main__':
@@ -171,9 +221,5 @@ if __name__ == '__main__':
     if is_equiv:
         print('alpha-equivalent')
         print(rewrite_rules)
-        #construct_narr = expression.tex2narr('x \\times *')
-        construct_narr = expression.tex2narr('* + 123')
-        new_narr = rewrite_by_alpha(construct_narr, rewrite_rules)
-        expression.narr_prettyprint(new_narr)
     else:
         print('Not alpha-equivalent')

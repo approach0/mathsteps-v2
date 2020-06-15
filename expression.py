@@ -157,6 +157,13 @@ class Tree2NestedArr(Transformer):
         """
         return x[0]
 
+    def wildcards(self, x):
+        """
+        转换 括号
+        """
+        number = str(x[1])
+        return [(+1, 'WILDCARDS'), number]
+
 
 def tex_parse(tex):
     """
@@ -238,9 +245,15 @@ def narr2tex(narr, parentRoot=None):
 
     if token in terminal_tokens():
         val = narr[1]
-        # omit decimal point
-        val = int(val) if token == 'NUMBER' and val.is_integer() else val
-        return sign + str(val)
+        if token == 'WILDCARDS':
+            return sign + '*{' + str(val) + '}'
+        elif token == 'NUMBER':
+            if val.is_integer():
+                return sign + int(val)
+            else:
+                return sign + float(val)
+        else:
+            return sign + str(val)
 
     elif token in commutative_operators():
         expr = ''
@@ -326,11 +339,11 @@ if __name__ == '__main__':
         '-x^{2}',
         '-3x^{2}',
         'x-\\left| -ab \\right|',
-        '1 +a*',
         '+(i+j)x',
+        '1 +a *{1}'
     ]
 
-    for expr in test_expressions:
+    for expr in test_expressions[-1:]:
         rich.print('[bold yellow]original:[/]', end=' ')
         print(expr, end="\n\n")
         tree = None
@@ -342,7 +355,7 @@ if __name__ == '__main__':
             continue
 
         narr = tree2narr(tree)
-        #print('[narr]', narr)
+        print('[narr]', narr)
 
         tex = narr2tex(narr)
         rich.print('[bold yellow]TeX:[/]', end=' ')
