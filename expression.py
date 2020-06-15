@@ -249,9 +249,9 @@ def narr2tex(narr, parentRoot=None):
             return sign + '*{' + str(val) + '}'
         elif token == 'NUMBER':
             if val.is_integer():
-                return sign + int(val)
+                return sign + str(int(val))
             else:
-                return sign + float(val)
+                return sign + str(val)
         else:
             return sign + str(val)
 

@@ -71,9 +71,6 @@ def alpha_universe_add_constraint(alpha_universe, name, narr):
 
 
 def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
-    """
-    测试表达式的替换相似性，在变量可以替换的情况下是否表达式结构相等。
-    """
     root1, root2 = narr1[0], narr2[0]
     sign1, sign2 = root1[0], root2[0]
     type1, type2 = root1[1], root2[1]
@@ -116,12 +113,12 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
 
     alpha_universe_new = []
     for perm_children in children_permutation(narr2, wildcards_index):
-        match_all = True
+        match_perm = True
         alpha_universe_copy = deepcopy(alpha_universe)
         for i, c1 in enumerate(narr1[1:]):
             # safe-guard for long wildcards
             if i >= len(perm_children):
-                match_all = False
+                match_perm = False
                 break
 
             if c1[0][1] == 'WILDCARDS':
@@ -141,10 +138,10 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
                 if c1[0][1] == 'WILDCARDS':
                     break
             else:
-                match_all = False
+                match_perm = False
                 break
 
-        if match_all:
+        if match_perm:
             alpha_universe_new += alpha_universe_copy
 
     return len(alpha_universe_new) > 0, alpha_universe_new
@@ -194,6 +191,7 @@ def rewrite_by_alpha(narr, alpha):
 
     return new_narr
 
+
 def alpha_prettyprint(alpha):
     print('rewrite rules:')
     if len(alpha) == 0:
@@ -214,12 +212,12 @@ if __name__ == '__main__':
     narr1 = expression.tex2narr('x + K')
     narr2 = expression.tex2narr('x - y^{2}')
 
-    narr1 = expression.tex2narr('x + *')
+    narr1 = expression.tex2narr('x + *{1}')
     narr2 = expression.tex2narr('x - 12 + 3')
 
     is_equiv, rewrite_rules = test_alpha_equiv(narr1, narr2)
     if is_equiv:
         print('alpha-equivalent')
-        print(rewrite_rules)
+        alpha_prettyprint(rewrite_rules[0])
     else:
         print('Not alpha-equivalent')
