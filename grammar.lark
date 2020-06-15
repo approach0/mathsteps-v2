@@ -10,13 +10,13 @@
      | term "\\div" product               -> div
 
 ?product: factor
-        | product factor                  -> mul
         | product "\\times" factor        -> mul
         | product "\\cdot" factor         -> mul
 
 ?factor: atom
        | atom "^" "{" sum "}"             -> sup
        | "\\frac" "{" sum "}" "{" sum "}" -> frac
+       | NUMBER "\\frac" "{" sum "}" "{" sum "}" -> ifrac
 
 ?atom: NUMBER                             -> number
      | VAR                                -> var

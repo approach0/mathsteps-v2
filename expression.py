@@ -121,6 +121,13 @@ class Tree2NestedArr(Transformer):
         """
         return [(+1, 'frac'), x[0], x[1]]
 
+    def ifrac(self, x):
+        """
+        转换 带分数 (improper fraction)
+        """
+        num_narr = self.number([x[0]])
+        return [(+1, 'ifrac'), num_narr, x[1], x[2]]
+
     def sqrt(self, x):
         """
         转换 分数
@@ -207,7 +214,7 @@ def need_inner_fence(narr):
     if debug: print('inner fence?', narr)
 
     if sign < 0 and len(narr) > 2: # non-unary
-        if Type in ['mul', 'frac', 'sup']:
+        if Type in ['mul', 'frac', 'sup', 'ifrac']:
             return False
         else:
             return True
@@ -230,7 +237,7 @@ def need_outter_fence(root, child_narr):
     elif child_root[0] == +1:
         if len(child_narr) <= 2: # unary
             return False
-        elif child_root[1] in ['mul', 'frac', 'sup']:
+        elif child_root[1] in ['mul', 'frac', 'sup', 'ifrac']:
             return False
     return True
 
@@ -284,6 +291,12 @@ def narr2tex(narr, parentRoot=None):
             expr = expr1 + ' = ' + expr2
         else:
             raise Exception('unexpected token: ' + token)
+
+    elif token == 'ifrac':
+        expr1 = narr2tex(narr[1], parentRoot=root)
+        expr2 = narr2tex(narr[2], parentRoot=root)
+        expr3 = narr2tex(narr[3], parentRoot=root)
+        expr = expr1 + '\\frac{' + expr2 + '}{' + expr3 + '}'
 
     else:
         expr = narr2tex(narr[1], parentRoot=root)
@@ -340,7 +353,8 @@ if __name__ == '__main__':
         '-3x^{2}',
         'x-\\left| -ab \\right|',
         '+(i+j)x',
-        '1 +a *{1}'
+        '1 +a *{1}',
+        '2 \cdot (-3 \\frac{1}{2})',
     ]
 
     for expr in test_expressions[-1:]:
