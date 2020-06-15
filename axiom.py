@@ -16,21 +16,26 @@ for element in itertools.product(*somelists):
 
 class Axiom:
 
-    def __init__(self, recursive_match=False, allow_complication=True):
+    def __init__(self, recursive_apply=False, allow_complication=True):
         self.rules = {}
         self.narrs = {}
-        self.recursive_match = recursive_match
+        self.recursive_apply = recursive_apply
         self.allow_complication = allow_complication
+        self.contain_wildcards = False
 
 
     def add_rule(self, a, b, direction='rewrite'):
         if direction == 'rewrite':
             self.rules[a] = b
+            if '*' in a: self.contain_wildcards = True
         elif direction == 'converse':
             self.rules[b] = a
+            if '*' in b: self.contain_wildcards = True
         elif direction == 'equivalence':
             self.rules[a] = b
             self.rules[b] = a
+            if '*' in a: self.contain_wildcards = True
+            if '*' in b: self.contain_wildcards = True
         else:
             raise Exception('bad binary relation direction')
 
@@ -60,9 +65,9 @@ class Axiom:
                 retstr += ' allow_complication'
                 retstr += '\033[0m'
 
-            if self.recursive_match:
+            if self.recursive_apply:
                 retstr += '\033[92m'
-                retstr += ' recursive_match'
+                retstr += ' recursive_apply'
                 retstr += '\033[0m'
 
             if i != len(self.rules) - 1: retstr += '\n'
@@ -106,7 +111,7 @@ class Axiom:
 
 
     @staticmethod
-    def children_choose_two(children, is_commutative):
+    def _children_choose_two(children, is_commutative):
         """
         选取一对子表达式的组合
 
@@ -126,18 +131,18 @@ class Axiom:
                     yield (a, b), (i, i + 1)
 
 
-    @staticmethod
-    def children_permutation(narr):
+    def _children_permutation(self, narr):
         root = narr[0]
         children = narr[1:]
-        # generate unary operations
-        if len(children) == 1:
+        print(self.contain_wildcards)
+        if self.contain_wildcards or len(children) == 1:
+            # generate unary operations
             construct_tree = deepcopy(narr)
             yield construct_tree, []
         else:
             is_commutative = True if root[1] in expression.commutative_operators() else False
             # generate binary operations
-            for (cl, cr), (i, j) in Axiom().children_choose_two(children, is_commutative):
+            for (cl, cr), (i, j) in self._children_choose_two(children, is_commutative):
                 construct_tree = deepcopy([root, cl, cr])
                 brothers = [c for k, c in enumerate(children) if k != i and k != j and j >= 0]
                 brothers = deepcopy(brothers)
@@ -145,14 +150,14 @@ class Axiom:
 
 
     @staticmethod
-    def uniq_append(possible_applied_narrs, new_narr):
+    def _uniq_append(possible_applied_narrs, new_narr):
         applied_set = set([expression.narr2tex(narr) for narr in possible_applied_narrs])
         new_tex = expression.narr2tex(new_narr)
         if new_tex not in applied_set:
             possible_applied_narrs.append(new_narr)
 
 
-    def apply(self, narr, debug=False):
+    def _onetime_apply(self, narr, debug=False):
         possible_applied_narrs = []
         tex_set = set()
         root_sign, root_type = narr[0]
@@ -161,16 +166,16 @@ class Axiom:
         if root_type not in expression.terminal_tokens():
             children = deepcopy(narr[1:])
             for i, child in enumerate(children):
-                applied_narrs = self.apply(child, debug=debug)
+                applied_narrs = self._onetime_apply(child, debug=debug)
                 for applied_narr in applied_narrs:
                     # substitute with sub-routine expression
                     new_narr = deepcopy(narr)
                     replace_or_pass_children(new_narr, i, applied_narr)
                     # append result
-                    Axiom().uniq_append(possible_applied_narrs, new_narr)
+                    Axiom()._uniq_append(possible_applied_narrs, new_narr)
 
         # match in this level
-        for construct_tree, brothers in Axiom().children_permutation(narr):
+        for construct_tree, brothers in self._children_permutation(narr):
             rewritten_narr, is_applied = self._exact_apply(construct_tree, debug=debug)
             if is_applied:
                 new_narr = [] # construct a new father
@@ -183,21 +188,37 @@ class Axiom:
                     # the entire expression in this level gets reduced
                     new_narr = rewritten_narr
                 # append result
-                Axiom().uniq_append(possible_applied_narrs, new_narr)
+                Axiom()._uniq_append(possible_applied_narrs, new_narr)
 
         return possible_applied_narrs
+
+    def apply(self, narr, debug=False):
+        Q = [narr]
+        final_narrs = []
+        cnt = 0
+        while len(Q) > 0:
+            narr = Q.pop(0)
+            narrs = self._onetime_apply(narr, debug=debug)
+            if len(narrs) == 0:
+                final_narrs.append(narr)
+            elif not self.recursive_apply:
+                return narrs
+            else:
+                Q += narrs
+            cnt += 1
+        return final_narrs
 
 
 if __name__ == '__main__':
     ## test-1
-    #a = Axiom(recursive_match=True)
+    #a = Axiom(recursive_apply=True)
     #a.add_rule('a *{1} + a *{2}', '(*{1} + *{2})a')
 
     #test = expression.tex2narr('xaz + yaw')
     #a._exact_apply(test, debug=True)
 
     # test-2
-    #a = Axiom(recursive_match=True)
+    #a = Axiom(recursive_apply=True)
     #a.add_rule('\\frac{x}{y} + *{1} = z', 'x + *{1} y = z y')
 
     #test = expression.tex2narr('x + \\frac{x}{2} + 1 = 3')
@@ -206,10 +227,28 @@ if __name__ == '__main__':
     #    print(expression.narr2tex(narr))
 
     # test-3
-    a = Axiom(recursive_match=True)
-    a.add_rule('a+0', 'a')
+    #a = Axiom(recursive_apply=True)
+    #a.add_rule('a+0', 'a')
 
-    test = expression.tex2narr('x + 1 + 0 + 2 = 3')
-    possible_applied_narrs = a.apply(test, debug=False)
+    #test = expression.tex2narr('x + 1 + 0 + 2 = 3')
+    #possible_applied_narrs = a.apply(test, debug=False)
+    #for narr in possible_applied_narrs:
+    #    print(expression.narr2tex(narr))
+
+    # test-4
+    #a = Axiom(recursive_apply=True)
+    #a.add_rule('a(x + *{1})', 'ax + a *{1}')
+
+    #test = expression.tex2narr('3(a + b + c + x) + 1')
+    #possible_applied_narrs = a.apply(test, debug=False)
+    #for narr in possible_applied_narrs:
+    #    print(expression.narr2tex(narr))
+
+    # test-5
+    a = Axiom(recursive_apply=False)
+    a.add_rule('0 \cdot *{1}', '0')
+
+    test = expression.tex2narr('12 \cdot 1 \cdot 0 \cdot 14')
+    possible_applied_narrs = a.apply(test, debug=True)
     for narr in possible_applied_narrs:
         print(expression.narr2tex(narr))
