@@ -144,6 +144,14 @@ class Axiom:
                 yield construct_tree, brothers
 
 
+    @staticmethod
+    def uniq_append(possible_applied_narrs, new_narr):
+        applied_set = set([expression.narr2tex(narr) for narr in possible_applied_narrs])
+        new_tex = expression.narr2tex(new_narr)
+        if new_tex not in applied_set:
+            possible_applied_narrs.append(new_narr)
+
+
     def apply(self, narr, debug=False):
         possible_applied_narrs = []
         tex_set = set()
@@ -153,13 +161,13 @@ class Axiom:
         if root_type not in expression.terminal_tokens():
             children = deepcopy(narr[1:])
             for i, child in enumerate(children):
-                applied_narrs = self.apply(child)
+                applied_narrs = self.apply(child, debug=debug)
                 for applied_narr in applied_narrs:
                     # substitute with sub-routine expression
                     new_narr = deepcopy(narr)
                     replace_or_pass_children(new_narr, i, applied_narr)
                     # append result
-                    possible_applied_narrs.append(new_narr)
+                    Axiom().uniq_append(possible_applied_narrs, new_narr)
 
         # match in this level
         for construct_tree, brothers in Axiom().children_permutation(narr):
@@ -169,15 +177,14 @@ class Axiom:
                 if len(brothers) > 0:
                     # always postive new father, in case the negative
                     # sign of father is also reduced, e.g. -abc => (ab)c
-                    positive_root = ('+', root_type)
-
+                    positive_root = (+1, root_type)
                     new_narr = [positive_root] + [rewritten_narr] + brothers
                 else:
                     # the entire expression in this level gets reduced
-
                     new_narr = rewritten_narr
+                # append result
+                Axiom().uniq_append(possible_applied_narrs, new_narr)
 
-                possible_applied_narrs.append(new_narr)
         return possible_applied_narrs
 
 
@@ -190,10 +197,19 @@ if __name__ == '__main__':
     #a._exact_apply(test, debug=True)
 
     # test-2
-    b = Axiom(recursive_match=True)
-    b.add_rule('\\frac{x}{y} + *{1} = z', 'x + *{1} y = z y')
+    #a = Axiom(recursive_match=True)
+    #a.add_rule('\\frac{x}{y} + *{1} = z', 'x + *{1} y = z y')
 
-    test = expression.tex2narr('x + \\frac{x}{2} + 1 = 3')
-    possible_applied_narrs = b.apply(test, debug=True)
+    #test = expression.tex2narr('x + \\frac{x}{2} + 1 = 3')
+    #possible_applied_narrs = a.apply(test, debug=True)
+    #for narr in possible_applied_narrs:
+    #    print(expression.narr2tex(narr))
+
+    # test-3
+    a = Axiom(recursive_match=True)
+    a.add_rule('a+0', 'a')
+
+    test = expression.tex2narr('x + 1 + 0 + 2 = 3')
+    possible_applied_narrs = a.apply(test, debug=False)
     for narr in possible_applied_narrs:
         print(expression.narr2tex(narr))
