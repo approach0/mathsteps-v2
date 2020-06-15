@@ -210,9 +210,14 @@ class Axiom:
 
 
 if __name__ == '__main__':
-    ## test-1
-    #a = Axiom(recursive_apply=True)
-    #a.add_rule('a *{1} + a *{2}', '(*{1} + *{2})a')
+    # test-1
+    a = Axiom(recursive_apply=True)
+    a.add_rule('X *{1} + X *{2}', '(*{1} + *{2}) X')
+
+    test = expression.tex2narr('3ab^{2} + b^{2}2a')
+    possible_applied_narrs = a.apply(test, debug=True)
+    for narr in possible_applied_narrs:
+        print(expression.narr2tex(narr))
 
     #test = expression.tex2narr('xaz + yaw')
     #a._exact_apply(test, debug=True)
@@ -245,10 +250,10 @@ if __name__ == '__main__':
     #    print(expression.narr2tex(narr))
 
     # test-5
-    a = Axiom(recursive_apply=False)
-    a.add_rule('0 \cdot *{1}', '0')
+    #a = Axiom(recursive_apply=False)
+    #a.add_rule('0 \cdot *{1}', '0')
 
-    test = expression.tex2narr('12 \cdot 1 \cdot 0 \cdot 14')
-    possible_applied_narrs = a.apply(test, debug=True)
-    for narr in possible_applied_narrs:
-        print(expression.narr2tex(narr))
+    #test = expression.tex2narr('12 \cdot 1 \cdot 0 \cdot 14')
+    #possible_applied_narrs = a.apply(test, debug=True)
+    #for narr in possible_applied_narrs:
+    #    print(expression.narr2tex(narr))
