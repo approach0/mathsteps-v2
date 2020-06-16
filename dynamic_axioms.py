@@ -1,4 +1,5 @@
 from axiom import Axiom
+import expression
 from alpha_equiv import rewrite_by_alpha, alpha_prettyprint
 
 
@@ -27,6 +28,40 @@ def gen_atom_number(num):
     else:
         return [(-1, 'NUMBER'), abs(num)]
 
+
+def factorizations(num):
+    """
+    生成一个整数类型常量的因子分解。
+    """
+    num = abs(num)
+    factors = []
+    p = 2
+    while num >= p:
+        if num % p == 0:
+            num = num  / p
+            factors.append(p)
+        else:
+            p = p + 1
+    return factors
+
+
+def sqrt_draw(num):
+    """
+    将 sqrt(n) 提出为 m sqrt(n') 的形式
+    """
+    m = 1
+    n = 1
+    factors = factorizations(num)
+    factors.sort()
+    while len(factors) > 0:
+        a = factors.pop(0)
+        b = factors[0] if len(factors) > 0 else -1
+        if a == b:
+            factors.pop(0)
+            m = m * a
+        else:
+            n = n * a
+    return m, n
 
 ###
 # Dynamic Axioms
@@ -103,4 +138,32 @@ axiom_calc_pow = (
     .add_test('-2^{-2}', '-0.25')
     .add_test('-(-2)^{2}', '-4')
     .add_test('(-2)^{2}', '4')
+)
+
+def calc_sqrt(pattern_narr, narr, rewrite_rules, output_tempalate):
+    x = get_atom_number(rewrite_rules['x'])
+
+    if x != None and x > 0 and x.is_integer():
+        rewrite_rules = {}
+
+        m, n = sqrt_draw(x)
+        if n == 1:
+            rewrite_rules['c'] = gen_atom_number(m)
+            return rewrite_by_alpha(output_tempalate, rewrite_rules), True
+        elif m > 1:
+            output_template_sign, _ = output_tempalate[0]
+            output = 'm \\sqrt{n}' if output_template_sign > 0 else '-m \\sqrt{n}'
+            output_narr = expression.tex2narr(output)
+
+            rewrite_rules['m'] = gen_atom_number(m)
+            rewrite_rules['n'] = gen_atom_number(n)
+            return rewrite_by_alpha(output_narr, rewrite_rules), True
+
+    return narr, False
+
+axiom_calc_sqrt = (
+    Axiom(name='开方化简')
+    .add_rule('#\sqrt{x}', '#1 c', dynamic_procedure=calc_sqrt)
+    .add_test('-\\sqrt{8}', '-2 \\times \sqrt{2}')
+    .add_test('\\sqrt{16}', '4')
 )
