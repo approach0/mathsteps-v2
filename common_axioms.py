@@ -131,6 +131,33 @@ def common_axioms():
         .add_test('2 - 3 \cdot 2', '2 - 3 \\times 2')
     )
 
+    axioms.append(
+        Axiom(name='等式移项')
+        .add_rule('#x # y = z', '#1 x #2 y -z=0')
+        .add_rule('x = z', 'x - z = 0')
+
+        .add_test('1 - 2 = -3 + 5', '1 - 2 + 3 - 5 = 0')
+        .add_test('ax = bx', 'a \\times x - b \\times x = 0')
+    )
+
+    axioms.append(
+        Axiom(name='等式两边同乘', allow_complication=True)
+        .add_rule('#\\frac{x}{y} + *{1} = z', '#1 x + y(*{1}) = yz')
+        .add_rule('#\\frac{x}{y} = z', '#1 x = yz')
+
+        .add_test('-\\frac{-2}{-3} = -4', '2 = (-3) \\times (-4)')
+        .add_test('\\frac{x}{2} + a - b = z', 'x + 2 \\times (a - b) = 2 \\times z')
+    )
+
+    axioms.append(
+        Axiom(name='嵌套分式的化简')
+        .add_rule('#\\frac{#\\frac{x}{y}}{#\\frac{x}{y}}', '#0 1')
+        .add_rule('#\\frac{#\\frac{x}{y}}{#\\frac{a}{b}}', '#0 \\frac{bx}{ay}')
+
+        .add_test('-\\frac{-\\frac{4}{3}}{-\\frac{4}{3}}', '-1')
+        .add_test('-\\frac{-\\frac{4}{3}}{\\frac{1}{2}}', '\\frac{2 \\times 4}{1 \\times 3}')
+    )
+
     return axioms
 
 
