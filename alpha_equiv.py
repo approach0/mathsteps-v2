@@ -72,11 +72,11 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
     type1, type2 = root1[1], root2[1]
 
     if debug:
-        for alpha in alpha_universe:
-            alpha_prettyprint(alpha)
+        print('test_alpha_equiv')
+        #for alpha in alpha_universe:
+        #    alpha_prettyprint(alpha)
         expression.narr_prettyprint(narr1)
         expression.narr_prettyprint(narr2)
-        print()
 
     if type1 == 'NUMBER':
         return type1 == type2 and sign1 == sign2 and narr1[1] == narr2[1], alpha_universe
@@ -85,9 +85,11 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
 
         name1 = narr1[1] if type1 == 'VAR' else '*' + narr1[1]
         narr2 = deepcopy(narr2[:])
+        #print(sign1, name1)
+        #print(narr2)
 
         # handle sign
-        apply_sign(narr2, sign1 * sign2)
+        apply_sign(narr2, sign1)
 
         # uppercase pattern such as X, Y only match variables
         if name1.isupper() and type2 == 'NUMBER':
@@ -108,7 +110,7 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
         return False, []
 
     alpha_universe_new = []
-    permutations = [narr2[1:]] if wildcards_index == -1 else children_wildcards_permutation(narr2)
+    permutations = [narr2[1:]] if wildcards_index == None else children_wildcards_permutation(narr2)
     for perm_children in permutations:
         match_perm = True
         alpha_universe_copy = deepcopy(alpha_universe)

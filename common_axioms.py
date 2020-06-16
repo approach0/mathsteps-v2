@@ -56,9 +56,19 @@ def common_axioms():
         .add_rule('# (# a *{1})^{k}', '#1 (#2 a)^{k} \\times (*{1})^{k}')
     )
 
+    axioms.append(
+        Axiom(name='以分数表示除法')
+        .add_rule('# x \\frac{a}{x}', '#1 a')
+        .add_test('-3 \\times \\frac{-2}{3}', '2')
+        .add_test('3 \\times \\frac{-2}{3}', '-2')
+    )
+
     return axioms
 
 
 if __name__ == '__main__':
-    for i, axiom in enumerate(common_axioms()):
+    axioms = common_axioms()
+    for i, axiom in enumerate(axioms):
         print(f'#{i}', axiom, end="\n\n")
+
+    axioms[-1].test(debug=False)

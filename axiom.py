@@ -16,6 +16,7 @@ class Axiom:
         self.allow_complication = allow_complication
         self.contain_wildcards = False
         self.name = name
+        self.tests = []
 
 
     def add_rule(self, a, b, direction='rewrite'):
@@ -40,6 +41,29 @@ class Axiom:
             if not callable(b):
                 self.narrs[b] = expression.tex2narr(b)
         return self
+
+
+    def add_test(self, expr, expect=None):
+        self.tests.append((expr, expect))
+        return self
+
+
+    def test(self, debug=False):
+        for expr, expect in self.tests:
+            rich.print('[bold cyan][[test]][/]', end=" ")
+            print(expr)
+            narr = expression.tex2narr(expr)
+            applied_narr, if_applied = self._exact_apply(narr, debug=debug)
+            if if_applied:
+                applied_tex = expression.narr2tex(applied_narr)
+                print('[applied]', applied_tex)
+                if expect is not None:
+                    if applied_tex == expect:
+                        rich.print('[bold green]pass[/]')
+                    else:
+                        rich.print('[bold red]failed[/]')
+            else:
+                print('[not applied]')
 
 
     def __str__(self):

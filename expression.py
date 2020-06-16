@@ -232,7 +232,7 @@ def need_outter_fence(root, child_narr):
 
     if root == None:
         return False
-    elif root[1] in ['frac', 'abs', 'sqrt', 'add', 'eq']:
+    elif root[1] in ['frac', 'ifrac', 'abs', 'sqrt', 'add', 'eq']:
         return False
     elif child_root[0] == +1:
         if len(child_narr) <= 2: # unary
@@ -355,7 +355,8 @@ if __name__ == '__main__':
         '+(i+j)x',
         '1 +a *{1}',
         '2 \cdot (-3 \\frac{1}{2})',
-        '+1 = -3'
+        '+1 = -3',
+        '\\frac{-2}{3}'
     ]
 
     for expr in test_expressions[-1:]:
