@@ -11,6 +11,7 @@ class Axiom:
 
     def __init__(self, recursive_apply=False, allow_complication=False, name=None):
         self.rules = {}
+        self.dp = {}
         self.narrs = {}
         self.recursive_apply = recursive_apply
         self.allow_complication = allow_complication
@@ -18,23 +19,26 @@ class Axiom:
         self.tests = []
 
 
-    def add_rule(self, a, b, direction='rewrite'):
+    def add_rule(self, a, b, direction='rewrite', dynamic_procedure=None):
         A, B = self._preprocess(a, b)
         for (a, b) in zip(A, B):
             if direction == 'rewrite':
                 self.rules[a] = b
+                self.dp[a] = dynamic_procedure
             elif direction == 'converse':
                 self.rules[b] = a
+                self.dp[b] = dynamic_procedure
             elif direction == 'equivalence':
                 self.rules[a] = b
                 self.rules[b] = a
+                self.dp[a] = dynamic_procedure
+                self.dp[b] = dynamic_procedure
             else:
                 raise Exception('bad binary relation direction')
 
             # cache some results for speedup
             self.narrs[a] = expression.tex2narr(a)
-            if not callable(b):
-                self.narrs[b] = expression.tex2narr(b)
+            self.narrs[b] = expression.tex2narr(b)
         return self
 
 
@@ -69,17 +73,11 @@ class Axiom:
         name = self.name
         retstr = 'Axiom (anonymous):\n' if name is None else f'{name}:\n'
         for i, k in enumerate(self.rules):
-            if callable(self.rules[k]):
-                retstr += f'rule[{i}]: ' + k
-                retstr += '\033[90m'
-                retstr += ' dynamical axiom'
-                retstr += '\033[0m'
-            else:
-                retstr += f'[{i}]: ' + k
-                retstr += '\033[91m'
-                retstr += '  =>  '
-                retstr += '\033[0m'
-                retstr += self.rules[k]
+            retstr += f'[{i}]: ' + k
+            retstr += '\033[91m'
+            retstr += '  =>  '
+            retstr += '\033[0m'
+            retstr += self.rules[k]
 
             if self.allow_complication:
                 retstr += '\033[92m'
@@ -89,6 +87,11 @@ class Axiom:
             if self.recursive_apply:
                 retstr += '\033[92m'
                 retstr += ' recursive_apply'
+                retstr += '\033[0m'
+
+            if self.dp[k] is not None:
+                retstr += '\033[91m'
+                retstr += ' dynamic_rule'
                 retstr += '\033[0m'
 
             if i != len(self.rules) - 1: retstr += '\n'
@@ -123,8 +126,10 @@ class Axiom:
                     alpha_prettyprint(rewrite_rules[0])
 
                 dest = self.rules[origin]
-                if callable(dest): # dynamical axiom
-                    rewritten_narr, is_applied = dest(pattern_narr, narr, rewrite_rules[0])
+                dest_narr = self.narrs[dest]
+                call = self.dp[origin]
+                if call is not None: # dynamical axiom
+                    rewritten_narr, is_applied = call(pattern_narr, narr, rewrite_rules[0], dest_narr)
                 else:
                     # apply rewrite rules to destination expression. E.g., (a)^{2} - (b)^{2}
                     dest_narr = self.narrs[dest]

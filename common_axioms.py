@@ -1,4 +1,5 @@
 from axiom import Axiom
+import dynamic_axioms
 
 
 def common_axioms():
@@ -247,6 +248,8 @@ def common_axioms():
             '3^{2} - (-a - b)^{2}'
         ])
     )
+
+    axioms.append(dynamic_axioms.axiom_calc_add)
 
     return axioms
 
