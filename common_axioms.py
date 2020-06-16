@@ -37,7 +37,7 @@ def common_axioms():
 
     axioms.append(
         Axiom(name='任何数乘以零还是零', recursive_apply=True)
-        .add_rule('# 0 \\times n', '0')
+        .add_rule('# 0 \cdot *{1}', '0')
         .add_rule('#\\frac{#0}{x}', '0')
     )
 
@@ -64,6 +64,13 @@ def common_axioms():
     axioms.append(
         Axiom(name='乘数的指数是各个因子指数的乘数', recursive_apply=True, allow_complication=True)
         .add_rule('# (# a *{1})^{k}', '#1 (#2 a)^{k} \\times (*{1})^{k}')
+    )
+
+    axioms.append(
+        Axiom(name='将指数分配进分子分母', allow_complication=True)
+        .add_rule('#(#\\frac{#a}{#b})^{k}', '#1 (#2 1)^{k} \\frac{(#3 a)^{k}}{(#4 b)^{k}}')
+
+        .add_test('(-\\frac{-2}{3})^{2}', '(-1)^{2} \\times \\frac{(-2)^{2}}{3^{2}}')
     )
 
     axioms.append(
@@ -101,6 +108,13 @@ def common_axioms():
         .add_test('\\frac{-x}{xay}', '\\frac{-1}{a \\times y}')
         .add_test('\\frac{3xy}{-xy}', '-3')
         .add_test('-\\frac{-a}{-a}', '-1')
+    )
+
+    axioms.append(
+        Axiom(name='乘法因子括号的提出')
+        .add_rule('#(#a) *{1}', '#0 a *{1}')
+
+        .add_test('-2 \\times a - 2 \\times (-b)')
     )
 
     axioms.append(
@@ -153,9 +167,59 @@ def common_axioms():
         Axiom(name='嵌套分式的化简')
         .add_rule('#\\frac{#\\frac{x}{y}}{#\\frac{x}{y}}', '#0 1')
         .add_rule('#\\frac{#\\frac{x}{y}}{#\\frac{a}{b}}', '#0 \\frac{bx}{ay}')
+        .add_rule('#\\frac{#1}{#\\frac{x}{y}}', '#0 \\frac{y}{x}')
+        .add_rule('#\\frac{#\\frac{x}{y}}{#1}', '#0 \\frac{x}{y}')
+        .add_rule('#\\frac{a}{#\\frac{x}{y}}', '#0 \\frac{ay}{x}')
+        .add_rule('#\\frac{#\\frac{x}{y}}{a}', '#0 \\frac{x}{ay}')
 
         .add_test('-\\frac{-\\frac{4}{3}}{-\\frac{4}{3}}', '-1')
         .add_test('-\\frac{-\\frac{4}{3}}{\\frac{1}{2}}', '\\frac{2 \\times 4}{1 \\times 3}')
+        .add_test('-\\frac{-\\frac{4}{3}}{x}', '\\frac{4}{x \\times 3}')
+        .add_test('-\\frac{4}{-\\frac{4}{3}}', '\\frac{4 \\times 3}{4}')
+    )
+
+    axioms.append(
+        Axiom(name='分式 加法/减法', allow_complication=True)
+        .add_rule('#\\frac{a}{c} #\\frac{b}{c}', '\\frac{#1 a #2 b}{c}')
+        .add_rule('#\\frac{a}{b} #\\frac{c}{d}', '\\frac{#1 ad #2 cb}{bd}')
+
+        .add_test('\\frac{4}{3} - \\frac{1}{3}', ['\\frac{4 - 1}{3}', '\\frac{-1 + 4}{3}'])
+        .add_test('-\\frac{1}{-2} - \\frac{-2}{3}')
+    )
+
+    axioms.append(
+        Axiom(name='分母为一的分式化简')
+        .add_rule('#\\frac{k}{#1}', '#0 k')
+
+        .add_test('\\frac{3}{-1}', '-3')
+    )
+
+    axioms.append(
+        Axiom(name='分式的乘法', allow_complication=True)
+        .add_rule('#\\frac{1}{x} \\frac{1}{y}', '#1 \\frac{1}{xy}')
+        .add_rule('#\\frac{1}{x} \\frac{y}{1}', '#1 \\frac{y}{x}')
+        .add_rule('#\\frac{x}{1} \\frac{1}{y}', '#1 \\frac{x}{y}')
+        .add_rule('#\\frac{x}{1} \\frac{y}{1}', '#1 xy')
+        .add_rule('#\\frac{a}{c} \\frac{b}{d}', '#1 \\frac{ab}{cd}')
+
+        .add_test('-\\frac{1}{-2} \cdot \\frac{-2}{1}', '-\\frac{-2}{-2}')
+    )
+
+    axioms.append(
+        Axiom(name='系数乘进分式的分子里面', allow_complication=True)
+        .add_rule('# a \\times \\frac{# 1}{b}', '#0 \\frac{a}{b}')
+        .add_rule('# a \\times \\frac{# c}{b}', '#0 \\frac{ac}{b}')
+
+        .add_test('-\\frac{-1}{3} \\times 12', '\\frac{12}{3}')
+        .add_test('12 \cdot \\frac{3}{2}', '\\frac{12 \\times 3}{2}')
+    )
+
+    axioms.append(
+        Axiom(name='乘法分配率', allow_complication=True, recursive_apply=True)
+        .add_rule('#a(x + *{1})', '#1 ax #1 a *{1}')
+
+        .add_test('3(a + b + c + x) + 1', '1 + 3 \\times a + 3 \\times b + 3 \\times c + 3 \\times x')
+        .add_test('(a - b)(-2)', '-2 \\times a - 2 \\times (-b)')
     )
 
     return axioms

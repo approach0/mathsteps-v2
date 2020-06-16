@@ -270,74 +270,11 @@ class Axiom:
 
 
 if __name__ == '__main__':
-    # test-1
-    #a = Axiom(recursive_apply=True)
-    #a.add_rule('X *{1} + X *{2}', '(*{1} + *{2}) X')
-
-    #test = expression.tex2narr('3ab^{2} + b^{2}2a')
-    #possible_applied_narrs = a.apply(test, debug=True)
-    #for narr in possible_applied_narrs:
-    #    print(expression.narr2tex(narr))
-
-    #test = expression.tex2narr('xaz + yaw')
-    #a._exact_apply(test, debug=True)
-
-    # test-2
-    #a = Axiom(recursive_apply=True)
-    #a.add_rule('\\frac{x}{y} + *{1} = z', 'x + *{1} y = z y')
-
-    #test = expression.tex2narr('x + \\frac{x}{2} + 1 = 3')
-    #possible_applied_narrs = a.apply(test, debug=True)
-    #for narr in possible_applied_narrs:
-    #    print(expression.narr2tex(narr))
-
-    # test-3
-    #a = Axiom(recursive_apply=True)
-    #a.add_rule('a+0', 'a')
-
-    #test = expression.tex2narr('x + 1 + 0 + 2 = 3')
-    #possible_applied_narrs = a.apply(test, debug=False)
-    #for narr in possible_applied_narrs:
-    #    print(expression.narr2tex(narr))
-
-    # test-4
-    #a = Axiom(recursive_apply=True)
-    #a.add_rule('a(x + *{1})', 'ax + a *{1}')
-
-    #test = expression.tex2narr('3(a + b + c + x) + 1')
-    #possible_applied_narrs = a.apply(test, debug=False)
-    #for narr in possible_applied_narrs:
-    #    print(expression.narr2tex(narr))
-
-    # test-5
-    #a = Axiom(recursive_apply=False)
-    #a.add_rule('0 \cdot *{1}', '0')
-
-    #test = expression.tex2narr('12 \cdot 1 \cdot 0 \cdot 14')
-    #possible_applied_narrs = a.apply(test, debug=True)
-    #for narr in possible_applied_narrs:
-    #    print(expression.narr2tex(narr))
-
-    # test-6
-    #a = Axiom(allow_complication=False, recursive_apply=False)
-    #a.add_rule('(#a) (# b) (# c)', '#3 abc')
-    #print(a)
-
-    # test-7
-    #a = Axiom(allow_complication=False, recursive_apply=False, name='分子分母消除')
-    #a.add_rule('\\frac{x *{1} }{x *{2} }', '\\frac{*{1}}{*{2}}')
-    #print(a)
-
-    #test = expression.tex2narr('\\frac{2rx}{ry}')
-    #test = expression.tex2narr('\\frac{xa}{ay}')
-    #narr, _ = a._exact_apply(test, debug=False)
-    #print(expression.narr2tex(narr))
-
-    # test-8
-    a = Axiom(name='根号的平方是其本身')
-    a.add_rule('#(#\\sqrt{x})^{2}', '#1 x')
+    a = Axiom(allow_complication=False, recursive_apply=False, name='分子分母消除')
+    a.add_rule('\\frac{x *{1} }{x *{2} }', '\\frac{*{1}}{*{2}}')
     print(a)
 
-    test = expression.tex2narr('-(-\sqrt{3})^{2}')
-    narr, _ = a._exact_apply(test, debug=True)
+    test = expression.tex2narr('\\frac{2rx}{ry}')
+    test = expression.tex2narr('\\frac{xa}{ay}')
+    narr, _ = a._exact_apply(test, debug=False)
     print(expression.narr2tex(narr))

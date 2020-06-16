@@ -194,6 +194,10 @@ def rewrite_by_alpha(narr, alpha):
 
         i = len(new_narr) - 1
         new_narr.append(None)
+
+        #print(new_narr, i)
+        #print(substitute)
+        #print()
         replace_or_pass_children(new_narr, i, substitute)
 
     return new_narr
