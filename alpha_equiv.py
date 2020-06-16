@@ -66,6 +66,19 @@ def alpha_universe_add_constraint(alpha_universe, name, narr):
     return len(new_universe) > 0, new_universe
 
 
+def get_wildcards_index(narr):
+    root_sign, root_type = narr[0]
+    if root_type not in expression.terminal_tokens():
+        children_tokens = [c[0][1] for c in narr[1:]]
+    else:
+        children_tokens = [narr[0][1]]
+    try:
+        wildcards_index = children_tokens.index('WILDCARDS')
+    except ValueError:
+        wildcards_index = None
+    return wildcards_index
+
+
 def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
     root1, root2 = narr1[0], narr2[0]
     sign1, sign2 = root1[0], root2[0]
@@ -98,12 +111,7 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
         else:
             return alpha_universe_add_constraint(alpha_universe, name1, narr2)
 
-    children_tokens = [c[0][1] for c in narr1[1:]]
-    try:
-        wildcards_index = children_tokens.index('WILDCARDS')
-    except ValueError:
-        wildcards_index = None
-
+    wildcards_index = get_wildcards_index(narr1)
     if not operator_identical(root1, root2):
         return False, []
     elif len(narr1[1:]) != len(narr2[1:]) and wildcards_index is None:

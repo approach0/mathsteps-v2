@@ -228,6 +228,7 @@ def need_outter_fence(root, child_narr):
     """
     child_root = child_narr[0]
 
+    #debug = True
     if debug: print('outter fence?', root, '@@@', child_narr)
 
     if root == None:
@@ -237,6 +238,8 @@ def need_outter_fence(root, child_narr):
     elif child_root[0] == +1:
         if len(child_narr) <= 2: # unary
             return False
+        elif root[1] == 'sup' and child_root[1] in ['frac', 'afrac']:
+            return True
         elif child_root[1] in ['frac', 'sup']:
             return False
     return True
@@ -356,7 +359,8 @@ if __name__ == '__main__':
         '1 +a *{1}',
         '2 \cdot (-3 \\frac{1}{2})',
         '+1 = -3',
-        '\\frac{-2}{3}'
+        '\\frac{-2}{3}',
+        '-(-a)(-b)'
     ]
 
     for expr in test_expressions[-1:]:

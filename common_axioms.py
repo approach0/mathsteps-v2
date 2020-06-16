@@ -93,14 +93,43 @@ def common_axioms():
         .add_rule('# \\frac{# x *{1} }{# x *{2} }', '#1 \\frac{#2 *{1}}{#3 *{2}}')
         .add_rule('# \\frac{# x }{# x *{2} }', '#1 \\frac{#2 1}{#3 *{2}}')
         .add_rule('# \\frac{# x *{1} }{# x }', '#0 *{1}')
+        .add_rule('# \\frac{# x }{# x }', '#0 1')
 
         .add_test('- \\frac{bx}{ax}', '-\\frac{b}{a}')
         .add_test('- \\frac{-bx}{xa}', '-\\frac{-b}{a}')
         .add_test('- \\frac{-bxy}{-xay}', '-\\frac{-b}{-a}')
         .add_test('\\frac{-x}{xay}', '\\frac{-1}{a \\times y}')
         .add_test('\\frac{3xy}{-xy}', '-3')
+        .add_test('-\\frac{-a}{-a}', '-1')
     )
 
+    axioms.append(
+        Axiom(name='乘积写成乘方的形式')
+        .add_rule('#(#X)(#X)', '#0 X^{2}')
+
+        .add_test('xx')
+        .add_test('-\\frac{1}{2} \cdot \\frac{1}{2}', '-(\\frac{1}{2})^{2}')
+    )
+
+    axioms.append(
+        Axiom(name='合并同类项', recursive_apply=True)
+        .add_rule('X + X', '2X')
+        .add_rule('- X - X', '-2X')
+        .add_rule('#X # kX', '(#1 1 #2 k) X')
+        .add_rule('#X # Xk', '(#1 1 #2 k) X')
+        .add_rule('#X *{1} # X *{2}', '(#1 *{1} #2 *{2}) X')
+
+        .add_test('2 + 2', '2 + 2')
+        .add_test('x^{2} + x^{2}', '2 \\times x^{2}')
+        .add_test('x + 2x + 3x', [
+            '(1 + 2 + 3) \\times x',
+            '(3 + 2 + 1) \\times x',
+            '(1 + 3 + 2) \\times x',
+            '(2 + 1 + 3) \\times x',
+            '(3 + 1 + 2) \\times x'
+        ])
+        .add_test('2 - 3 \cdot 2', '2 - 3 \\times 2')
+    )
 
     return axioms
 

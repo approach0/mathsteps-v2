@@ -4,7 +4,7 @@ import itertools
 import functools
 import expression
 from copy import deepcopy
-from alpha_equiv import rewrite_by_alpha, test_alpha_equiv, alpha_prettyprint, replace_or_pass_children
+from alpha_equiv import rewrite_by_alpha, test_alpha_equiv, alpha_prettyprint, replace_or_pass_children, get_wildcards_index
 
 
 class Axiom:
@@ -14,7 +14,6 @@ class Axiom:
         self.narrs = {}
         self.recursive_apply = recursive_apply
         self.allow_complication = allow_complication
-        self.contain_wildcards = False
         self.name = name
         self.tests = []
 
@@ -24,15 +23,11 @@ class Axiom:
         for (a, b) in zip(A, B):
             if direction == 'rewrite':
                 self.rules[a] = b
-                if '*' in a: self.contain_wildcards = True
             elif direction == 'converse':
                 self.rules[b] = a
-                if '*' in b: self.contain_wildcards = True
             elif direction == 'equivalence':
                 self.rules[a] = b
                 self.rules[b] = a
-                if '*' in a: self.contain_wildcards = True
-                if '*' in b: self.contain_wildcards = True
             else:
                 raise Exception('bad binary relation direction')
 
@@ -195,10 +190,10 @@ class Axiom:
                     yield (a, b), (i, i + 1)
 
 
-    def _children_permutation(self, narr):
+    def _children_permutation(self, narr, always_unary=False):
         root = narr[0]
         children = narr[1:]
-        if self.contain_wildcards or len(children) == 1:
+        if len(children) == 1 or always_unary:
             # generate unary operations
             construct_tree = deepcopy(narr)
             yield construct_tree, []
@@ -238,7 +233,9 @@ class Axiom:
                     Axiom()._uniq_append(possible_applied_narrs, new_narr)
 
         # match in this level
-        for construct_tree, brothers in self._children_permutation(narr):
+        wildcards_index = get_wildcards_index(narr)
+        always_unary = (wildcards_index != None)
+        for construct_tree, brothers in self._children_permutation(narr, always_unary=always_unary):
             rewritten_narr, is_applied = self._exact_apply(construct_tree, debug=debug)
             if is_applied:
                 new_narr = [] # construct a new father
