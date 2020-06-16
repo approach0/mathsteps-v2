@@ -46,7 +46,9 @@ def common_axioms():
         .add_rule('# 1 \\times *{1}', '#1 *{1}')
 
         .add_test('1 \cdot 4', '4')
+        .add_test('-4 \\times 1', '-4')
         .add_test('- (a+b) \cdot 1', '-a - b')
+        .add_test('- 1 \cdot 4 \cdot 1', '-4')
     )
 
     axioms.append(
@@ -72,6 +74,29 @@ def common_axioms():
         .add_test('3 \\times \\frac{-2}{3}', '-2')
     )
 
+    axioms.append(
+        Axiom(name='绝对值分配到分子分母中', allow_complication=True)
+        .add_rule('# \\left| # \\frac{a}{b} \\right|', '#1 \\frac{\\left| a \\right|}{\\left| b \\right|}')
+
+        .add_test('\\left| - \\frac{1}{2} \\right|')
+    )
+
+    axioms.append(
+        Axiom(name='根号分配到分子分母中', allow_complication=True)
+        .add_rule('# \\sqrt{\\frac{a}{b}}', '#1 \\frac{\\sqrt{a}}{\\sqrt{b}}')
+
+        .add_test('- \sqrt{\\frac{1}{2}}')
+    )
+
+    axioms.append(
+        Axiom(name='分子分母消除公因子', recursive_apply=True)
+        .add_rule('# \\frac{# x *{1} }{# x *{2} }', '#1 \\frac{#2 *{1}}{#3 *{2}}')
+
+        .add_test('- \\frac{bx}{ax}', '-\\frac{b}{a}')
+        .add_test('- \\frac{-bx}{xa}', '-\\frac{-b}{a}')
+        .add_test('- \\frac{-bxy}{-xay}', '-\\frac{-b}{-a}')
+    )
+
     return axioms
 
 
@@ -80,4 +105,4 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         print(f'#{i}', axiom, end="\n\n")
 
-    axioms[6].test(debug=False)
+    axioms[-1].test(debug=False)

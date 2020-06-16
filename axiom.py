@@ -44,7 +44,12 @@ class Axiom:
 
 
     def add_test(self, expr, expect=None):
-        self.tests.append((expr, expect))
+        if expect is None:
+            self.tests.append((expr, None))
+        elif isinstance(expect, list):
+            self.tests.append((expr, expect))
+        else:
+            self.tests.append((expr, [expect]))
         return self
 
 
@@ -54,18 +59,15 @@ class Axiom:
             rich.print('[bold cyan][[test]][/]', end=" ")
             print(expr)
             narr = expression.tex2narr(expr)
-            applied_narr, if_applied = self._exact_apply(narr, debug=debug)
-            if if_applied:
+            possible_applied_narrs = self.apply(narr, debug=debug)
+            for applied_narr in possible_applied_narrs:
                 applied_tex = expression.narr2tex(applied_narr)
-                print('[applied]', applied_narr)
-                print('[applied]', applied_tex)
+                print('[result]', applied_tex)
                 if expect is not None:
-                    if applied_tex == expect:
+                    if applied_tex in expect:
                         rich.print('[bold green]pass[/]')
                     else:
                         rich.print('[bold red]failed[/]')
-            else:
-                print('[not applied]')
 
 
     def __str__(self):
@@ -335,24 +337,10 @@ if __name__ == '__main__':
     #print(expression.narr2tex(narr))
 
     # test-8
-    #a = Axiom(name='根号的平方是其本身')
-    #a.add_rule('#(#\\sqrt{x})^{2}', '#1 x')
-    #print(a)
+    a = Axiom(name='根号的平方是其本身')
+    a.add_rule('#(#\\sqrt{x})^{2}', '#1 x')
+    print(a)
 
-    #test = expression.tex2narr('-(-\sqrt{3})^{2}')
-    #narr, _ = a._exact_apply(test, debug=True)
-    #print(expression.narr2tex(narr))
-
-
-    #a = (Axiom(name='除以一个数等于乘上它的倒数', recursive_apply=True)
-    #    .add_rule('# x \\div (# \\frac{y}{z})', '#0 \\frac{xz}{y}'))
-    #test = expression.tex2narr('x \\div \\frac{1}{2}')
-    #narr, _ = a._exact_apply(test, debug=True)
-    #print(expression.narr2tex(narr))
-
-    a = (Axiom(name='乘数的指数是各个因子指数的乘数', recursive_apply=True, allow_complication=True)
-        .add_rule('# (# a *{1})^{k}', '#1 (#2 a)^{k} \\times (*{1})^{k}'))
-    test = expression.tex2narr('(-3 a b)^{k}')
-    possible_applied_narrs = a.apply(test, debug=False)
-    for narr in possible_applied_narrs:
-        print(expression.narr2tex(narr))
+    test = expression.tex2narr('-(-\sqrt{3})^{2}')
+    narr, _ = a._exact_apply(test, debug=True)
+    print(expression.narr2tex(narr))
