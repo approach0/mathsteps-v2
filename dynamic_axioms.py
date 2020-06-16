@@ -164,6 +164,26 @@ def calc_sqrt(pattern_narr, narr, rewrite_rules, output_tempalate):
 axiom_calc_sqrt = (
     Axiom(name='开方化简')
     .add_rule('#\sqrt{x}', '#1 c', dynamic_procedure=calc_sqrt)
+
     .add_test('-\\sqrt{8}', '-2 \\times \sqrt{2}')
     .add_test('\\sqrt{16}', '4')
+)
+
+def calc_abs(pattern_narr, narr, rewrite_rules, output_tempalate):
+    x = get_atom_number(rewrite_rules['x'])
+
+    if x != None:
+        c = abs(x)
+        rewrite_rules = {}
+        rewrite_rules['c'] = gen_atom_number(c)
+        return rewrite_by_alpha(output_tempalate, rewrite_rules), True
+
+    return narr, False
+
+axiom_calc_abs = (
+    Axiom(name='绝对值计算')
+    .add_rule('#\\left| x \\right|', '#1 c', dynamic_procedure=calc_abs)
+
+    .add_test('-\\left| 8 \\right|', '-8')
+    .add_test('\\left| -8 \\right|', '8')
 )
