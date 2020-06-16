@@ -230,6 +230,24 @@ def common_axioms():
         .add_test('- \\frac{-1}{2} + 1', '\\frac{1 \\times 2 + 1}{2}')
     )
 
+    axioms.append(
+        Axiom(name='和平方公式', allow_complication=True)
+        .add_rule('#(#a + *{1})^{2}', '#1 ( a^{2} #2 2 a *{1} + (*{1})^{2} )')
+        .add_rule('# \\left| #a + *{1} \\right|^{2}', '#1 ( a^{2} #2 2 a *{1} + (*{1})^{2} )')
+
+        .add_test('-(3 - 2)^{2}', '-(3^{2} + 2 \\times 3 \\times (-2) + (-2)^{2})')
+    )
+
+    axioms.append(
+        Axiom(name='平方差公式', allow_complication=True)
+        .add_rule('#(a + *{1})(a - *{1})', '#1( a^{2} - (*{1})^{2} )')
+
+        .add_test('(3 + a + b)(-a - b + 3)', [
+            '3^{2} - (a + b)^{2}',
+            '3^{2} - (-a - b)^{2}'
+        ])
+    )
+
     return axioms
 
 
