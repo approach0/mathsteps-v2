@@ -128,7 +128,7 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
                 c2 = perm_children[i]
 
             match_any, alpha_universe_copy = test_alpha_equiv(
-                c1, c2, alpha_universe=alpha_universe_copy
+                c1, c2, alpha_universe=alpha_universe_copy, debug=debug
             )
 
             if match_any:
