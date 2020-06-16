@@ -39,6 +39,7 @@ class Axiom:
             self.narrs[a] = expression.tex2narr(a)
             if not callable(b):
                 self.narrs[b] = expression.tex2narr(b)
+        return self
 
 
     def __str__(self):

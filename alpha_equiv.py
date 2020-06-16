@@ -203,25 +203,28 @@ if __name__ == '__main__':
     #narr1 = expression.tex2narr('\\frac{a}{b}')
     #narr2 = expression.tex2narr('\\frac{1+x}{x^{2}}')
 
-    narr1 = expression.tex2narr('x + x')
-    narr2 = expression.tex2narr('y^{2} + y^{2}')
+    #narr1 = expression.tex2narr('x + x')
+    #narr2 = expression.tex2narr('y^{2} + y^{2}')
 
-    narr1 = expression.tex2narr('x + K')
-    narr2 = expression.tex2narr('x - y^{2}')
+    #narr1 = expression.tex2narr('x + K')
+    #narr2 = expression.tex2narr('x - y^{2}')
 
-    narr1 = expression.tex2narr('x + *{1}')
-    narr2 = expression.tex2narr('x - 12 + 3')
+    #narr1 = expression.tex2narr('x + *{1}')
+    #narr2 = expression.tex2narr('x - 12 + 3')
 
-    narr1 = expression.tex2narr('(((3)))')
-    narr2 = expression.tex2narr('3')
+    #narr1 = expression.tex2narr('(((3)))')
+    #narr2 = expression.tex2narr('3')
 
-    narr1 = expression.tex2narr('(-\\frac{x}{y})')
-    narr2 = expression.tex2narr('-\\frac{x}{y}')
+    #narr1 = expression.tex2narr('(-\\frac{x}{y})')
+    #narr2 = expression.tex2narr('-\\frac{x}{y}')
 
-    narr1 = expression.tex2narr('-\\sqrt{x}^{2}')
-    narr2 = expression.tex2narr('(-\\sqrt{x})^{2}')
+    #narr1 = expression.tex2narr('-\\sqrt{x}^{2}')
+    #narr2 = expression.tex2narr('-(\\sqrt{x})^{2}')
 
-    is_equiv, rewrite_rules = test_alpha_equiv(narr1, narr2)
+    narr1 = expression.tex2narr('0 (-n)')
+    narr2 = expression.tex2narr('- 0 n')
+
+    is_equiv, rewrite_rules = test_alpha_equiv(narr1, narr2, debug=True)
     if is_equiv:
         print('alpha-equivalent')
         alpha_prettyprint(rewrite_rules[0])

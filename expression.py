@@ -44,16 +44,13 @@ class Tree2NestedArr(Transformer):
             child_root = child[0]
             child_sign, child_type = child_root
 
+            if op_type == 'mul':
+                # reduce sign
+                sign *= child_sign
+                child[0] = (+1, child_type)
+
             if child_type == op_type:
-                distribute_sign = 1
-
-                if op_type == 'mul':
-                    # reduce sign
-                    sign *= child_sign
-                elif op_type == 'add':
-                    # distribute sign
-                    distribute_sign = child_sign
-
+                distribute_sign = child_sign if op_type == 'add' else 1
                 for grand_child in Tree2NestedArr().children(child):
                     grand_sign, grand_type = grand_child[0]
                     grand_child[0] = (grand_sign * distribute_sign, grand_type)
