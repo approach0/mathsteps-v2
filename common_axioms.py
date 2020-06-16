@@ -222,6 +222,14 @@ def common_axioms():
         .add_test('(a - b)(-2)', '-2 \\times a - 2 \\times (-b)')
     )
 
+    axioms.append(
+        Axiom(name='整数加分式的转换', allow_complication=True)
+        .add_rule('#a # \\frac{b}{c}', '\\frac{#1 ac #2 b}{c}')
+
+        .add_test('- 1 - \\frac{-1}{2}', '\\frac{(-1) \\times 2 + 1}{2}')
+        .add_test('- \\frac{-1}{2} + 1', '\\frac{1 \\times 2 + 1}{2}')
+    )
+
     return axioms
 
 
