@@ -257,3 +257,4 @@ if __name__ == '__main__':
         print(f'#{i}', axiom, end="\n\n")
 
     axioms[-1].test(debug=False)
+    print(f'total {len(axioms)} axioms.')
