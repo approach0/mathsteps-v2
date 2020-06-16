@@ -250,6 +250,8 @@ def common_axioms():
     )
 
     axioms.append(dynamic_axioms.axiom_calc_add)
+    axioms.append(dynamic_axioms.axiom_calc_mul)
+    axioms.append(dynamic_axioms.axiom_calc_pow)
 
     return axioms
 
