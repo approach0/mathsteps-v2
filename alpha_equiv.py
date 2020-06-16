@@ -212,6 +212,15 @@ if __name__ == '__main__':
     narr1 = expression.tex2narr('x + *{1}')
     narr2 = expression.tex2narr('x - 12 + 3')
 
+    narr1 = expression.tex2narr('(((3)))')
+    narr2 = expression.tex2narr('3')
+
+    narr1 = expression.tex2narr('(-\\frac{x}{y})')
+    narr2 = expression.tex2narr('-\\frac{x}{y}')
+
+    narr1 = expression.tex2narr('-\\sqrt{x}^{2}')
+    narr2 = expression.tex2narr('(-\\sqrt{x})^{2}')
+
     is_equiv, rewrite_rules = test_alpha_equiv(narr1, narr2)
     if is_equiv:
         print('alpha-equivalent')

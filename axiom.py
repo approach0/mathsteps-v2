@@ -9,7 +9,7 @@ from alpha_equiv import rewrite_by_alpha, test_alpha_equiv, alpha_prettyprint, r
 
 class Axiom:
 
-    def __init__(self, recursive_apply=False, allow_complication=True, name=None):
+    def __init__(self, recursive_apply=False, allow_complication=False, name=None):
         self.rules = {}
         self.narrs = {}
         self.recursive_apply = recursive_apply
@@ -82,12 +82,16 @@ class Axiom:
             #    b -> -z
             pattern_narr = self.narrs[origin] # pattern
 
-            is_match, rewrite_rules = test_alpha_equiv(pattern_narr, narr, debug=debug)
+            is_match, rewrite_rules = test_alpha_equiv(pattern_narr, narr, debug=False)
 
             if debug:
                 rich.print('[red]pattern vs. narr')
-                print('pattern:', expression.narr2tex(pattern_narr))
-                print('subject:', expression.narr2tex(narr))
+                if False:
+                    print('pattern:', pattern_narr)
+                    print('subject:', narr)
+                else:
+                    print('pattern:', expression.narr2tex(pattern_narr))
+                    print('subject:', expression.narr2tex(narr))
                 rich.print('match:', is_match)
 
             if is_match:
@@ -294,11 +298,20 @@ if __name__ == '__main__':
     #print(a)
 
     # test-7
-    a = Axiom(allow_complication=False, recursive_apply=False, name='分子分母消除')
-    a.add_rule('\\frac{x *{1} }{x *{2} }', '\\frac{*{1}}{*{2}}')
+    #a = Axiom(allow_complication=False, recursive_apply=False, name='分子分母消除')
+    #a.add_rule('\\frac{x *{1} }{x *{2} }', '\\frac{*{1}}{*{2}}')
+    #print(a)
+
+    #test = expression.tex2narr('\\frac{2rx}{ry}')
+    #test = expression.tex2narr('\\frac{xa}{ay}')
+    #narr, _ = a._exact_apply(test, debug=False)
+    #print(expression.narr2tex(narr))
+
+    # test-8
+    a = Axiom(name='根号的平方是其本身')
+    a.add_rule('#(#\\sqrt{x})^{2}', '#1 x')
     print(a)
 
-    test = expression.tex2narr('\\frac{2rx}{ry}')
-    test = expression.tex2narr('\\frac{xa}{ay}')
-    narr, _ = a._exact_apply(test, debug=False)
+    test = expression.tex2narr('-(-\sqrt{3})^{2}')
+    narr, _ = a._exact_apply(test, debug=True)
     print(expression.narr2tex(narr))

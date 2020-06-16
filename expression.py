@@ -84,7 +84,10 @@ class Tree2NestedArr(Transformer):
         """
         转换 a + b （满足交换律）
         """
-        return self.passchildren(x, 'add')
+        if len(x[0]) == 0:
+            return x[1]
+        else:
+            return self.passchildren(x, 'add')
 
     def eq(self, x):
         """
@@ -355,6 +358,7 @@ if __name__ == '__main__':
         '+(i+j)x',
         '1 +a *{1}',
         '2 \cdot (-3 \\frac{1}{2})',
+        '+1 = -3'
     ]
 
     for expr in test_expressions[-1:]:
