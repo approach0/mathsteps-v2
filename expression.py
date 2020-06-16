@@ -232,12 +232,12 @@ def need_outter_fence(root, child_narr):
 
     if root == None:
         return False
-    elif root[1] in ['frac', 'abs', 'sqrt', 'add', 'eq', 'sup']:
+    elif root[1] in ['frac', 'abs', 'sqrt', 'add', 'eq']:
         return False
     elif child_root[0] == +1:
         if len(child_narr) <= 2: # unary
             return False
-        elif child_root[1] in ['mul', 'frac', 'sup', 'ifrac']:
+        elif child_root[1] in ['frac', 'sup']:
             return False
     return True
 
@@ -253,14 +253,14 @@ def narr2tex(narr, parentRoot=None):
     if token in terminal_tokens():
         val = narr[1]
         if token == 'WILDCARDS':
-            return sign + '*{' + str(val) + '}'
+            expr = '*{' + str(val) + '}'
         elif token == 'NUMBER':
             if val.is_integer():
-                return sign + str(int(val))
+                expr = str(int(val))
             else:
-                return sign + str(val)
+                expr = str(val)
         else:
-            return sign + str(val)
+            expr = str(val)
 
     elif token in commutative_operators():
         expr = ''
