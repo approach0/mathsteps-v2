@@ -42,6 +42,14 @@ def common_axioms():
     )
 
     axioms.append(
+        Axiom(name='一乘以任何数还是它本身', recursive_apply=True)
+        .add_rule('# 1 \\times *{1}', '#1 *{1}')
+
+        .add_test('1 \cdot 4', '4')
+        .add_test('- (a+b) \cdot 1', '-a - b')
+    )
+
+    axioms.append(
         Axiom(name='除以一个数等于乘上它的倒数')
         .add_rule('# x \\div (# \\frac{y}{z})', '#0 \\frac{xz}{y}')
     )
@@ -57,8 +65,9 @@ def common_axioms():
     )
 
     axioms.append(
-        Axiom(name='以分数表示除法')
+        Axiom(name='因子和分母消去')
         .add_rule('# x \\frac{a}{x}', '#1 a')
+
         .add_test('-3 \\times \\frac{-2}{3}', '2')
         .add_test('3 \\times \\frac{-2}{3}', '-2')
     )
@@ -71,4 +80,4 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         print(f'#{i}', axiom, end="\n\n")
 
-    axioms[-1].test(debug=False)
+    axioms[6].test(debug=False)

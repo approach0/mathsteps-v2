@@ -49,6 +49,7 @@ class Axiom:
 
 
     def test(self, debug=False):
+        if len(self.tests) == 0: print('[no test case]')
         for expr, expect in self.tests:
             rich.print('[bold cyan][[test]][/]', end=" ")
             print(expr)
@@ -56,6 +57,7 @@ class Axiom:
             applied_narr, if_applied = self._exact_apply(narr, debug=debug)
             if if_applied:
                 applied_tex = expression.narr2tex(applied_narr)
+                print('[applied]', applied_narr)
                 print('[applied]', applied_tex)
                 if expect is not None:
                     if applied_tex == expect:
@@ -68,7 +70,7 @@ class Axiom:
 
     def __str__(self):
         name = self.name
-        retstr = 'Axiom (anonymous):\n' if name is None else f'Axiom {name}:\n'
+        retstr = 'Axiom (anonymous):\n' if name is None else f'{name}:\n'
         for i, k in enumerate(self.rules):
             if callable(self.rules[k]):
                 retstr += f'rule[{i}]: ' + k
