@@ -91,11 +91,16 @@ def common_axioms():
     axioms.append(
         Axiom(name='分子分母消除公因子', recursive_apply=True)
         .add_rule('# \\frac{# x *{1} }{# x *{2} }', '#1 \\frac{#2 *{1}}{#3 *{2}}')
+        .add_rule('# \\frac{# x }{# x *{2} }', '#1 \\frac{#2 1}{#3 *{2}}')
+        .add_rule('# \\frac{# x *{1} }{# x }', '#0 *{1}')
 
         .add_test('- \\frac{bx}{ax}', '-\\frac{b}{a}')
         .add_test('- \\frac{-bx}{xa}', '-\\frac{-b}{a}')
         .add_test('- \\frac{-bxy}{-xay}', '-\\frac{-b}{-a}')
+        .add_test('\\frac{-x}{xay}', '\\frac{-1}{a \\times y}')
+        .add_test('\\frac{3xy}{-xy}', '-3')
     )
+
 
     return axioms
 
