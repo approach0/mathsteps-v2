@@ -42,7 +42,7 @@ def apply_sign(narr, apply_product):
     old_sign, Type = root[0], root[1]
     if Type == 'add':
         # make narr positive
-        narr[:] = expression.passchildren(+1, 'add', [narr])
+        narr[:], _ = expression.passchildren(+1, 'add', [narr])
         # distribute sign to each term
         for i, c in enumerate(narr[1:]):
             apply_sign(c, apply_product)
@@ -170,7 +170,7 @@ def replace_or_pass_children(narr, i, substitute):
     sign, Type = root
     if Type == substitute[0][1] and Type in ['add', 'mul']:
         del narr[1 + i]
-        new_narr = expression.passchildren(sign, Type, [substitute])
+        new_narr, _ = expression.passchildren(sign, Type, [substitute])
         narr[0] = new_narr[0]
         narr += new_narr[1:]
     else:

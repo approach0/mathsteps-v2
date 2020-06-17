@@ -9,6 +9,7 @@ debug = False
 
 def passchildren(sign, op_type, children):
     new_narr = [(sign, op_type)]
+    any_change = False
     for child in children:
         child_sign, child_type = child[0]
         if child_type == op_type:
@@ -26,12 +27,18 @@ def passchildren(sign, op_type, children):
 
             else:
                 raise Exception('unexpected type: ' + Type)
+
+            if child_sign < 0:
+                any_change = True
         else:
             if op_type == 'mul' and child_sign < 0:
                 child[0] = (+1, child_type)
                 new_narr[0] = (sign * -1, op_type)
+                any_change = True
+
             new_narr.append(child)
-    return new_narr
+
+    return new_narr, any_change
 
 
 class Tree2NestedArr(Transformer):
@@ -66,7 +73,7 @@ class Tree2NestedArr(Transformer):
         x = Tree2NestedArr().unwrap_null_reduce(x)
         x = [[(child[0])] + [_ for _ in Tree2NestedArr().children(child)] for child in x]
 
-        return passchildren(+1, op_type, x)
+        return passchildren(+1, op_type, x)[0]
 
     @staticmethod
     def negate(x):

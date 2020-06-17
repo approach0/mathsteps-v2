@@ -279,3 +279,32 @@ axiom_collapse_fraction_add_float = (
     .add_test('3.25 - \\frac{1}{4}', '-0.25 + 3.25')
     .add_test('-3.25 + \\frac{1}{4}', '0.25 - 3.25')
 )
+
+
+def canonicalize_grouped_mul(pattern_narr, narr, rewrite_rules, output_tempalate):
+    sign, Type = narr[0]
+    return expression.passchildren(sign, Type, narr[1:])
+
+axiom_canonicalize_grouped_mul = (
+    Axiom(name='乘法因子去括号')
+    .add_rule('# a *{1}', 'X', dynamic_procedure=canonicalize_grouped_mul)
+
+    .add_test(
+        [(1, 'add'),
+            [(-1, 'NUMBER'), 30.0],
+            [(1, 'mul'),
+                [(1, 'NUMBER'), 10.0],
+                [(-1, 'frac'),
+                    [(1, 'NUMBER'), 1.0],
+                    [(1, 'NUMBER'), 3.0]
+                ]
+            ]
+        ]
+    )
+    .add_test('-ab')
+)
+
+
+if __name__ == '__main__':
+    a = axiom_canonicalize_grouped_mul
+    a.test()

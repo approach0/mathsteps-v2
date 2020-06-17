@@ -73,13 +73,19 @@ if __name__ == '__main__':
     ]
 
     testcases, _ = test_cases_x3_rational()
+
+    begin_from = 2
+
     for i, test in enumerate(testcases):
     #for test in testcases[-1:]:
+        if i < begin_from: continue
+
         test_narr = expression.tex2narr(test)
         steps = dfs(test_narr, all_axioms, debug=True)
         for narr, a, ai in steps:
             rich.print(f'[red]{a.name()}')
             print('\t', expression.narr2tex(narr))
+            print(narr)
 
         render_steps(steps)
         print(f'test case: {i} / {len(testcases)}')

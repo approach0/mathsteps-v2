@@ -53,10 +53,11 @@ class Axiom:
 
     def test(self, debug=False):
         if len(self.tests) == 0: print('[no test case]')
-        for expr, expect in self.tests:
+        for test, expect in self.tests:
+            expr = test if isinstance(test, str) else expression.narr2tex(test)
             rich.print('[bold cyan][[test]][/]', end=" ")
             print(expr)
-            narr = expression.tex2narr(expr)
+            narr = expression.tex2narr(expr) if isinstance(test, str) else test
             possible_applied_narrs = self.apply(narr, debug=debug)
             for applied_narr in possible_applied_narrs:
                 applied_tex = expression.narr2tex(applied_narr)
@@ -282,14 +283,11 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='分子分母消除公因子', recursive_apply=True)
-        .add_rule('# \\frac{# x *{1} }{# x *{2} }', '#1 \\frac{#2 *{1}}{#3 *{2}}')
-        .add_rule('# \\frac{# x }{# x *{2} }', '#1 \\frac{#2 1}{#3 *{2}}')
-        .add_rule('# \\frac{# x *{1} }{# x }', '#0 *{1}')
-        .add_rule('# \\frac{# x }{# x }', '#0 1')
+        Axiom(name='系数乘进分式的分子里面', allow_complication=True)
+        .add_rule('# a \\times \\frac{# 1}{b}', '#0 \\frac{a}{b}')
+        .add_rule('# a \\times \\frac{# c}{b}', '#0 \\frac{ac}{b}')
 
-        .add_test('\\frac{-(a + b)}{a + b}')
-        .add_test('\\frac{-3 - \\frac{1}{3}}{-(3 + \\frac{1}{3}) \\times x}')
+        .add_test('30 \\times (-\\frac{1}{3})')
     )
 
     a.test()

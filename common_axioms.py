@@ -8,6 +8,8 @@ def common_axioms():
     """
     axioms = []
 
+    axioms.append(dynamic_axioms.axiom_canonicalize_grouped_mul)
+
     axioms.append(
         Axiom(name='带分式的展开')
         .add_rule('# & \\frac{a}{b}', '#1 (v + \\frac{a}{b})')
@@ -267,8 +269,7 @@ def common_axioms():
 
 if __name__ == '__main__':
     axioms = common_axioms()
-    #for i, axiom in enumerate(axioms):
-    #    print(f'#{i}', axiom, end="\n\n")
-
-    axioms[-1].test(debug=False)
+    for i, axiom in enumerate(axioms):
+        print(f'#{i}', axiom, end="\n\n")
+    #axioms[-1].test(debug=False)
     print(f'total {len(axioms)} axioms.')
