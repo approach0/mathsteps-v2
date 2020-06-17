@@ -100,7 +100,7 @@ def calc_add(pattern_narr, narr, rewrite_rules, output_tempalate):
     return narr, False
 
 axiom_calc_add = (
-    Axiom(name='加法计算')
+    Axiom(name='加减法计算')
     .add_rule('#(a + b)', '#1 c', dynamic_procedure=calc_add)
 
     .add_test('-12 + 3', '-9')
@@ -327,6 +327,21 @@ axiom_canonicalize = (
         [(-1, 'add'),
             [(-1, 'NUMBER'), 30.0],
             [(1, 'NUMBER'), 1.0],
+        ]
+    )
+
+    .add_test(
+        [(1, 'frac'),
+            [(1, 'add'),
+                [(1, 'mul'),
+                    [(1, 'NUMBER'), 30.0],
+                    [(-1, 'frac'),
+                        [(1, 'NUMBER'), 1.0], [(1, 'NUMBER'), 3.0]
+                    ]
+                ],
+                [(-1, 'NUMBER'), 90.0]
+            ],
+            [(1, 'NUMBER'), 49.0]
         ]
     )
 )

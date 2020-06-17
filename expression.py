@@ -357,8 +357,12 @@ def passchildren(sign, op_type, children):
 
 
 def canonicalize(narr):
-    _, Type = narr[0]
-    return passchildren(+1, Type, [narr])
+    sign, Type = narr[0]
+    if Type == 'add':
+        # -(a + ...) becomes -a - ...
+        return passchildren(+1, Type, [narr])
+    else:
+        return passchildren(sign, Type, narr[1:])
 
 
 if __name__ == '__main__':

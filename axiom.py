@@ -58,6 +58,7 @@ class Axiom:
             rich.print('[bold cyan][[test]][/]', end=" ")
             print(expr)
             narr = expression.tex2narr(expr) if isinstance(test, str) else test
+            #print(narr)
             possible_applied_narrs = self.apply(narr, debug=debug)
             for applied_narr in possible_applied_narrs:
                 applied_tex = expression.narr2tex(applied_narr)

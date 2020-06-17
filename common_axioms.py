@@ -8,7 +8,7 @@ def common_axioms():
     """
     axioms = []
 
-    axioms.append(dynamic_axioms.axiom_canonicalize_grouped_mul)
+    axioms.append(dynamic_axioms.axiom_canonicalize)
 
     axioms.append(
         Axiom(name='带分式的展开')
