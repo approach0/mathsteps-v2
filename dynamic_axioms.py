@@ -107,6 +107,7 @@ axiom_calc_add = (
     .add_test('-(12 - 1)')
 )
 
+
 def calc_mul(pattern_narr, narr, rewrite_rules, output_tempalate):
     a = get_atom_number(rewrite_rules['a'])
     b = get_atom_number(rewrite_rules['b'])
@@ -126,6 +127,7 @@ axiom_calc_mul = (
     .add_test('-(3 \cdot (-2))')
     .add_test('-(3 \cdot 4)')
 )
+
 
 def calc_pow(pattern_narr, narr, rewrite_rules, output_tempalate):
     a = get_atom_number(rewrite_rules['a'])
@@ -157,6 +159,7 @@ axiom_calc_pow = (
     .add_test('(-2)^{2}', '4')
 )
 
+
 def calc_sqrt(pattern_narr, narr, rewrite_rules, output_tempalates):
     x = get_atom_number(rewrite_rules['x'])
 
@@ -180,6 +183,7 @@ axiom_calc_sqrt = (
     .add_test('\\sqrt{16}', '4')
 )
 
+
 def calc_abs(pattern_narr, narr, rewrite_rules, output_tempalate):
     x = get_atom_number(rewrite_rules['x'])
 
@@ -197,6 +201,7 @@ axiom_calc_abs = (
     .add_test('-\\left| 8 \\right|', '-8')
     .add_test('\\left| -8 \\right|', '8')
 )
+
 
 def simplify_fraction(pattern_narr, narr, rewrite_rules, output_tempalates):
     a = get_atom_number(rewrite_rules['a'])
@@ -216,6 +221,8 @@ def simplify_fraction(pattern_narr, narr, rewrite_rules, output_tempalates):
                 rewrite_rules['b'] = gen_atom_number(b)
                 return rewrite_by_alpha(output_tempalates[1], rewrite_rules), True
 
+    return narr, False
+
 axiom_simplify_fraction = (
     Axiom(name='化简分式')
     .add_rule('#\\frac{a}{b}', ['#1 c', '#1 \\frac{a}{b}'], dynamic_procedure=simplify_fraction)
@@ -223,4 +230,30 @@ axiom_simplify_fraction = (
     .add_test('-\\frac{-14}{-4}', '-\\frac{7}{2}')
     .add_test('\\frac{9}{-6}', '\\frac{-3}{2}')
     .add_test('-\\frac{-12}{6}', '2')
+)
+
+
+def collapse_fraction(pattern_narr, narr, rewrite_rules, output_tempalates):
+    a = get_atom_number(rewrite_rules['a'])
+    b = get_atom_number(rewrite_rules['b'])
+
+    if b != 0:
+        if a != None and b != None and not (a.is_integer() and b.is_integer()):
+            rewrite_rules['c'] = gen_atom_number(a / b)
+            return rewrite_by_alpha(output_tempalates[0], rewrite_rules), True
+
+        elif b != None and not b.is_integer():
+            rewrite_rules['k'] = gen_atom_number(1 / b)
+            rewrite_rules['x'] = rewrite_rules['a']
+            return rewrite_by_alpha(output_tempalates[1], rewrite_rules), True
+
+    return narr, False
+
+axiom_collapse_fraction = (
+    Axiom(name='分式中带小数的化简')
+    .add_rule('#\\frac{a}{b}', ['#1 c', '#1 kx'], dynamic_procedure=collapse_fraction)
+
+    .add_test('-\\frac{-6.4}{3.2}', '2')
+    .add_test('\\frac{9}{-2.5}', '-3.6')
+    .add_test('-\\frac{-10.2}{-6}', '-1.7')
 )
