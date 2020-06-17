@@ -10,9 +10,10 @@ def test_case_from_log(path):
     return arr
 
 
-def test_cases():
+def test_cases_x3_rational():
     """
-    测试用例（包含可能的化简答案和结果）
+    extracted from:
+    https://gitlab.dm-ai.cn/research-algorithm/Task-planner-group/X3-support/X3-solve-rational-problem/blob/b59222ae7e27b1371de646679be082be29469d5f/retriever.py
     """
     questions = []
     answers = []

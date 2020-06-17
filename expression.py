@@ -125,7 +125,8 @@ class Tree2NestedArr(Transformer):
         """
         转换 带分数 (improper fraction)
         """
-        num_narr = self.number([x[0]])
+        if x[0] == '&': num_narr = [(1, 'VAR'), 'v']
+        else: num_narr = self.number([x[0]])
         return [(+1, 'ifrac'), num_narr, x[1], x[2]]
 
     def sqrt(self, x):
@@ -203,6 +204,10 @@ def commutative_operators():
 
 def binary_operators():
     return ['div', 'frac', 'sup', 'eq']
+
+
+def no_permute_tokens():
+    return ['ifrac']
 
 
 def need_inner_fence(narr):
@@ -360,7 +365,8 @@ if __name__ == '__main__':
         '2 \cdot (-3 \\frac{1}{2})',
         '+1 = -3',
         '\\frac{-2}{3}',
-        '-(-a)(-b)'
+        '-(-a)(-b)',
+        '& \\frac{y}{x}'
     ]
 
     for expr in test_expressions[-1:]:

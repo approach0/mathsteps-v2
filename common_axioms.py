@@ -16,6 +16,7 @@ def common_axioms():
     axioms.append(dynamic_axioms.axiom_collapse_fraction_add_float)
     axioms.append(dynamic_axioms.axiom_simplify_fraction)
     axioms.append(dynamic_axioms.axiom_collapse_fraction)
+    axioms.append(dynamic_axioms.axiom_calc_sqrt)
 
     axioms.append(
         Axiom(name='根号的平方是其本身')
@@ -85,7 +86,7 @@ def common_axioms():
 
     axioms.append(
         Axiom(name='因子和分母消去')
-        .add_rule('# x \\frac{a}{x}', '#1 a')
+        .add_rule('# x \\times \\frac{a}{x}', '#1 a')
 
         .add_test('-3 \\times \\frac{-2}{3}', '2')
         .add_test('3 \\times \\frac{-2}{3}', '-2')
@@ -258,14 +259,21 @@ def common_axioms():
         ])
     )
 
-    axioms.append(dynamic_axioms.axiom_calc_sqrt)
+    axioms.append(
+        Axiom(name='带分式的展开')
+        .add_rule('# & \\frac{a}{b}', '#1 (v + \\frac{a}{b})')
+
+        .add_test('-3 \\frac{-2}{4}', '-(3 + \\frac{-2}{4})')
+        .add_test('-3 \\frac{1}{2}', '-(3 + \\frac{1}{2})')
+    )
+
     return axioms
 
 
 if __name__ == '__main__':
     axioms = common_axioms()
-    for i, axiom in enumerate(axioms):
-        print(f'#{i}', axiom, end="\n\n")
+    #for i, axiom in enumerate(axioms):
+    #    print(f'#{i}', axiom, end="\n\n")
 
-    axioms[24].test(debug=False)
+    axioms[-1].test(debug=False)
     print(f'total {len(axioms)} axioms.')

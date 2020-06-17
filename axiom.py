@@ -197,10 +197,10 @@ class Axiom:
                     yield (a, b), (i, i + 1)
 
 
-    def _children_permutation(self, narr, always_unary=False):
+    def _children_permutation(self, narr, no_permute=False):
         root = narr[0]
         children = narr[1:]
-        if len(children) == 1 or always_unary:
+        if len(children) == 1 or no_permute:
             # generate unary operations
             construct_tree = deepcopy(narr)
             yield construct_tree, []
@@ -241,8 +241,8 @@ class Axiom:
 
         # match in this level
         wildcards_index = get_wildcards_index(narr)
-        always_unary = (wildcards_index != None)
-        for construct_tree, brothers in self._children_permutation(narr, always_unary=always_unary):
+        no_permute = (wildcards_index != None) or root_type in expression.no_permute_tokens()
+        for construct_tree, brothers in self._children_permutation(narr, no_permute=no_permute):
             rewritten_narr, is_applied = self._exact_apply(construct_tree, debug=debug)
             if is_applied:
                 new_narr = [] # construct a new father

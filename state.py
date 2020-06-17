@@ -112,6 +112,7 @@ def value(narr, debug=False):
         'mul': 1,
         'div': 10,
         'frac': 8,
+        'ifrac': 20,
         'sup': 4,
         'abs': 1,
         'sqrt': 1,

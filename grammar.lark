@@ -18,6 +18,7 @@
        | atom "^" "{" sum "}"             -> sup
        | "\\frac" "{" sum "}" "{" sum "}" -> frac
        | NUMBER "\\frac" "{" sum "}" "{" sum "}" -> ifrac
+       | IFRAC_NUM "\\frac" "{" sum "}" "{" sum "}" -> ifrac
 
 ?atom: NUMBER                             -> number
      | VAR                                -> var
@@ -29,6 +30,7 @@
 
 VAR: "a".."z" | "A".."Z"
 ASTERISK: "*"
+IFRAC_NUM: "&"
 
 %import common.NUMBER
 

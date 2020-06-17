@@ -10,7 +10,7 @@ def possible_next_steps(narr, axioms, debug=False, restrict_rules=None, quick_re
     if debug:
         tex = expression.narr2tex(narr)
         value = state.value(narr)
-        rich.print(f'[light]{value:.2f}', end=' ') 
+        rich.print(f'[light]{value:.2f}', end=' ')
         print(tex)
 
     for axiom_idx, axiom in enumerate(axioms):
@@ -23,7 +23,7 @@ def possible_next_steps(narr, axioms, debug=False, restrict_rules=None, quick_re
                 next_value = state.value(applied_narr)
                 if next_value < curr_value:
                     if debug:
-                        rich.print('[grey50][[x]]', end=' ') 
+                        rich.print('[grey50][[x]]', end=' ')
                         tex = expression.narr2tex(applied_narr)
                         print(axiom.name(), tex)
                     continue
@@ -39,12 +39,12 @@ def possible_next_steps(narr, axioms, debug=False, restrict_rules=None, quick_re
         for i, (narr, axiom, axiom_idx) in enumerate(return_steps):
             value = state.value(narr)
             if i == 0:
-                rich.print(f'[bright_green][[✓]]', end=' ') 
+                rich.print(f'[bright_green][[✓]]', end=' ')
             else:
-                rich.print(f'[grey50][[ ]]', end=' ') 
+                rich.print(f'[grey50][[ ]]', end=' ')
             tex = expression.narr2tex(applied_narr)
             print(axiom.name(), end=" ")
-            rich.print(f'[light]{value:.2f}', end=' ') 
+            rich.print(f'[light]{value:.2f}', end=' ')
             print(tex)
         print()
     return return_steps
@@ -62,11 +62,16 @@ def dfs(narr, axioms, debug=False):
 
 if __name__ == '__main__':
     from render_math import render_steps
+    from test_cases import test_cases_x3_rational, test_cases_wiki131278697
+
     all_axioms = common_axioms()
+
     testcases = [
         '\\frac{12a}{3a + a + 20a} - \\frac{1}{4}',
         '1 + \\frac{7}{3}'
     ]
+
+    testcases, _ = test_cases_x3_rational()
 
     for test in testcases:
     #for test in testcases[-1:]:
