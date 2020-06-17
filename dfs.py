@@ -61,8 +61,19 @@ def dfs(narr, axioms, debug=False):
 
 
 if __name__ == '__main__':
+    from render_math import render_steps
     all_axioms = common_axioms()
-    test = expression.tex2narr('\\frac{12a}{3a + a + 20a} - \\frac{1}{4}')
-    steps = dfs(test, all_axioms, debug=True)
-    for narr, a, ai in steps:
-        print(a.name(), '\n', expression.narr2tex(narr))
+    testcases = [
+        '\\frac{12a}{3a + a + 20a} - \\frac{1}{4}',
+        '1 + \\frac{7}{3}'
+    ]
+
+    for test in testcases:
+    #for test in testcases[-1:]:
+        test_narr = expression.tex2narr(test)
+        steps = dfs(test_narr, all_axioms, debug=True)
+        for narr, a, ai in steps:
+            print(a.name(), '\n', expression.narr2tex(narr))
+
+        render_steps(steps)
+        input('Enter to continue...')
