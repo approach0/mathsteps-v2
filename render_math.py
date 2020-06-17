@@ -63,7 +63,6 @@ def render_steps(steps, output='./render-tex.html'):
         display_str += '\\\\'
 
     display_str += '\\end{align}'
-    print(display_str)
     output_html(output, display_str)
 
 

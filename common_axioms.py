@@ -8,29 +8,12 @@ def common_axioms():
     """
     axioms = []
 
-    axioms.append(dynamic_axioms.axiom_calc_add)
-    axioms.append(dynamic_axioms.axiom_calc_mul)
-    axioms.append(dynamic_axioms.axiom_calc_pow)
-    axioms.append(dynamic_axioms.axiom_calc_sqrt)
-    axioms.append(dynamic_axioms.axiom_calc_abs)
-    axioms.append(dynamic_axioms.axiom_collapse_fraction_add_float)
-    axioms.append(dynamic_axioms.axiom_simplify_fraction)
-    axioms.append(dynamic_axioms.axiom_collapse_fraction)
-    axioms.append(dynamic_axioms.axiom_calc_sqrt)
-
     axioms.append(
-        Axiom(name='根号的平方是其本身')
-        .add_rule('#(#\\sqrt{x})^{2}', '#1 x')
-    )
+        Axiom(name='带分式的展开')
+        .add_rule('# & \\frac{a}{b}', '#1 (v + \\frac{a}{b})')
 
-    axioms.append(
-        Axiom(name='一的平方还是一')
-        .add_rule('#(# 1)^{2}', '#1 x')
-    )
-
-    axioms.append(
-        Axiom(name='负数的平方是其相反数的平方')
-        .add_rule('#(-a)^{2}', '#1 a')
+        #.add_test('-3 \\frac{-2}{4}', '-(3 + \\frac{-2}{4})')
+        .add_test('-3 \\frac{1}{2}', '-(3 + \\frac{1}{2})')
     )
 
     axioms.append(
@@ -60,6 +43,21 @@ def common_axioms():
         .add_test('-4 \\times 1', '-4')
         .add_test('- (a+b) \cdot 1', '-a - b')
         .add_test('- 1 \cdot 4 \cdot 1', '-4')
+    )
+
+    axioms.append(
+        Axiom(name='根号的平方是其本身')
+        .add_rule('#(#\\sqrt{x})^{2}', '#1 x')
+    )
+
+    axioms.append(
+        Axiom(name='一的平方还是一')
+        .add_rule('#(# 1)^{2}', '#1 x')
+    )
+
+    axioms.append(
+        Axiom(name='负数的平方是其相反数的平方')
+        .add_rule('#(-a)^{2}', '#1 a')
     )
 
     axioms.append(
@@ -121,13 +119,6 @@ def common_axioms():
         .add_test('-\\frac{-a}{-a}', '-1')
     )
 
-    #axioms.append(
-    #    Axiom(name='乘法因子括号的提出')
-    #    .add_rule('#(#a) *{1}', '#0 a *{1}')
-
-    #    .add_test('-2 \\times a - 2 \\times (-b)')
-    #)
-
     axioms.append(
         Axiom(name='乘积写成乘方的形式')
         .add_rule('#(#X)(#X)', '#0 X^{2}')
@@ -135,6 +126,16 @@ def common_axioms():
         .add_test('xx')
         .add_test('-\\frac{1}{2} \cdot \\frac{1}{2}', '-(\\frac{1}{2})^{2}')
     )
+
+    axioms.append(dynamic_axioms.axiom_calc_add)
+    axioms.append(dynamic_axioms.axiom_calc_mul)
+    axioms.append(dynamic_axioms.axiom_calc_pow)
+    axioms.append(dynamic_axioms.axiom_calc_sqrt)
+    axioms.append(dynamic_axioms.axiom_calc_abs)
+    axioms.append(dynamic_axioms.axiom_collapse_fraction_add_float)
+    axioms.append(dynamic_axioms.axiom_simplify_fraction)
+    axioms.append(dynamic_axioms.axiom_collapse_fraction)
+    axioms.append(dynamic_axioms.axiom_calc_sqrt)
 
     axioms.append(
         Axiom(name='合并同类项', recursive_apply=True)
@@ -257,14 +258,6 @@ def common_axioms():
             '3^{2} - (a + b)^{2}',
             '3^{2} - (-a - b)^{2}'
         ])
-    )
-
-    axioms.append(
-        Axiom(name='带分式的展开')
-        .add_rule('# & \\frac{a}{b}', '#1 (v + \\frac{a}{b})')
-
-        #.add_test('-3 \\frac{-2}{4}', '-(3 + \\frac{-2}{4})')
-        .add_test('-3 \\frac{1}{2}', '-(3 + \\frac{1}{2})')
     )
 
     return axioms

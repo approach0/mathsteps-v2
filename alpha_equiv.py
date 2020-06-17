@@ -88,7 +88,9 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
         print('test_alpha_equiv')
         #for alpha in alpha_universe:
         #    alpha_prettyprint(alpha)
+        rich.print('[bold green]1[/]', end=" ")
         expression.narr_prettyprint(narr1)
+        rich.print('[bold red]2[/]', end=" ")
         expression.narr_prettyprint(narr2)
 
     if type1 == 'NUMBER':
@@ -98,11 +100,13 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
 
         name1 = narr1[1] if type1 == 'VAR' else '*' + narr1[1]
         narr2 = deepcopy(narr2[:])
-        #print(sign1, name1)
-        #print(narr2)
 
         # handle sign
         apply_sign(narr2, sign1)
+
+        #print(name1)
+        #print(narr2)
+        #print()
 
         # uppercase pattern such as X, Y only match variables
         if name1.isupper() and type2 == 'NUMBER':
@@ -248,8 +252,11 @@ if __name__ == '__main__':
     #narr1 = expression.tex2narr('-\\sqrt{x}^{2}')
     #narr2 = expression.tex2narr('-(\\sqrt{x})^{2}')
 
-    narr1 = expression.tex2narr('0 (-n)')
-    narr2 = expression.tex2narr('- 0 n')
+    #narr1 = expression.tex2narr('0 (-n)')
+    #narr2 = expression.tex2narr('- 0 n')
+
+    narr1 = expression.tex2narr('\\frac{-x }{x }')
+    narr2 = expression.tex2narr('\\frac{-(a + b)}{a + b}')
 
     is_equiv, rewrite_rules = test_alpha_equiv(narr1, narr2, debug=True)
     if is_equiv:

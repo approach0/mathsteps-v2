@@ -281,16 +281,14 @@ class Axiom:
 
 
 if __name__ == '__main__':
-    def foo(pattern_narr, narr, rewrite_rules, output_tempalates):
-        print(expression.narr2tex(pattern_narr))
-        print(expression.narr2tex(narr))
-        alpha_prettyprint(rewrite_rules)
-        return output_tempalates[1], True
+    a = (
+        Axiom(name='分子分母消除公因子', recursive_apply=True)
+        .add_rule('# \\frac{# x *{1} }{# x *{2} }', '#1 \\frac{#2 *{1}}{#3 *{2}}')
+        .add_rule('# \\frac{# x }{# x *{2} }', '#1 \\frac{#2 1}{#3 *{2}}')
+        .add_rule('# \\frac{# x *{1} }{# x }', '#0 *{1}')
+        .add_rule('# \\frac{# x }{# x }', '#0 1')
 
-    a = Axiom(allow_complication=False, recursive_apply=False, name='分子分母消除')
-    a.add_rule('# \\frac{x *{1} }{x *{2} }', ['#1 \\frac{*{1}}{*{2}}', '#1 a'], dynamic_procedure=foo)
-    print(a)
+        .add_test('\\frac{-(a + b)}{a + b}')
+    )
 
-    test = expression.tex2narr('\\frac{xa}{ay}')
-    narr, _ = a._exact_apply(test, debug=False)
-    print(expression.narr2tex(narr))
+    a.test()

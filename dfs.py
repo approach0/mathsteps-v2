@@ -73,7 +73,7 @@ if __name__ == '__main__':
     ]
 
     testcases, _ = test_cases_x3_rational()
-    for test in testcases:
+    for i, test in enumerate(testcases):
     #for test in testcases[-1:]:
         test_narr = expression.tex2narr(test)
         steps = dfs(test_narr, all_axioms, debug=True)
@@ -81,4 +81,5 @@ if __name__ == '__main__':
             print(a.name(), '\n', expression.narr2tex(narr))
 
         render_steps(steps)
+        print(f'test case: {i} / {len(testcases)}')
         input('Enter to continue...')
