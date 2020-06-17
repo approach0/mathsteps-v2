@@ -102,9 +102,10 @@ axiom_calc_add = (
     Axiom(name='加法计算')
     .add_rule('#(a + b)', '#1 c', dynamic_procedure=calc_add)
 
-    .add_test('-12 + 3')
+    .add_test('-12 + 3', '-9')
     .add_test('(-12 - 3 - 1)')
-    .add_test('-(12 - 1)')
+    .add_test('-(12 - 1)', '-11')
+    .add_test('0.25 - 3.25', '-3')
 )
 
 
@@ -256,4 +257,25 @@ axiom_collapse_fraction = (
     .add_test('-\\frac{-6.4}{3.2}', '2')
     .add_test('\\frac{9}{-2.5}', '-3.6')
     .add_test('-\\frac{-10.2}{-6}', '-1.7')
+)
+
+
+def collapse_fraction_add_float(pattern_narr, narr, rewrite_rules, output_tempalate):
+    a = get_atom_number(rewrite_rules['a'])
+    b = get_atom_number(rewrite_rules['b'])
+    c = get_atom_number(rewrite_rules['c'])
+
+    if a != None and b != None and c != None:
+        if b != 0 and not c.is_integer():
+            rewrite_rules['x'] = gen_atom_number(a / b)
+            return rewrite_by_alpha(output_tempalate, rewrite_rules), True
+
+    return narr, False
+
+axiom_collapse_fraction_add_float = (
+    Axiom(name='分式加小数的化简')
+    .add_rule('#\\frac{a}{b} # c', '#1 x #2 c', dynamic_procedure=collapse_fraction_add_float)
+
+    .add_test('3.25 - \\frac{1}{4}', '-0.25 + 3.25')
+    .add_test('-3.25 + \\frac{1}{4}', '0.25 - 3.25')
 )

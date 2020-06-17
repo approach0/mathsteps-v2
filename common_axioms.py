@@ -250,12 +250,13 @@ def common_axioms():
     )
 
     axioms.append(dynamic_axioms.axiom_calc_add)
-    axioms.append(dynamic_axioms.axiom_calc_mul)
-    axioms.append(dynamic_axioms.axiom_calc_pow)
-    axioms.append(dynamic_axioms.axiom_calc_sqrt)
-    axioms.append(dynamic_axioms.axiom_calc_abs)
-    axioms.append(dynamic_axioms.axiom_simplify_fraction)
-    axioms.append(dynamic_axioms.axiom_collapse_fraction)
+    #axioms.append(dynamic_axioms.axiom_calc_mul)
+    #axioms.append(dynamic_axioms.axiom_calc_pow)
+    #axioms.append(dynamic_axioms.axiom_calc_sqrt)
+    #axioms.append(dynamic_axioms.axiom_calc_abs)
+    #axioms.append(dynamic_axioms.axiom_simplify_fraction)
+    #axioms.append(dynamic_axioms.axiom_collapse_fraction)
+    #axioms.append(dynamic_axioms.axiom_collapse_fraction_add_float)
 
     return axioms
 
