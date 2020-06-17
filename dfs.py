@@ -85,7 +85,7 @@ if __name__ == '__main__':
         for narr, a, ai in steps:
             rich.print(f'[red]{a.name()}')
             print('\t', expression.narr2tex(narr))
-            print(narr)
+            #print(narr)
 
         render_steps(steps)
         print(f'test case: {i} / {len(testcases)}')

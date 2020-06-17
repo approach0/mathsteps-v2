@@ -1,5 +1,6 @@
 from axiom import Axiom
 import expression
+import rich
 from alpha_equiv import rewrite_by_alpha, alpha_prettyprint
 
 
@@ -281,13 +282,20 @@ axiom_collapse_fraction_add_float = (
 )
 
 
-def canonicalize_grouped_mul(pattern_narr, narr, rewrite_rules, output_tempalate):
+def canonicalize(pattern_narr, narr, rewrite_rules, output_tempalate):
     sign, Type = narr[0]
-    return expression.passchildren(sign, Type, narr[1:])
+    if Type in expression.commutative_operators():
+        new_narr, is_applied = expression.canonicalize(narr)
+        return new_narr, is_applied
+    return narr, False
 
-axiom_canonicalize_grouped_mul = (
-    Axiom(name='乘法因子去括号')
-    .add_rule('# a *{1}', 'X', dynamic_procedure=canonicalize_grouped_mul)
+axiom_canonicalize = (
+    Axiom(name='去括号')
+    .add_rule('# a *{1}', 'X', dynamic_procedure=canonicalize)
+    .add_rule('# a # *{1}', 'X', dynamic_procedure=canonicalize)
+    .add_rule('# a', 'X', dynamic_procedure=canonicalize)
+
+    .add_test('-ab')
 
     .add_test(
         [(1, 'add'),
@@ -301,10 +309,29 @@ axiom_canonicalize_grouped_mul = (
             ]
         ]
     )
-    .add_test('-ab')
+
+    .add_test(
+        [(1, 'add'),
+            [(-1, 'NUMBER'), 30.0],
+            [(-1, 'add'),
+                [(1, 'NUMBER'), 10.0],
+                [(-1, 'frac'),
+                    [(1, 'NUMBER'), 1.0],
+                    [(1, 'NUMBER'), 3.0]
+                ]
+            ]
+        ]
+    )
+
+    .add_test(
+        [(-1, 'add'),
+            [(-1, 'NUMBER'), 30.0],
+            [(1, 'NUMBER'), 1.0],
+        ]
+    )
 )
 
 
 if __name__ == '__main__':
-    a = axiom_canonicalize_grouped_mul
+    a = axiom_canonicalize
     a.test()

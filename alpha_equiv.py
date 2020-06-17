@@ -42,7 +42,7 @@ def apply_sign(narr, apply_product):
     old_sign, Type = root[0], root[1]
     if Type == 'add':
         # make narr positive
-        narr[:], _ = expression.passchildren(+1, 'add', [narr])
+        narr[:], _ = expression.canonicalize(narr)
         # distribute sign to each term
         for i, c in enumerate(narr[1:]):
             apply_sign(c, apply_product)

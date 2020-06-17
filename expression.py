@@ -7,40 +7,6 @@ lark = Lark.open('grammar.lark', rel_to=__file__, parser='lalr', debug=True)
 debug = False
 
 
-def passchildren(sign, op_type, children):
-    new_narr = [(sign, op_type)]
-    any_change = False
-    for child in children:
-        child_sign, child_type = child[0]
-        if child_type == op_type:
-            if child_type == 'add':
-                # distribute sign
-                for grand_child in child[1:]:
-                    grand_sign, grand_type = grand_child[0]
-                    grand_child[0] = (grand_sign * child_sign, grand_type)
-                    new_narr.append(grand_child)
-
-            elif child_type == 'mul':
-                # reduce sign
-                sign *= child_sign
-                new_narr += child[1:]
-
-            else:
-                raise Exception('unexpected type: ' + Type)
-
-            if child_sign < 0:
-                any_change = True
-        else:
-            if op_type == 'mul' and child_sign < 0:
-                child[0] = (+1, child_type)
-                new_narr[0] = (sign * -1, op_type)
-                any_change = True
-
-            new_narr.append(child)
-
-    return new_narr, any_change
-
-
 class Tree2NestedArr(Transformer):
     """
     中间表示的转换类。把 Lark 的表示树转换成我们所期望的表示。
@@ -354,6 +320,45 @@ def narr_prettyprint(narr, level=0):
     print('    ' * level, root)
     for c in children:
         narr_prettyprint(c, level + 1)
+
+
+def passchildren(sign, op_type, children):
+    new_narr = [(sign, op_type)]
+    any_change = False
+    for child in children:
+        child_sign, child_type = child[0]
+        if child_type == op_type:
+            if child_type == 'add':
+                # distribute sign
+                for grand_child in child[1:]:
+                    grand_sign, grand_type = grand_child[0]
+                    grand_child[0] = (grand_sign * child_sign, grand_type)
+                    new_narr.append(grand_child)
+
+            elif child_type == 'mul':
+                # reduce sign
+                sign *= child_sign
+                new_narr += child[1:]
+
+            else:
+                raise Exception('unexpected type: ' + Type)
+
+            if child_sign < 0:
+                any_change = True
+        else:
+            if op_type == 'mul' and child_sign < 0:
+                child[0] = (+1, child_type)
+                new_narr[0] = (sign * -1, op_type)
+                any_change = True
+
+            new_narr.append(child)
+
+    return new_narr, any_change
+
+
+def canonicalize(narr):
+    _, Type = narr[0]
+    return passchildren(+1, Type, [narr])
 
 
 if __name__ == '__main__':
