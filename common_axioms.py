@@ -8,6 +8,15 @@ def common_axioms():
     """
     axioms = []
 
+    axioms.append(dynamic_axioms.axiom_calc_add)
+    axioms.append(dynamic_axioms.axiom_calc_mul)
+    axioms.append(dynamic_axioms.axiom_calc_pow)
+    axioms.append(dynamic_axioms.axiom_calc_sqrt)
+    axioms.append(dynamic_axioms.axiom_calc_abs)
+    axioms.append(dynamic_axioms.axiom_collapse_fraction_add_float)
+    axioms.append(dynamic_axioms.axiom_simplify_fraction)
+    axioms.append(dynamic_axioms.axiom_collapse_fraction)
+
     axioms.append(
         Axiom(name='根号的平方是其本身')
         .add_rule('#(#\\sqrt{x})^{2}', '#1 x')
@@ -111,12 +120,12 @@ def common_axioms():
         .add_test('-\\frac{-a}{-a}', '-1')
     )
 
-    axioms.append(
-        Axiom(name='乘法因子括号的提出')
-        .add_rule('#(#a) *{1}', '#0 a *{1}')
+    #axioms.append(
+    #    Axiom(name='乘法因子括号的提出')
+    #    .add_rule('#(#a) *{1}', '#0 a *{1}')
 
-        .add_test('-2 \\times a - 2 \\times (-b)')
-    )
+    #    .add_test('-2 \\times a - 2 \\times (-b)')
+    #)
 
     axioms.append(
         Axiom(name='乘积写成乘方的形式')
@@ -249,15 +258,7 @@ def common_axioms():
         ])
     )
 
-    axioms.append(dynamic_axioms.axiom_calc_add)
-    #axioms.append(dynamic_axioms.axiom_calc_mul)
-    #axioms.append(dynamic_axioms.axiom_calc_pow)
-    #axioms.append(dynamic_axioms.axiom_calc_sqrt)
-    #axioms.append(dynamic_axioms.axiom_calc_abs)
-    #axioms.append(dynamic_axioms.axiom_simplify_fraction)
-    #axioms.append(dynamic_axioms.axiom_collapse_fraction)
-    #axioms.append(dynamic_axioms.axiom_collapse_fraction_add_float)
-
+    axioms.append(dynamic_axioms.axiom_calc_sqrt)
     return axioms
 
 
@@ -266,5 +267,5 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         print(f'#{i}', axiom, end="\n\n")
 
-    axioms[-1].test(debug=False)
+    axioms[24].test(debug=False)
     print(f'total {len(axioms)} axioms.')

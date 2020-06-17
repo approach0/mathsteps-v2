@@ -15,7 +15,7 @@ class Axiom:
         self.narrs = {}
         self.recursive_apply = recursive_apply
         self.allow_complication = allow_complication
-        self.name = name
+        self._name = name
         self.tests = []
 
 
@@ -69,8 +69,7 @@ class Axiom:
 
 
     def __str__(self):
-        name = self.name
-        retstr = 'Axiom (anonymous):\n' if name is None else f'{name}:\n'
+        retstr = self.name() + ':\n'
         for i, k in enumerate(self.rules):
             retstr += f'[{i}]: ' + k
             retstr += '\033[91m'
@@ -95,6 +94,10 @@ class Axiom:
 
             if i != len(self.rules) - 1: retstr += '\n'
         return retstr
+
+
+    def name(self):
+        return 'Axiom (anonymous)' if self._name is None else f'{self._name}'
 
 
     def _exact_apply(self, narr, debug=False):
@@ -256,20 +259,24 @@ class Axiom:
 
         return possible_applied_narrs
 
-    def apply(self, narr, debug=False):
+
+    def apply(self, narr, debug=False, max_cnt=6):
         Q = [narr]
         final_narrs = []
         cnt = 0
         while len(Q) > 0:
             narr = Q.pop(0)
             narrs = self._onetime_apply(narr, debug=debug)
-            if len(narrs) == 0:
-                final_narrs.append(narr)
-            elif not self.recursive_apply:
+            if not self.recursive_apply:
                 return narrs
             else:
                 Q += narrs
-            cnt += 1
+                if len(narrs) == 0 and cnt > 0:
+                    final_narrs.append(narr)
+            if cnt + 1 >= max_cnt:
+                break
+            else:
+                cnt += 1
         return final_narrs
 
 
