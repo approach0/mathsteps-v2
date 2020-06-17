@@ -63,6 +63,26 @@ def sqrt_draw(num):
             n = n * a
     return m, n
 
+
+def Euclidean_gcd(x, y):
+    """
+    欧拉最大公約數
+    """
+    while(y):
+        x, y = y, x % y
+    return x
+
+
+def Euclidean_lcm(a, b):
+    """
+    欧拉最小公倍数
+    """
+    if Euclidean_gcd(a, b) == 0:
+        return 0
+    else:
+        return a * b / Euclidean_gcd(a, b)
+
+
 ###
 # Dynamic Axioms
 ###
@@ -73,7 +93,6 @@ def calc_add(pattern_narr, narr, rewrite_rules, output_tempalate):
 
     if a != None and b != None:
         c = a + b
-        rewrite_rules = {}
         rewrite_rules['c'] = gen_atom_number(c)
         return rewrite_by_alpha(output_tempalate, rewrite_rules), True
 
@@ -94,7 +113,6 @@ def calc_mul(pattern_narr, narr, rewrite_rules, output_tempalate):
 
     if a != None and b != None:
         c = a * b
-        rewrite_rules = {}
         rewrite_rules['c'] = gen_atom_number(c)
         return rewrite_by_alpha(output_tempalate, rewrite_rules), True
 
@@ -118,7 +136,6 @@ def calc_pow(pattern_narr, narr, rewrite_rules, output_tempalate):
             c = a ** b
             if abs(c) > 2000: raise OverflowError
 
-            rewrite_rules = {}
             rewrite_rules['c'] = gen_atom_number(c)
             return rewrite_by_alpha(output_tempalate, rewrite_rules), True
 
@@ -140,30 +157,24 @@ axiom_calc_pow = (
     .add_test('(-2)^{2}', '4')
 )
 
-def calc_sqrt(pattern_narr, narr, rewrite_rules, output_tempalate):
+def calc_sqrt(pattern_narr, narr, rewrite_rules, output_tempalates):
     x = get_atom_number(rewrite_rules['x'])
 
     if x != None and x > 0 and x.is_integer():
-        rewrite_rules = {}
-
         m, n = sqrt_draw(x)
         if n == 1:
             rewrite_rules['c'] = gen_atom_number(m)
-            return rewrite_by_alpha(output_tempalate, rewrite_rules), True
+            return rewrite_by_alpha(output_tempalates[0], rewrite_rules), True
         elif m > 1:
-            output_template_sign, _ = output_tempalate[0]
-            output = 'm \\sqrt{n}' if output_template_sign > 0 else '-m \\sqrt{n}'
-            output_narr = expression.tex2narr(output)
-
             rewrite_rules['m'] = gen_atom_number(m)
             rewrite_rules['n'] = gen_atom_number(n)
-            return rewrite_by_alpha(output_narr, rewrite_rules), True
+            return rewrite_by_alpha(output_tempalates[1], rewrite_rules), True
 
     return narr, False
 
 axiom_calc_sqrt = (
     Axiom(name='开方化简')
-    .add_rule('#\sqrt{x}', '#1 c', dynamic_procedure=calc_sqrt)
+    .add_rule('#\sqrt{x}', ['#1 c', '#1 m \\sqrt{n}'], dynamic_procedure=calc_sqrt)
 
     .add_test('-\\sqrt{8}', '-2 \\times \sqrt{2}')
     .add_test('\\sqrt{16}', '4')
@@ -174,7 +185,6 @@ def calc_abs(pattern_narr, narr, rewrite_rules, output_tempalate):
 
     if x != None:
         c = abs(x)
-        rewrite_rules = {}
         rewrite_rules['c'] = gen_atom_number(c)
         return rewrite_by_alpha(output_tempalate, rewrite_rules), True
 
@@ -186,4 +196,31 @@ axiom_calc_abs = (
 
     .add_test('-\\left| 8 \\right|', '-8')
     .add_test('\\left| -8 \\right|', '8')
+)
+
+def simplify_fraction(pattern_narr, narr, rewrite_rules, output_tempalates):
+    a = get_atom_number(rewrite_rules['a'])
+    b = get_atom_number(rewrite_rules['b'])
+
+    if a != None and b != None and a.is_integer() and b.is_integer():
+        a, b = a, b
+        gcd = Euclidean_gcd(a, b)
+        if gcd != 0 and gcd != 1:
+            a = a / gcd
+            b = b / gcd
+            if b == 1:
+                rewrite_rules['c'] = gen_atom_number(a)
+                return rewrite_by_alpha(output_tempalates[0], rewrite_rules), True
+            elif b != 0:
+                rewrite_rules['a'] = gen_atom_number(a)
+                rewrite_rules['b'] = gen_atom_number(b)
+                return rewrite_by_alpha(output_tempalates[1], rewrite_rules), True
+
+axiom_simplify_fraction = (
+    Axiom(name='化简分式')
+    .add_rule('#\\frac{a}{b}', ['#1 c', '#1 \\frac{a}{b}'], dynamic_procedure=simplify_fraction)
+
+    .add_test('-\\frac{-14}{-4}', '-\\frac{7}{2}')
+    .add_test('\\frac{9}{-6}', '\\frac{-3}{2}')
+    .add_test('-\\frac{-12}{6}', '2')
 )

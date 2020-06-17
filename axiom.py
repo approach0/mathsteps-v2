@@ -19,26 +19,25 @@ class Axiom:
         self.tests = []
 
 
-    def add_rule(self, a, b, direction='rewrite', dynamic_procedure=None):
-        A, B = self._preprocess(a, b)
-        for (a, b) in zip(A, B):
-            if direction == 'rewrite':
-                self.rules[a] = b
-                self.dp[a] = dynamic_procedure
-            elif direction == 'converse':
-                self.rules[b] = a
-                self.dp[b] = dynamic_procedure
-            elif direction == 'equivalence':
-                self.rules[a] = b
-                self.rules[b] = a
-                self.dp[a] = dynamic_procedure
-                self.dp[b] = dynamic_procedure
-            else:
-                raise Exception('bad binary relation direction')
+    def add_rule(self, src, dest, dynamic_procedure=None):
+        dest = dest if isinstance(dest, list) else [dest]
 
-            # cache some results for speedup
-            self.narrs[a] = expression.tex2narr(a)
-            self.narrs[b] = expression.tex2narr(b)
+        for dest_pattern in dest:
+            A, B = self._preprocess(src, dest_pattern)
+
+            for (a, b) in zip(A, B):
+                if a not in self.rules:
+                    self.rules[a] = b
+                elif isinstance(self.rules[a], list):
+                    self.rules[a].append(b)
+                else:
+                    self.rules[a] = [self.rules[a], b]
+
+                self.dp[a] = dynamic_procedure
+
+                # cache some results for speedup
+                self.narrs[a] = expression.tex2narr(a)
+                self.narrs[b] = expression.tex2narr(b)
         return self
 
 
@@ -77,7 +76,7 @@ class Axiom:
             retstr += '\033[91m'
             retstr += '  =>  '
             retstr += '\033[0m'
-            retstr += self.rules[k]
+            retstr += str(self.rules[k])
 
             if self.allow_complication:
                 retstr += '\033[92m'
@@ -126,7 +125,7 @@ class Axiom:
                     alpha_prettyprint(rewrite_rules[0])
 
                 dest = self.rules[origin]
-                dest_narr = self.narrs[dest]
+                dest_narr = [self.narrs[d] for d in dest] if isinstance(dest, list) else self.narrs[dest]
                 call = self.dp[origin]
                 if call is not None: # dynamical axiom
                     rewritten_narr, is_applied = call(pattern_narr, narr, rewrite_rules[0], dest_narr)
@@ -275,11 +274,16 @@ class Axiom:
 
 
 if __name__ == '__main__':
+    def foo(pattern_narr, narr, rewrite_rules, output_tempalates):
+        print(expression.narr2tex(pattern_narr))
+        print(expression.narr2tex(narr))
+        alpha_prettyprint(rewrite_rules)
+        return output_tempalates[1], True
+
     a = Axiom(allow_complication=False, recursive_apply=False, name='分子分母消除')
-    a.add_rule('\\frac{x *{1} }{x *{2} }', '\\frac{*{1}}{*{2}}')
+    a.add_rule('# \\frac{x *{1} }{x *{2} }', ['#1 \\frac{*{1}}{*{2}}', '#1 a'], dynamic_procedure=foo)
     print(a)
 
-    test = expression.tex2narr('\\frac{2rx}{ry}')
     test = expression.tex2narr('\\frac{xa}{ay}')
     narr, _ = a._exact_apply(test, debug=False)
     print(expression.narr2tex(narr))
