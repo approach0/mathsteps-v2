@@ -68,11 +68,11 @@ if __name__ == '__main__':
 
     testcases = [
         '\\frac{12a}{3a + a + 20a} - \\frac{1}{4}',
-        '1 + \\frac{7}{3}'
+        '1 + \\frac{7}{3}',
+        '4 -3 \\frac{1}{2}',
     ]
 
     testcases, _ = test_cases_x3_rational()
-
     for test in testcases:
     #for test in testcases[-1:]:
         test_narr = expression.tex2narr(test)

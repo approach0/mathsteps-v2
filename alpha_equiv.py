@@ -162,6 +162,19 @@ def replace_or_pass_children(narr, i, substitute):
     root = narr[0]
     sign, Type = root
     if Type == substitute[0][1] and Type in ['add', 'mul']:
+        if substitute[0][0] < 0:
+            if Type == 'add':
+                # distribute
+                for grand_child in substitute[1:]:
+                    grand_sign, grand_type = grand_child[0]
+                    grand_child[0] = (grand_sign * -1, grand_type)
+            elif Type == 'mul':
+                # reduce sign
+                sign *= -1
+                narr[0] = (sign, Type)
+            else:
+                raise Exception('unexpected type: ' + Type)
+
         # pass children of commutative operators
         del narr[1 + i]
         narr += substitute[1:]

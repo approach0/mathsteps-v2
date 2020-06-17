@@ -263,7 +263,7 @@ def common_axioms():
         Axiom(name='带分式的展开')
         .add_rule('# & \\frac{a}{b}', '#1 (v + \\frac{a}{b})')
 
-        .add_test('-3 \\frac{-2}{4}', '-(3 + \\frac{-2}{4})')
+        #.add_test('-3 \\frac{-2}{4}', '-(3 + \\frac{-2}{4})')
         .add_test('-3 \\frac{1}{2}', '-(3 + \\frac{1}{2})')
     )
 
