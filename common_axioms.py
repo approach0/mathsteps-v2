@@ -117,6 +117,8 @@ def common_axioms():
         .add_test('\\frac{-x}{xay}', '\\frac{-1}{a \\times y}')
         .add_test('\\frac{3xy}{-xy}', '-3')
         .add_test('-\\frac{-a}{-a}', '-1')
+        .add_test('\\frac{-(a + b)}{a + b}', '-1')
+        .add_test('\\frac{-3 - \\frac{1}{3}}{-(3 + \\frac{1}{3}) \\times x}', '\\frac{-1}{-x}')
     )
 
     axioms.append(

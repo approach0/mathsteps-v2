@@ -289,6 +289,7 @@ if __name__ == '__main__':
         .add_rule('# \\frac{# x }{# x }', '#0 1')
 
         .add_test('\\frac{-(a + b)}{a + b}')
+        .add_test('\\frac{-3 - \\frac{1}{3}}{-(3 + \\frac{1}{3}) \\times x}')
     )
 
     a.test()

@@ -7,6 +7,33 @@ lark = Lark.open('grammar.lark', rel_to=__file__, parser='lalr', debug=True)
 debug = False
 
 
+def passchildren(sign, op_type, children):
+    new_narr = [(sign, op_type)]
+    for child in children:
+        child_sign, child_type = child[0]
+        if child_type == op_type:
+            if child_type == 'add':
+                # distribute sign
+                for grand_child in child[1:]:
+                    grand_sign, grand_type = grand_child[0]
+                    grand_child[0] = (grand_sign * child_sign, grand_type)
+                    new_narr.append(grand_child)
+
+            elif child_type == 'mul':
+                # reduce sign
+                sign *= child_sign
+                new_narr += child[1:]
+
+            else:
+                raise Exception('unexpected type: ' + Type)
+        else:
+            if op_type == 'mul' and child_sign < 0:
+                child[0] = (+1, child_type)
+                new_narr[0] = (sign * -1, op_type)
+            new_narr.append(child)
+    return new_narr
+
+
 class Tree2NestedArr(Transformer):
     """
     中间表示的转换类。把 Lark 的表示树转换成我们所期望的表示。
@@ -37,28 +64,9 @@ class Tree2NestedArr(Transformer):
         如果二叉树子树的 token 是 op_type 的话，将子树的孩子合并上来
         """
         x = Tree2NestedArr().unwrap_null_reduce(x)
-        # handle two commutative tree of the same type
-        sign = 1
-        new_narr = []
-        for child in x:
-            child_root = child[0]
-            child_sign, child_type = child_root
+        x = [[(child[0])] + [_ for _ in Tree2NestedArr().children(child)] for child in x]
 
-            if op_type == 'mul':
-                # reduce sign
-                sign *= child_sign
-                child[0] = (+1, child_type)
-
-            if child_type == op_type:
-                distribute_sign = child_sign if op_type == 'add' else 1
-                for grand_child in Tree2NestedArr().children(child):
-                    grand_sign, grand_type = grand_child[0]
-                    grand_child[0] = (grand_sign * distribute_sign, grand_type)
-                    new_narr.append(grand_child)
-            else:
-                new_narr.append(child)
-
-        return [(sign, op_type)] + new_narr
+        return passchildren(+1, op_type, x)
 
     @staticmethod
     def negate(x):
@@ -366,7 +374,9 @@ if __name__ == '__main__':
         '+1 = -3',
         '\\frac{-2}{3}',
         '-(-a)(-b)',
-        '& \\frac{y}{x}'
+        '& \\frac{y}{x}',
+        'a-b-c+d-f',
+        '-a(-2)(-3)4'
     ]
 
     for expr in test_expressions[-1:]:

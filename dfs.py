@@ -78,7 +78,8 @@ if __name__ == '__main__':
         test_narr = expression.tex2narr(test)
         steps = dfs(test_narr, all_axioms, debug=True)
         for narr, a, ai in steps:
-            print(a.name(), '\n', expression.narr2tex(narr))
+            rich.print(f'[red]{a.name()}')
+            print('\t', expression.narr2tex(narr))
 
         render_steps(steps)
         print(f'test case: {i} / {len(testcases)}')

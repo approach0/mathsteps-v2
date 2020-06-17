@@ -34,17 +34,20 @@ def narr_identical(narr1, narr2, same_sign=True):
     return True
 
 
-def apply_sign(narr, product):
+def apply_sign(narr, apply_product):
     """
     表达式变号，从加号变成减号或者减号改成加号。加法会让每一项变号。
     """
     root = narr[0]
     old_sign, Type = root[0], root[1]
     if Type == 'add':
+        # make narr positive
+        narr[:] = expression.passchildren(+1, 'add', [narr])
+        # distribute sign to each term
         for i, c in enumerate(narr[1:]):
-            apply_sign(c, old_sign * product)
+            apply_sign(c, apply_product)
     else:
-        narr[0] = (old_sign * product, Type)
+        narr[0] = (old_sign * apply_product, Type)
 
 
 def children_wildcards_permutation(narr):
@@ -104,7 +107,7 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
         # handle sign
         apply_sign(narr2, sign1)
 
-        #print(name1)
+        #print(name1, end=' --> ')
         #print(narr2)
         #print()
 
@@ -166,22 +169,10 @@ def replace_or_pass_children(narr, i, substitute):
     root = narr[0]
     sign, Type = root
     if Type == substitute[0][1] and Type in ['add', 'mul']:
-        if substitute[0][0] < 0:
-            if Type == 'add':
-                # distribute
-                for grand_child in substitute[1:]:
-                    grand_sign, grand_type = grand_child[0]
-                    grand_child[0] = (grand_sign * -1, grand_type)
-            elif Type == 'mul':
-                # reduce sign
-                sign *= -1
-                narr[0] = (sign, Type)
-            else:
-                raise Exception('unexpected type: ' + Type)
-
-        # pass children of commutative operators
         del narr[1 + i]
-        narr += substitute[1:]
+        new_narr = expression.passchildren(sign, Type, [substitute])
+        narr[0] = new_narr[0]
+        narr += new_narr[1:]
     else:
         # replacement at i
         narr[1 + i] = substitute
@@ -240,11 +231,11 @@ if __name__ == '__main__':
     #narr1 = expression.tex2narr('x + K')
     #narr2 = expression.tex2narr('x - y^{2}')
 
-    #narr1 = expression.tex2narr('x + *{1}')
+    #narr1 = expression.tex2narr('x - *{1}')
     #narr2 = expression.tex2narr('x - 12 + 3')
 
-    #narr1 = expression.tex2narr('(((3)))')
-    #narr2 = expression.tex2narr('3')
+    #narr1 = expression.tex2narr('(((3)(-2))(-1))')
+    #narr2 = expression.tex2narr('3 \cdot 2 \cdot 1')
 
     #narr1 = expression.tex2narr('(-\\frac{x}{y})')
     #narr2 = expression.tex2narr('-\\frac{x}{y}')
@@ -260,7 +251,7 @@ if __name__ == '__main__':
 
     is_equiv, rewrite_rules = test_alpha_equiv(narr1, narr2, debug=True)
     if is_equiv:
-        print('alpha-equivalent')
+        rich.print('[bold green]Is alpha-equivalent')
         alpha_prettyprint(rewrite_rules[0])
     else:
-        print('Not alpha-equivalent')
+        rich.print('[bold red]Not alpha-equivalent')
