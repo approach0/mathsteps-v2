@@ -8,7 +8,7 @@ def common_axioms():
     """
     axioms = []
 
-    axioms.append(dynamic_axioms.axiom_canonicalize)
+    axioms.append(dynamic_axioms.canonicalize)
 
     axioms.append(
         Axiom(name='带分式的展开')
@@ -131,15 +131,15 @@ def common_axioms():
         .add_test('-\\frac{1}{2} \cdot \\frac{1}{2}', '-(\\frac{1}{2})^{2}')
     )
 
-    axioms.append(dynamic_axioms.axiom_calc_add)
-    axioms.append(dynamic_axioms.axiom_calc_mul)
-    axioms.append(dynamic_axioms.axiom_calc_pow)
-    axioms.append(dynamic_axioms.axiom_calc_sqrt)
-    axioms.append(dynamic_axioms.axiom_calc_abs)
-    axioms.append(dynamic_axioms.axiom_collapse_fraction_add_float)
-    axioms.append(dynamic_axioms.axiom_simplify_fraction)
-    axioms.append(dynamic_axioms.axiom_collapse_fraction)
-    axioms.append(dynamic_axioms.axiom_calc_sqrt)
+    axioms.append(dynamic_axioms.calc_add)
+    axioms.append(dynamic_axioms.calc_mul)
+    axioms.append(dynamic_axioms.calc_pow)
+    axioms.append(dynamic_axioms.calc_sqrt)
+    axioms.append(dynamic_axioms.calc_abs)
+    axioms.append(dynamic_axioms.collapse_fraction_add_float)
+    axioms.append(dynamic_axioms.simplify_fraction)
+    axioms.append(dynamic_axioms.collapse_fraction)
+    axioms.append(dynamic_axioms.calc_sqrt)
 
     axioms.append(
         Axiom(name='合并同类项', recursive_apply=True)

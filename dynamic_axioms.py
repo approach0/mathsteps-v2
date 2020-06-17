@@ -99,7 +99,7 @@ def calc_add(pattern_narr, narr, rewrite_rules, output_tempalate):
 
     return narr, False
 
-axiom_calc_add = (
+calc_add = (
     Axiom(name='加减法计算')
     .add_rule('#(a + b)', '#1 c', dynamic_procedure=calc_add)
 
@@ -121,7 +121,7 @@ def calc_mul(pattern_narr, narr, rewrite_rules, output_tempalate):
 
     return narr, False
 
-axiom_calc_mul = (
+calc_mul = (
     Axiom(name='乘法计算')
     .add_rule('#ab', '#1 c', dynamic_procedure=calc_mul)
 
@@ -150,7 +150,7 @@ def calc_pow(pattern_narr, narr, rewrite_rules, output_tempalate):
 
     return narr, False
 
-axiom_calc_pow = (
+calc_pow = (
     Axiom(name='乘方计算')
     .add_rule('#a^{b}', '#1 c', dynamic_procedure=calc_pow)
 
@@ -177,7 +177,7 @@ def calc_sqrt(pattern_narr, narr, rewrite_rules, output_tempalates):
 
     return narr, False
 
-axiom_calc_sqrt = (
+calc_sqrt = (
     Axiom(name='开方化简')
     .add_rule('#\sqrt{x}', ['#1 c', '#1 m \\sqrt{n}'], dynamic_procedure=calc_sqrt)
 
@@ -196,7 +196,7 @@ def calc_abs(pattern_narr, narr, rewrite_rules, output_tempalate):
 
     return narr, False
 
-axiom_calc_abs = (
+calc_abs = (
     Axiom(name='绝对值计算')
     .add_rule('#\\left| x \\right|', '#1 c', dynamic_procedure=calc_abs)
 
@@ -225,7 +225,7 @@ def simplify_fraction(pattern_narr, narr, rewrite_rules, output_tempalates):
 
     return narr, False
 
-axiom_simplify_fraction = (
+simplify_fraction = (
     Axiom(name='化简分式')
     .add_rule('#\\frac{a}{b}', ['#1 c', '#1 \\frac{a}{b}'], dynamic_procedure=simplify_fraction)
 
@@ -251,7 +251,7 @@ def collapse_fraction(pattern_narr, narr, rewrite_rules, output_tempalates):
 
     return narr, False
 
-axiom_collapse_fraction = (
+collapse_fraction = (
     Axiom(name='分式中带小数的化简')
     .add_rule('#\\frac{a}{b}', ['#1 c', '#1 kx'], dynamic_procedure=collapse_fraction)
 
@@ -273,7 +273,7 @@ def collapse_fraction_add_float(pattern_narr, narr, rewrite_rules, output_tempal
 
     return narr, False
 
-axiom_collapse_fraction_add_float = (
+collapse_fraction_add_float = (
     Axiom(name='分式加小数的化简')
     .add_rule('#\\frac{a}{b} # c', '#1 x #2 c', dynamic_procedure=collapse_fraction_add_float)
 
@@ -289,7 +289,7 @@ def canonicalize(pattern_narr, narr, rewrite_rules, output_tempalate):
         return new_narr, is_applied
     return narr, False
 
-axiom_canonicalize = (
+canonicalize = (
     Axiom(name='去括号')
     .add_rule('# a *{1}', 'X', dynamic_procedure=canonicalize)
     .add_rule('# a # *{1}', 'X', dynamic_procedure=canonicalize)
@@ -348,5 +348,5 @@ axiom_canonicalize = (
 
 
 if __name__ == '__main__':
-    a = axiom_canonicalize
+    a = canonicalize
     a.test()
