@@ -76,6 +76,8 @@ if __name__ == '__main__':
     testcases, _ = test_cases_x3_rational()
 
     begin_from = 0
+
+    n_steps = 0
     timer = Timer()
 
     for i, test in enumerate(testcases):
@@ -93,7 +95,11 @@ if __name__ == '__main__':
             #print(narr, end='\n\n')
 
         render_steps(steps)
+
+        n_steps += len(steps)
+        print(f'steps: {len(steps)}')
         print(f'test case: {i} / {len(testcases)}')
+
         #input('Enter to continue...')
 
-    timer.show_stats()
+    timer.show_stats(n_steps=n_steps)
