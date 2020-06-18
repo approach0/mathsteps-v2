@@ -53,10 +53,13 @@ def possible_next_steps(narr, axioms, debug=False, restrict_rules=None, quick_re
 def dfs(narr, axioms, debug=False):
     next_steps = [(narr, Axiom(name='原式'), -1)]
     return_steps = []
-    while len(next_steps) > 0:
-        narr, axiom, axiom_idx = next_steps[0]
-        return_steps.append((narr, axiom, axiom_idx))
-        next_steps = possible_next_steps(narr, axioms, quick_return=True, debug=debug)
+    try:
+        while len(next_steps) > 0:
+            narr, axiom, axiom_idx = next_steps[0]
+            return_steps.append((narr, axiom, axiom_idx))
+            next_steps = possible_next_steps(narr, axioms, quick_return=True, debug=debug)
+    except KeyboardInterrupt:
+        pass
     return return_steps
 
 
@@ -74,7 +77,7 @@ if __name__ == '__main__':
 
     testcases, _ = test_cases_x3_rational()
 
-    begin_from = 0
+    begin_from = 3
 
     for i, test in enumerate(testcases):
     #for test in testcases[-1:]:

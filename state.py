@@ -44,7 +44,7 @@ def token_stats(narr, stats={}, right_side_of_eq=False, inside_of_sqrt=False):
                 d[k] = v
 
     # count negativity
-    if sign == '-':
+    if sign < 0:
         incr(stats, 'neg')
 
     # count leaves

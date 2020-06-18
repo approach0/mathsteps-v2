@@ -54,12 +54,22 @@ def common_axioms():
 
     axioms.append(
         Axiom(name='一的平方还是一')
-        .add_rule('#(# 1)^{2}', '#1 x')
+        .add_rule('#(# 1)^{2}', '#1 1')
+    )
+
+    axioms.append(
+        Axiom(name='将指数分配进分子分母', allow_complication=True)
+        .add_rule('#(#\\frac{#a}{#b})^{k}', '#1 (#2 1)^{k} \\frac{(#3 a)^{k}}{(#4 b)^{k}}')
+
+        .add_test('(-\\frac{-2}{3})^{2}', '(-1)^{2} \\times \\frac{(-2)^{2}}{3^{2}}')
     )
 
     axioms.append(
         Axiom(name='负数的平方是其相反数的平方')
-        .add_rule('#(-a)^{2}', '#1 a')
+        .add_rule('#(-a)^{2}', '#1 a^{2}')
+
+        #.add_test('(6 \div (-\\frac{2}{3})^{2})')
+        .add_test('3^{2} - (1 + \\frac{1}{2}) \\times \\frac{2}{9} - (6 \div (-\\frac{2}{3})^{2}) - (-2)^{2}')
     )
 
     axioms.append(
@@ -75,13 +85,6 @@ def common_axioms():
     axioms.append(
         Axiom(name='乘数的指数是各个因子指数的乘数', recursive_apply=True, allow_complication=True)
         .add_rule('# (# a *{1})^{k}', '#1 (#2 a)^{k} \\times (*{1})^{k}')
-    )
-
-    axioms.append(
-        Axiom(name='将指数分配进分子分母', allow_complication=True)
-        .add_rule('#(#\\frac{#a}{#b})^{k}', '#1 (#2 1)^{k} \\frac{(#3 a)^{k}}{(#4 b)^{k}}')
-
-        .add_test('(-\\frac{-2}{3})^{2}', '(-1)^{2} \\times \\frac{(-2)^{2}}{3^{2}}')
     )
 
     axioms.append(
@@ -270,6 +273,8 @@ def common_axioms():
 if __name__ == '__main__':
     axioms = common_axioms()
     for i, axiom in enumerate(axioms):
-        print(f'#{i}', axiom, end="\n\n")
-    #axioms[-1].test(debug=False)
+        #print(f'#{i}', axiom, end="\n\n")
+
+        if axiom.name() == '将指数分配进分子分母':
+            axiom.test(debug=False)
     print(f'total {len(axioms)} axioms.')
