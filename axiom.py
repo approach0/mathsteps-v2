@@ -5,6 +5,7 @@ import functools
 import expression
 from copy import deepcopy
 from alpha_equiv import rewrite_by_alpha, test_alpha_equiv, alpha_prettyprint, replace_or_pass_children, get_wildcards_index
+import numpy as np
 
 
 class Axiom:
@@ -102,6 +103,96 @@ class Axiom:
         return 'Axiom (anonymous)' if self._name is None else f'{self._name}'
 
 
+    @staticmethod
+    def _extract_weight(narr):
+        sign, Type = narr[0]
+        if Type == 'mul':
+            num = sign
+            for c in narr[1:]:
+                if c[0][1] == 'NUMBER':
+                    num *= Axiom()._extract_weight(c)
+            return num
+        elif Type == 'NUMBER':
+            num = narr[1]
+            if num.is_integer():
+                num_sign, _ = narr[0]
+                return num_sign * num
+            else:
+                return None
+        else:
+            return None
+
+
+    @staticmethod
+    def _extract_weights(narr):
+        _, Type = narr[0]
+        root = narr[0]
+        if Type == 'add':
+            return [Axiom()._extract_weight(c) for c in narr[1:]]
+        elif Type in ['mul', 'NUMBER']:
+            return [Axiom()._extract_weight(narr)]
+        else:
+            return [None]
+
+
+    @staticmethod
+    def _restore_weights(weights, narr):
+        def gen_num(n):
+            return [(+1 if n >= 0 else -1, 'NUMBER'), float(abs(n))]
+        children = narr[1:] if narr[0][1] == 'add' else [narr]
+        for i, c in enumerate(children):
+            sign, Type = c[0]
+            # turn to positive term
+            c[0] = (+1, Type)
+            if Type == 'NUMBER':
+                print(weights, i)
+                w = weights[i]
+                narr[1 + i] = gen_num(w)
+            elif Type == 'mul':
+                # remove numbers
+                c[1:] = [gc for gc in c[1:] if gc[0][1] != 'NUMBER']
+                # insert weight if necessary
+                w = weights[i]
+                if len(c) == 1:
+                    c[:] = gen_num(w)
+                elif w != 1:
+                    c[:] = [c[0]] + [gen_num(w)] + c[1:]
+        if narr[0][1] == 'add':
+            narr[1:] = children
+        else:
+            narr[:] = children[0]
+
+
+    @staticmethod
+    def _fraction_cancel(narr):
+        sign, Type = narr[0]
+        if Type != 'frac':
+            return narr
+
+        # extract weights
+        numerator_weights = Axiom()._extract_weights(narr[1])
+        if any([x is None for x in numerator_weights]):
+            return narr
+
+        denominator_weights = Axiom()._extract_weights(narr[2])
+        if any([x is None for x in denominator_weights]):
+            return narr
+
+        # cancel weights
+        L = len(numerator_weights)
+        weights = np.array(numerator_weights + denominator_weights, dtype=int)
+        gcd = np.gcd.reduce(weights)
+        weights = (weights // gcd).tolist()
+
+        # restore weights
+        numerator_weights = weights[:L]
+        denominator_weights = weights[L:]
+
+        Axiom()._restore_weights(numerator_weights, narr[1])
+        Axiom()._restore_weights(denominator_weights, narr[2])
+        return narr
+
+
     def _exact_apply(self, narr, debug=False):
         for origin in self.rules:
             # Example:
@@ -141,6 +232,7 @@ class Axiom:
 
                 # if rules with higher priority get applied, later rules are ignored
                 if is_applied:
+                    rewritten_narr = self._fraction_cancel(rewritten_narr) # post process
                     return rewritten_narr, is_applied
         return narr, False
 
@@ -285,11 +377,12 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='系数乘进分式的分子里面', allow_complication=True)
-        .add_rule('# a \\times \\frac{# 1}{b}', '#0 \\frac{a}{b}')
-        .add_rule('# a \\times \\frac{# c}{b}', '#0 \\frac{ac}{b}')
+        Axiom(name='分式 加法/减法', allow_complication=True)
+        .add_rule('#\\frac{a}{c} #\\frac{b}{c}', '\\frac{#1 a #2 b}{c}')
+        .add_rule('#\\frac{a}{b} #\\frac{c}{d}', '\\frac{#1 ad #2 cb}{bd}')
 
-        .add_test('30 \\times (-\\frac{1}{3})')
+        .add_test('-\\frac{-3}{-1} - \\frac{-3}{3x}')
+        .add_test('\\frac{\sqrt{2}}{2} + \\frac{1}{2}')
     )
 
     a.test()
