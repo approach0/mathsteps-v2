@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
     testcases, _ = test_cases_x3_rational()
 
-    begin_from = 4
+    begin_from = 0
 
     for i, test in enumerate(testcases):
     #for test in testcases[-1:]:

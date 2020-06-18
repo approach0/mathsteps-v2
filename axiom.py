@@ -145,9 +145,8 @@ class Axiom:
             # turn to positive term
             c[0] = (+1, Type)
             if Type == 'NUMBER':
-                print(weights, i)
                 w = weights[i]
-                narr[1 + i] = gen_num(w)
+                children[i] = gen_num(w)
             elif Type == 'mul':
                 # remove numbers
                 c[1:] = [gc for gc in c[1:] if gc[0][1] != 'NUMBER']
@@ -188,8 +187,13 @@ class Axiom:
         numerator_weights = weights[:L]
         denominator_weights = weights[L:]
 
+        #expression.narr_prettyprint(narr)
+        #print()
+
         Axiom()._restore_weights(numerator_weights, narr[1])
         Axiom()._restore_weights(denominator_weights, narr[2])
+
+        #expression.narr_prettyprint(narr)
         return narr
 
 
