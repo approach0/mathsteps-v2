@@ -224,7 +224,7 @@ def need_outter_fence(root, child_narr):
     elif child_root[0] == +1:
         if len(child_narr) <= 2: # unary
             return False
-        elif root[1] == 'sup' and child_root[1] in ['frac', 'afrac']:
+        elif root[1] == 'sup' and child_root[1] in ['frac', 'afrac', 'sup']:
             return True
         elif child_root[1] in ['frac', 'sup']:
             return False
