@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
     testcases, _ = test_cases_x3_rational()
 
-    begin_from = 10
+    begin_from = 13
 
     for i, test in enumerate(testcases):
     #for test in testcases[-1:]:
@@ -88,7 +88,7 @@ if __name__ == '__main__':
         for narr, a, ai in steps:
             rich.print(f'[red]{a.name()}')
             print('\t', expression.narr2tex(narr))
-            #print(narr)
+            #print(narr, end='\n\n')
 
         render_steps(steps)
         print(f'test case: {i} / {len(testcases)}')

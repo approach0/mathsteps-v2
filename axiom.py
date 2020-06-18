@@ -150,12 +150,16 @@ class Axiom:
             elif Type == 'mul':
                 # remove numbers
                 c[1:] = [gc for gc in c[1:] if gc[0][1] != 'NUMBER']
-                # insert weight if necessary
+                # insert weight if it is non-one value
                 w = weights[i]
+                if w != 1:
+                    children[i] = [c[0]] + [gen_num(w)] + c[1:]
+                    c = children[i]
+                # trim the tree if it has zero or only one operand
                 if len(c) == 1:
-                    c[:] = gen_num(w)
-                elif w != 1:
-                    c[:] = [c[0]] + [gen_num(w)] + c[1:]
+                    children[i] = gen_num(w)
+                elif len(c) == 2:
+                    children[i] = c[1]
         if narr[0][1] == 'add':
             narr[1:] = children
         else:
@@ -163,7 +167,7 @@ class Axiom:
 
 
     @staticmethod
-    def _fraction_cancel(narr):
+    def _fraction_cancel(narr, debug=False):
         sign, Type = narr[0]
         if Type != 'frac':
             return narr
@@ -187,13 +191,17 @@ class Axiom:
         numerator_weights = weights[:L]
         denominator_weights = weights[L:]
 
-        #expression.narr_prettyprint(narr)
-        #print()
+        if debug:
+            rich.print('[yellow]cancel fraction:',  expression.narr2tex(narr))
+            print('numerator:', numerator_weights)
+            print('denominator:', denominator_weights)
 
         Axiom()._restore_weights(numerator_weights, narr[1])
         Axiom()._restore_weights(denominator_weights, narr[2])
 
-        #expression.narr_prettyprint(narr)
+        if debug:
+            rich.print('[yellow]after:',  expression.narr2tex(narr))
+            expression.narr_prettyprint(narr)
         return narr
 
 

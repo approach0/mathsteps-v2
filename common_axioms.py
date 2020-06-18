@@ -75,7 +75,7 @@ def common_axioms():
 
     axioms.append(
         Axiom(name='以分数表示除法')
-        .add_rule('(#x) \\div (#y)', '#0 \\frac{x}{y}')
+        .add_rule('# (#x) \\div (#y)', '#0 \\frac{x}{y}')
 
         .add_test('1 \\div 2x + 3')
     )
@@ -188,6 +188,8 @@ def common_axioms():
         .add_test('-\\frac{-\\frac{4}{3}}{\\frac{1}{2}}', '\\frac{2 \\times 4}{1 \\times 3}')
         .add_test('-\\frac{-\\frac{4}{3}}{x}', '\\frac{4}{x \\times 3}')
         .add_test('-\\frac{4}{-\\frac{4}{3}}', '\\frac{4 \\times 3}{4}')
+        .add_test('\\frac{-8}{\\frac{1}{4}}')
+        .add_test('\\frac{-18}{\\frac{9 \\times (1 - \\frac{3}{4})}{4}}')
     )
 
     axioms.append(
@@ -222,8 +224,9 @@ def common_axioms():
         .add_rule('# a \\times \\frac{# 1}{b}', '#0 \\frac{a}{b}')
         .add_rule('# a \\times \\frac{# c}{b}', '#0 \\frac{ac}{b}')
 
-        .add_test('-\\frac{-1}{3} \\times 12', '\\frac{12}{3}')
-        .add_test('12 \cdot \\frac{3}{2}', '\\frac{12 \\times 3}{2}')
+        .add_test('-\\frac{-1}{3} \\times 12', '\\frac{4}{1}')
+        .add_test('12 \cdot \\frac{3}{2}', '\\frac{18}{1}')
+        .add_test('\\frac{9}{4} \\times (1 - \\frac{3}{4})', '\\frac{9 \\times (1 - \\frac{3}{4})}{4}')
     )
 
     axioms.append(
@@ -284,6 +287,6 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() == '除以一个数等于乘上它的倒数':
+        if axiom.name() == '系数乘进分式的分子里面':
             axiom.test(debug=False)
     print(f'total {len(axioms)} axioms.')
