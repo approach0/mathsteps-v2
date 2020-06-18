@@ -58,15 +58,6 @@ def common_axioms():
     )
 
     axioms.append(
-        Axiom(name='将指数分配进分子分母', allow_complication=True)
-        .add_rule('#(-\\frac{#a}{#b})^{k}', '#1 (-1)^{k} \\frac{(#2 a)^{k}}{(#3 b)^{k}}')
-        .add_rule('#(+\\frac{#a}{#b})^{k}', '#1 \\frac{(#2 a)^{k}}{(#3 b)^{k}}')
-
-        .add_test('(-\\frac{-2}{3})^{2}', '(-1)^{2} \\times \\frac{(-2)^{2}}{3^{2}}')
-        .add_test('-(\\frac{-2}{3})^{2}', '-\\frac{(-2)^{2}}{3^{2}}')
-    )
-
-    axioms.append(
         Axiom(name='负数的平方是其相反数的平方')
         .add_rule('#(-a)^{2}', '#1 a^{2}')
 
@@ -76,6 +67,7 @@ def common_axioms():
 
     axioms.append(
         Axiom(name='除以一个数等于乘上它的倒数')
+        .add_rule('# (#\\frac{w}{x}) \\div (# \\frac{y}{z})', '#0 \\frac{wz}{xy}')
         .add_rule('# x \\div (# \\frac{y}{z})', '#0 \\frac{xz}{y}')
 
         .add_test('- 3 \\div (-\\frac{1}{2})', '-\\frac{3 \\times 2}{1}')
@@ -86,13 +78,6 @@ def common_axioms():
         .add_rule('(#x) \\div (#y)', '#0 \\frac{x}{y}')
 
         .add_test('1 \\div 2x + 3')
-    )
-
-    axioms.append(
-        Axiom(name='乘数的指数是各个因子指数的乘数', recursive_apply=True, allow_complication=True)
-        .add_rule('# (# a *{1})^{k}', '#1 (#2 a)^{k} \\times (*{1})^{k}')
-
-        .add_test('-(-3xy)^{2}', '-(-3)^{2} \\times x^{2} \\times y^{2}')
     )
 
     axioms.append(
@@ -247,6 +232,22 @@ def common_axioms():
 
         .add_test('3(a + b + c + x) + 1', '1 + 3 \\times a + 3 \\times b + 3 \\times c + 3 \\times x')
         .add_test('(a - b)(-2)', '-2 \\times a - 2 \\times (-b)')
+    )
+
+    axioms.append(
+        Axiom(name='乘数的指数是各个因子指数的乘数', recursive_apply=True, allow_complication=True)
+        .add_rule('# (# a *{1})^{k}', '#1 (#2 a)^{k} \\times (*{1})^{k}')
+
+        .add_test('-(-3xy)^{2}', '-(-3)^{2} \\times x^{2} \\times y^{2}')
+    )
+
+    axioms.append(
+        Axiom(name='将指数分配进分子分母', allow_complication=True)
+        .add_rule('#(-\\frac{#a}{#b})^{k}', '#1 (-1)^{k} \\frac{(#2 a)^{k}}{(#3 b)^{k}}')
+        .add_rule('#(+\\frac{#a}{#b})^{k}', '#1 \\frac{(#2 a)^{k}}{(#3 b)^{k}}')
+
+        .add_test('(-\\frac{-2}{3})^{2}', '(-1)^{2} \\times \\frac{(-2)^{2}}{3^{2}}')
+        .add_test('-(\\frac{-2}{3})^{2}', '-\\frac{(-2)^{2}}{3^{2}}')
     )
 
     axioms.append(
