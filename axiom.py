@@ -110,7 +110,10 @@ class Axiom:
             num = sign
             for c in narr[1:]:
                 if c[0][1] == 'NUMBER':
-                    num *= Axiom()._extract_weight(c)
+                    w = Axiom()._extract_weight(c)
+                    if w is None:
+                        continue
+                    num *= w
             return num
         elif Type == 'NUMBER':
             num = narr[1]
@@ -149,7 +152,7 @@ class Axiom:
                 children[i] = gen_num(w)
             elif Type == 'mul':
                 # remove numbers
-                c[1:] = [gc for gc in c[1:] if gc[0][1] != 'NUMBER']
+                c[1:] = [gc for gc in c[1:] if gc[0][1] != 'NUMBER' or not gc[1].is_integer()]
                 # insert weight if it is non-one value
                 w = weights[i]
                 if w != 1:
