@@ -138,7 +138,8 @@ class Axiom:
                     # apply rewrite rules to destination expression. E.g., (a)^{2} - (b)^{2}
                     dest_narr = self.narrs[dest]
                     rewritten_narr, is_applied = rewrite_by_alpha(dest_narr, rewrite_rules[0]), True
-                # only return when rule is actually applied
+
+                # if rules with higher priority get applied, later rules are ignored
                 if is_applied:
                     return rewritten_narr, is_applied
         return narr, False

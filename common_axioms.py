@@ -59,9 +59,11 @@ def common_axioms():
 
     axioms.append(
         Axiom(name='将指数分配进分子分母', allow_complication=True)
-        .add_rule('#(#\\frac{#a}{#b})^{k}', '#1 (#2 1)^{k} \\frac{(#3 a)^{k}}{(#4 b)^{k}}')
+        .add_rule('#(-\\frac{#a}{#b})^{k}', '#1 (-1)^{k} \\frac{(#2 a)^{k}}{(#3 b)^{k}}')
+        .add_rule('#(+\\frac{#a}{#b})^{k}', '#1 \\frac{(#2 a)^{k}}{(#3 b)^{k}}')
 
         .add_test('(-\\frac{-2}{3})^{2}', '(-1)^{2} \\times \\frac{(-2)^{2}}{3^{2}}')
+        .add_test('-(\\frac{-2}{3})^{2}', '-\\frac{(-2)^{2}}{3^{2}}')
     )
 
     axioms.append(
@@ -75,16 +77,22 @@ def common_axioms():
     axioms.append(
         Axiom(name='除以一个数等于乘上它的倒数')
         .add_rule('# x \\div (# \\frac{y}{z})', '#0 \\frac{xz}{y}')
+
+        .add_test('- 3 \\div (-\\frac{1}{2})', '-\\frac{3 \\times 2}{1}')
     )
 
     axioms.append(
         Axiom(name='以分数表示除法')
         .add_rule('(#x) \\div (#y)', '#0 \\frac{x}{y}')
+
+        .add_test('1 \\div 2x + 3')
     )
 
     axioms.append(
         Axiom(name='乘数的指数是各个因子指数的乘数', recursive_apply=True, allow_complication=True)
         .add_rule('# (# a *{1})^{k}', '#1 (#2 a)^{k} \\times (*{1})^{k}')
+
+        .add_test('-(-3xy)^{2}', '-(-3)^{2} \\times x^{2} \\times y^{2}')
     )
 
     axioms.append(
@@ -275,6 +283,6 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() == '将指数分配进分子分母':
+        if axiom.name() == '除以一个数等于乘上它的倒数':
             axiom.test(debug=False)
     print(f'total {len(axioms)} axioms.')
