@@ -220,6 +220,22 @@ def common_axioms():
     )
 
     axioms.append(
+        Axiom(name='乘数的指数是各个因子指数的乘数', recursive_apply=True, allow_complication=True)
+        .add_rule('# (# a *{1})^{k}', '#1 (#2 a)^{k} \\times (*{1})^{k}')
+
+        .add_test('-(-3xy)^{2}', '-(-3)^{2} \\times x^{2} \\times y^{2}')
+    )
+
+    axioms.append(
+        Axiom(name='将指数分配进分子分母', allow_complication=True)
+        .add_rule('#(-\\frac{#a}{#b})^{k}', '#1 (-1)^{k} \\frac{(#2 a)^{k}}{(#3 b)^{k}}')
+        .add_rule('#(+\\frac{#a}{#b})^{k}', '#1 \\frac{(#2 a)^{k}}{(#3 b)^{k}}')
+
+        .add_test('(-\\frac{-2}{3})^{2}', '(-1)^{2} \\times \\frac{(-2)^{2}}{3^{2}}')
+        .add_test('-(\\frac{-2}{3})^{2}', '-\\frac{(-2)^{2}}{3^{2}}')
+    )
+
+    axioms.append(
         Axiom(name='系数乘进分式的分子里面', allow_complication=True)
         .add_rule('# a \\times \\frac{# 1}{b}', '#0 \\frac{a}{b}')
         .add_rule('# a \\times \\frac{# c}{b}', '#0 \\frac{ac}{b}')
@@ -235,22 +251,6 @@ def common_axioms():
 
         .add_test('3(a + b + c + x) + 1', '1 + 3 \\times a + 3 \\times b + 3 \\times c + 3 \\times x')
         .add_test('(a - b)(-2)', '-2 \\times a - 2 \\times (-b)')
-    )
-
-    axioms.append(
-        Axiom(name='乘数的指数是各个因子指数的乘数', recursive_apply=True, allow_complication=True)
-        .add_rule('# (# a *{1})^{k}', '#1 (#2 a)^{k} \\times (*{1})^{k}')
-
-        .add_test('-(-3xy)^{2}', '-(-3)^{2} \\times x^{2} \\times y^{2}')
-    )
-
-    axioms.append(
-        Axiom(name='将指数分配进分子分母', allow_complication=True)
-        .add_rule('#(-\\frac{#a}{#b})^{k}', '#1 (-1)^{k} \\frac{(#2 a)^{k}}{(#3 b)^{k}}')
-        .add_rule('#(+\\frac{#a}{#b})^{k}', '#1 \\frac{(#2 a)^{k}}{(#3 b)^{k}}')
-
-        .add_test('(-\\frac{-2}{3})^{2}', '(-1)^{2} \\times \\frac{(-2)^{2}}{3^{2}}')
-        .add_test('-(\\frac{-2}{3})^{2}', '-\\frac{(-2)^{2}}{3^{2}}')
     )
 
     axioms.append(
