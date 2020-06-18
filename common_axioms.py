@@ -256,9 +256,11 @@ def common_axioms():
     axioms.append(
         Axiom(name='整数加分式的转换', allow_complication=True)
         .add_rule('#a # \\frac{b}{c}', '\\frac{#1 ac #2 b}{c}')
+        .add_rule('#(#a # \\frac{b}{c})', '#1\\frac{#2 ac #3 b}{c}')
 
         .add_test('- 1 - \\frac{-1}{2}', '\\frac{(-1) \\times 2 + 1}{2}')
         .add_test('- \\frac{-1}{2} + 1', '\\frac{1 \\times 2 + 1}{2}')
+        .add_test('\\left| -(5 + \\frac{1}{2})  \\right|')
     )
 
     axioms.append(
@@ -287,6 +289,6 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() == '系数乘进分式的分子里面':
+        if axiom.name() == '整数加分式的转换':
             axiom.test(debug=False)
     print(f'total {len(axioms)} axioms.')

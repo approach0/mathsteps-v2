@@ -198,7 +198,7 @@ def calc_abs(pattern_narr, narr, rewrite_rules, output_tempalate):
 
 calc_abs = (
     Axiom(name='绝对值计算')
-    .add_rule('#\\left| x \\right|', '#1 c', dynamic_procedure=calc_abs)
+    .add_rule('#\\left| #x \\right|', '#1 c', dynamic_procedure=calc_abs)
 
     .add_test('-\\left| 8 \\right|', '-8')
     .add_test('\\left| -8 \\right|', '8')
@@ -348,5 +348,6 @@ canonicalize = (
 
 
 if __name__ == '__main__':
-    a = canonicalize
+    #a = canonicalize
+    a = calc_abs
     a.test()

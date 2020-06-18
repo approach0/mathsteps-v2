@@ -75,8 +75,9 @@ if __name__ == '__main__':
     ]
 
     testcases, _ = test_cases_x3_rational()
+    testcases, _ = test_cases_wiki131278697()
 
-    begin_from = 0
+    begin_from = 4
 
     n_steps = 0
     timer = Timer()
@@ -101,6 +102,6 @@ if __name__ == '__main__':
         print(f'steps: {len(steps)}')
         print(f'test case: {i} / {len(testcases)}')
 
-        #input('Enter to continue...')
+        input('Enter to continue...')
 
     timer.show_stats(n_steps=n_steps)
