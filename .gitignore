@@ -1,6 +1,7 @@
 *.pyc
 *.swp
-*.html
+/*.html
+*.lock
 *.log
 *.pt
 *.pkl
