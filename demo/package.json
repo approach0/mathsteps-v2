@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "dependencies": {
     "jquery": "^3.4.1",
+    "material-icons": "^0.3.1",
     "muse-ui": "^3.0.2",
     "vue": "^2.6.11"
   },

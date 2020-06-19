@@ -12,6 +12,8 @@ import MuseUI from 'muse-ui'
 import 'muse-ui/dist/muse-ui.css';
 Vue.use(MuseUI)
 
+import 'material-icons/iconfont/material-icons.css'
+
 import App from './app.vue'
 
 /* mount Vue */
