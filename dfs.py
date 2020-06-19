@@ -2,6 +2,7 @@ import expression
 import rich
 import axiom
 import state
+import sys
 from axiom import Axiom
 from timer import Timer
 from common_axioms import common_axioms
@@ -61,7 +62,7 @@ def dfs(narr, axioms, debug=False):
     return return_steps
 
 
-if __name__ == '__main__':
+def test():
     from render_math import render_steps
     from test_cases import test_cases_x3_rational, test_cases_wiki131278697
 
@@ -73,6 +74,7 @@ if __name__ == '__main__':
         '4 -3 \\frac{1}{2}',
         '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
         '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
+        'a + 2b + a'
     ]
 
     #testcases, _ = test_cases_x3_rational()
@@ -106,3 +108,35 @@ if __name__ == '__main__':
         input('Enter to continue...')
 
     timer.show_stats(n_steps=n_steps)
+
+
+if __name__ == '__main__':
+    args = sys.argv[1:]
+    if len(args) > 0:
+        tex = args[0]
+        narr = expression.tex2narr(tex)
+        all_axioms = common_axioms()
+        steps = dfs(narr, all_axioms, debug=False)
+
+        steps = [
+            {
+                'tex': expression.narr2tex(narr),
+                'axiom': a.name(),
+                'axiom_idx': ai
+            }
+        for narr, a, ai in steps]
+
+        import json
+        print(json.dumps(steps))
+
+    else:
+        #test()
+        from test_cases import test_cases_x3_rational, test_cases_wiki131278697
+        import json
+        a, _ = test_cases_x3_rational()
+        b, _ = test_cases_wiki131278697()
+        j = {
+            'list': a + b
+        }
+        with open('data.json', 'w') as f:
+            json.dump(j, f, indent=4, sort_keys=True)

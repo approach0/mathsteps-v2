@@ -8,23 +8,33 @@
     <mu-text-field v-model="input" placeholder="请输入 TeX 表达式">
     </mu-text-field>
 
-    <mu-button icon @click="clear">
-      <mu-icon value="clear"></mu-icon>
-    </mu-button>
+    <mu-tooltip content="清除输入">
+      <mu-button icon @click="clear">
+        <mu-icon value="clear"></mu-icon>
+      </mu-button>
+    </mu-tooltip>
 
-    <mu-button icon @click="add">
-      <mu-icon value="control_point"></mu-icon>
-    </mu-button>
+    <mu-tooltip content="添加表达式（方程组）">
+      <mu-button icon @click="random">
+        <mu-icon value="control_point"></mu-icon>
+      </mu-button>
+    </mu-tooltip>
+
+    <mu-tooltip content="随机表达式">
+      <mu-button icon @click="random">
+        <mu-icon value="replay"></mu-icon>
+      </mu-button>
+    </mu-tooltip>
 
     <mu-button @click="calc" color="primary" style="margin-left: 40px">
-       求解
+      求解
     </mu-button>
   </mu-row>
 
   <h3 v-if="preview.length > 0">预览</h3>
   <div id="preview" class="latex" v-html="preview" v-if="preview.length > 0"></div>
 
-  <mu-row v-for="(step, i) in steps" :key="step.latex" class="step" align-items="center">
+  <mu-row v-for="(step, i) in steps" :key="i + step.latex" class="step" align-items="center">
 
     <mu-col span="1" class="mu-transition-row">
       <mu-slide-left-transition>
@@ -34,7 +44,7 @@
       </mu-slide-left-transition>
     </mu-col>
 
-    <mu-col span="7" class="mu-transition-row">
+    <mu-col span="9" class="mu-transition-row">
       <mu-slide-left-transition>
         <div class="mu-transition-box latex" v-show="step.show" v-html="step.html">
         </div>
@@ -44,7 +54,7 @@
     <mu-col span="2" class="mu-transition-row" fill>
       <mu-slide-left-transition>
         <div class="mu-transition-box" v-show="step.show">
-          {{step.info}}
+          {{ i == 0 ? '' : step.info}}
         </div>
       </mu-slide-left-transition>
     </mu-col>
@@ -57,20 +67,14 @@
 
 <script>
 import $ from 'jquery'
+const random_list = require('./random-list')
 
 export default {
   data () {
     return {
       input: '',
       preview: '',
-      'steps': [
-        {
-          show: true,
-          latex: '$\\frac{a}{b}$',
-          info: '去括号',
-          html: '<b>i</b>j'
-        }
-      ]
+      steps: []
     }
   },
 
@@ -96,22 +100,25 @@ export default {
         this.$set(this.steps[i], 'show', boolean)
     },
 
-    add() {
-      let latex = '\\frac{a}{b}'
-      let html = this.render(latex)
+    add(step) {
+      let tex = step.tex
+      let html = this.render(tex)
       this.steps.push(
         {
           show: false,
-          latex: latex,
-          info: '去括号',
+          latex: tex,
+          info: step.axiom,
           html: html
         }
       )
 
       this.$nextTick(() => {
         this.all_show(true)
-        console.log(this.steps)
       })
+
+      setTimeout(() => {
+        $("html, body").animate({ scrollTop: $(document).height() + 500}, 0)
+      }, 100)
     },
 
     render(latex, display=false) {
@@ -120,8 +127,39 @@ export default {
       }).outerHTML
     },
 
+    show_steps(steps) {
+      let vm = this
+      steps.forEach(async (step, i) => {
+        setTimeout(() => {
+          vm.add(step)
+        }, i * 500)
+      })
+    },
+
     calc() {
-      let query = this.input 
+      let query = this.input
+      if (query.trim().length == 0)
+        alert('空表达式')
+
+      let enc_qry = encodeURIComponent(query)
+      let vm = this
+      $.ajax({
+        url: 'http://localhost:3889/query/' + enc_qry,
+        success: function(res){
+          if (res.ret == 'successful') {
+            vm.steps = []
+            vm.show_steps(res.steps)
+          } else {
+            console.error(res)
+          }
+        }
+      })
+    },
+
+    random() {
+      let list = random_list.list
+      let idx = Math.floor(Math.random() * list.length)
+      this.input = list[idx]
     }
   }
 }
@@ -142,6 +180,9 @@ div.mu-input {
 }
 
 .latex {
+  width: 95%;
   font-size: 2.0em;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 </style>
