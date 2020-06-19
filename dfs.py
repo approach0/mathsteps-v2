@@ -71,19 +71,20 @@ if __name__ == '__main__':
         '\\frac{12a}{3a + a + 20a} - \\frac{1}{4}',
         '1 + \\frac{7}{3}',
         '4 -3 \\frac{1}{2}',
-        '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}'
+        '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
+        '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
     ]
 
-    testcases, _ = test_cases_x3_rational()
-    testcases, _ = test_cases_wiki131278697()
+    #testcases, _ = test_cases_x3_rational()
+    #testcases, _ = test_cases_wiki131278697()
 
-    begin_from = 4
+    begin_from = 0
 
     n_steps = 0
     timer = Timer()
 
-    for i, test in enumerate(testcases):
-    #for test in testcases[-1:]:
+    #for i, test in enumerate(testcases):
+    for i, test in enumerate(testcases[-1:]):
         if i < begin_from: continue
 
         test_narr = expression.tex2narr(test)
