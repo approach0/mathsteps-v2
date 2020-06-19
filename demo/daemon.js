@@ -26,7 +26,7 @@ function run(qry) {
     })
 
     process.stderr.on('data', (data) => {
-      //reject(data)
+      reject(data)
     })
   })
 }

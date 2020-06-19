@@ -34,6 +34,10 @@
   <h3 v-if="preview.length > 0">预览</h3>
   <div id="preview" class="latex" v-html="preview" v-if="preview.length > 0"></div>
 
+  <mu-alert color="error" v-if="error_msg.length > 0">
+    <mu-icon left value="warning"></mu-icon> {{error_msg}}
+  </mu-alert>
+
   <mu-row v-for="(step, i) in steps" :key="i + step.latex" class="step" align-items="center">
 
     <mu-col span="1" class="mu-transition-row">
@@ -74,6 +78,7 @@ export default {
     return {
       input: '',
       preview: '',
+      error_msg: '',
       steps: []
     }
   },
@@ -138,6 +143,7 @@ export default {
 
     calc() {
       let query = this.input
+      this.error_msg = ''
       if (query.trim().length == 0)
         alert('空表达式')
 
@@ -150,7 +156,8 @@ export default {
             vm.steps = []
             vm.show_steps(res.steps)
           } else {
-            console.error(res)
+            console.error(res.error)
+            vm.error_msg = res.error
           }
         }
       })

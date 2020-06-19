@@ -3,7 +3,7 @@ from lark import Transformer
 import rich
 
 
-lark = Lark.open('grammar.lark', rel_to=__file__, parser='lalr', debug=True)
+lark = Lark.open('grammar.lark', rel_to=__file__, parser='lalr', debug=False)
 debug = False
 
 
