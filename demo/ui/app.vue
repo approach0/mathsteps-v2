@@ -132,13 +132,17 @@ export default {
       }).outerHTML
     },
 
-    show_steps(steps) {
+    async show_steps(steps) {
       let vm = this
-      steps.forEach(async (step, i) => {
-        setTimeout(() => {
-          vm.add(step)
-        }, i * 500)
-      })
+      for (var i = 0; i < steps.length; i ++) {
+        let step = steps[i]
+        vm.add(step)
+        await new Promise(resolve => {
+          setTimeout(() => {
+            resolve()
+          }, 500)
+        })
+      }
     },
 
     calc() {
