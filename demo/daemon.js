@@ -17,9 +17,9 @@ const port = 3889
 app.listen(port)
 console.log(`Listen on ${port}`)
 
-function run(qry) {
+function run(script, qry) {
   return new Promise((resolve, reject) => {
-    const process = spawn('python', ['../dfs.py', qry])
+    const process = spawn('python', [script, qry])
     process.stdout.on('data', (data) => {
       const steps = data.toString()
       resolve(steps)
@@ -31,14 +31,16 @@ function run(qry) {
   })
 }
 
-app.get('/query/:qry', async function (req, res) {
-  const qry = req.params.qry
+app.post('/query', async function (req, res) {
+  let qry = req.body.query
   console.log('[query]', qry)
 
   try {
-    let steps = await run(qry)
+    if (qry === undefined)
+      throw 'internal undefined query'
+
+    let steps = await run('../dfs.py', qry)
     steps = JSON.parse(steps)
-    console.log(steps)
 
     res.json({
       qry: qry,
@@ -55,4 +57,8 @@ app.get('/query/:qry', async function (req, res) {
       error: err.toString()
     })
   }
+}).get('/', async function (req, res) {
+    res.json({
+      'hello': 'world'
+    })
 })

@@ -1,7 +1,7 @@
 <template>
 <mu-container>
   <mu-row justify-content="center">
-  <h2>表达式求解 Demo</h2>
+    <h2>表达式求解 Demo</h2>
   </mu-row>
 
   <mu-row gutter align-items="start" justify-content="center">
@@ -148,13 +148,21 @@ export default {
     calc() {
       let query = this.input
       this.error_msg = ''
-      if (query.trim().length == 0)
+      if (query.trim().length == 0) {
         alert('空表达式')
+        return
+      }
 
-      let enc_qry = encodeURIComponent(query)
+      console.log('[query]', query)
       let vm = this
       $.ajax({
-        url: 'http://localhost:3889/query/' + enc_qry,
+        url: '/api/query',
+        type: "POST",
+        data: JSON.stringify({
+          query: query
+        }),
+        contentType:"application/json; charset=utf-8",
+        dataType:"json",
         success: function(res){
           if (res.ret == 'successful') {
             vm.steps = []
@@ -163,6 +171,9 @@ export default {
             console.error(res.error)
             vm.error_msg = res.error
           }
+        },
+        error: function(err) {
+          console.error(err)
         }
       })
     },
