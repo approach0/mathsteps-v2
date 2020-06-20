@@ -19,7 +19,9 @@ console.log(`Listen on ${port}`)
 
 function run(script, qry) {
   return new Promise((resolve, reject) => {
-    const process = spawn('python', [script, qry])
+    cmd_args = [script, ...qry]
+    console.log(cmd_args)
+    const process = spawn('python', cmd_args)
     process.stdout.on('data', (data) => {
       const steps = data.toString()
       resolve(steps)
@@ -39,9 +41,17 @@ app.post('/query', async function (req, res) {
     if (qry === undefined)
       throw 'internal undefined query'
 
-    let steps = await run('../dfs.py', qry)
-    steps = JSON.parse(steps)
+    let steps = []
+    if (qry.length == 0) {
+      throw 'input query length is zero'
 
+    } else if (qry.length == 1 && !qry[0].includes('=')) {
+      steps = await run('../dfs.py', qry)
+    } else {
+      steps = await run('../../mathsteps-v1/mathstep.py', qry)
+    }
+
+    steps = JSON.parse(steps)
     res.json({
       qry: qry,
       ret: 'successful',

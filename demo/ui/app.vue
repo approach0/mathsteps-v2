@@ -5,17 +5,30 @@
   </mu-row>
 
   <mu-row gutter align-items="start" justify-content="center">
-    <mu-text-field v-model="input" placeholder="请输入 TeX 表达式">
-    </mu-text-field>
+    <div>
+      <mu-text-field v-model="input" placeholder="请输入 TeX 表达式">
+      </mu-text-field>
 
-    <mu-tooltip content="清除输入">
-      <mu-button icon @click="clear">
-        <mu-icon value="clear"></mu-icon>
-      </mu-button>
-    </mu-tooltip>
+      <mu-tooltip content="清除输入">
+        <mu-button icon @click="clear">
+          <mu-icon value="clear"></mu-icon>
+        </mu-button>
+      </mu-tooltip>
+
+      <mu-row v-for="(eq, i) in equations" :key="i + eq" class="equations" justify-content="center">
+        <mu-text-field v-model="equations[i]" disabled>
+        </mu-text-field>
+
+        <mu-tooltip content="删除方程">
+          <mu-button icon @click="dele_eq(i)">
+            <mu-icon value="delete"></mu-icon>
+          </mu-button>
+        </mu-tooltip>
+      </mu-row>
+    </div>
 
     <mu-tooltip content="添加表达式（方程组）">
-      <mu-button icon @click="random">
+      <mu-button icon @click="add_eq">
         <mu-icon value="control_point"></mu-icon>
       </mu-button>
     </mu-tooltip>
@@ -76,6 +89,7 @@ const random_list = require('./random-list')
 export default {
   data () {
     return {
+      equations: [],
       input: '',
       preview: '',
       error_msg: '',
@@ -88,10 +102,8 @@ export default {
 
   watch: {
     input: function(newval, oldval) {
-      if (newval.trim().length == 0)
-        this.preview = ''
-      else
-        this.preview = this.render(newval, true)
+      this.refresh_preview()
+      this.error_msg = ''
     }
   },
 
@@ -100,12 +112,50 @@ export default {
       this.input = ''
     },
 
+    all_equations() {
+      let input = this.input
+      let equations = this.equations
+      if (input.trim().length > 0)
+        equations = [input, ...equations]
+      return equations
+    },
+
+    refresh_preview() {
+      let equations = this.all_equations()
+      let preview_tex = this.input
+      if (equations.length >= 2) {
+        preview_tex =
+          '\\left\\{ \\begin{array}{rl}' +
+          equations.join('\\\\') +
+          '\\end{array} \\right.'
+      }
+
+      if (preview_tex.trim().length == 0)
+        this.preview = ''
+      else
+        this.preview = this.render(preview_tex, true)
+    },
+
+    add_eq() {
+      if (this.input.includes('=')) {
+        this.equations = [this.input, ...this.equations]
+        this.clear()
+      } else {
+        this.error_msg = '添加的必须是等式'
+      }
+    },
+
+    dele_eq(idx) {
+      this.equations.splice(idx)
+      this.equations = this.equations
+    },
+
     all_show(boolean) {
       for (var i = 0; i < this.steps.length; i++)
         this.$set(this.steps[i], 'show', boolean)
     },
 
-    add(step) {
+    append_step(step) {
       let tex = step.tex
       let html = this.render(tex)
       this.steps.push(
@@ -136,7 +186,7 @@ export default {
       let vm = this
       for (var i = 0; i < steps.length; i ++) {
         let step = steps[i]
-        vm.add(step)
+        vm.append_step(step)
         await new Promise(resolve => {
           setTimeout(() => {
             resolve()
@@ -147,9 +197,10 @@ export default {
 
     calc() {
       let query = this.input
+      let equations = this.equations
       this.error_msg = ''
-      if (query.trim().length == 0) {
-        alert('空表达式')
+      if (query.trim().length == 0 && equations.length == 0) {
+        this.error_msg = '空表达式'
         return
       }
 
@@ -159,7 +210,7 @@ export default {
         url: '/api/query',
         type: "POST",
         data: JSON.stringify({
-          query: query
+          query: vm.all_equations()
         }),
         contentType:"application/json; charset=utf-8",
         dataType:"json",
