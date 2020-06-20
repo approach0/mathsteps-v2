@@ -131,7 +131,7 @@ def value(narr, debug=False):
             accum += stats[key] * value_dict[key] 
     # number sum values
     if 'NUMBER_sum' in stats:
-        accum += math.log(1 + stats['NUMBER_sum'])
+        accum += math.log(1 + stats['NUMBER_sum']) / 2
     if 'NUMBER_in_sqrt' in stats:
         accum += 1.5 * math.log(1 + stats['NUMBER_in_sqrt'])
     return -accum
@@ -152,5 +152,8 @@ if __name__ == '__main__':
     #print(right_padding_zeros(-100))
     #print(right_padding_zeros(0))
 
-    test('10 \cdot x + 15 = 15')
-    test('10 \cdot x + 15 -15 = 0')
+    #test('10 \cdot x + 15 = 15')
+    #test('10 \cdot x + 15 -15 = 0')
+
+    test('100 \\times 25')
+    test('2500')

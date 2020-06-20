@@ -93,7 +93,8 @@ export default {
       input: '',
       preview: '',
       error_msg: '',
-      steps: []
+      steps: [],
+      last_random_idx: -1
     }
   },
 
@@ -233,7 +234,9 @@ export default {
 
     random() {
       let list = random_list.list
-      let idx = Math.floor(Math.random() * list.length)
+      //let idx = Math.floor(Math.random() * list.length)
+      let idx = (this.last_random_idx + 1) % list.length
+      this.last_random_idx = idx
       if (typeof list[idx] == 'object') {
         this.equations = list[idx]
         this.input = ''
