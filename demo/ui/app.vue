@@ -103,6 +103,7 @@ export default {
   watch: {
     input: function(newval, oldval) {
       this.refresh_preview()
+      this.steps = ''
       this.error_msg = ''
     }
   },
@@ -110,6 +111,7 @@ export default {
   methods: {
     clear() {
       this.input = ''
+      this.equations = []
     },
 
     all_equations() {
@@ -139,7 +141,7 @@ export default {
     add_eq() {
       if (this.input.includes('=')) {
         this.equations = [this.input, ...this.equations]
-        this.clear()
+        this.input = ''
       } else {
         this.error_msg = '添加的必须是等式'
       }
@@ -147,10 +149,10 @@ export default {
 
     dele_eq(idx) {
       this.equations.splice(idx)
-      this.equations = this.equations
+      this.input = this.input
     },
 
-    all_show(boolean) {
+    steps_animation(boolean) {
       for (var i = 0; i < this.steps.length; i++)
         this.$set(this.steps[i], 'show', boolean)
     },
@@ -168,7 +170,7 @@ export default {
       )
 
       this.$nextTick(() => {
-        this.all_show(true)
+        this.steps_animation(true)
       })
 
       setTimeout(() => {
@@ -232,7 +234,13 @@ export default {
     random() {
       let list = random_list.list
       let idx = Math.floor(Math.random() * list.length)
-      this.input = list[idx]
+      if (typeof list[idx] == 'object') {
+        this.equations = list[idx]
+        this.input = ''
+      } else {
+        this.equations = []
+        this.input = list[idx]
+      }
     }
   }
 }
