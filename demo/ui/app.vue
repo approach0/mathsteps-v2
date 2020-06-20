@@ -125,7 +125,7 @@ export default {
 
     refresh_preview() {
       let equations = this.all_equations()
-      let preview_tex = this.input
+      let preview_tex = equations[0] || ''
       if (equations.length >= 2) {
         preview_tex =
           '\\left\\{ \\begin{array}{rl}' +
@@ -149,8 +149,8 @@ export default {
     },
 
     dele_eq(idx) {
-      this.equations.splice(idx)
-      this.input = this.input
+      this.equations.splice(idx, 1)
+      this.refresh_preview()
     },
 
     steps_animation(boolean) {
