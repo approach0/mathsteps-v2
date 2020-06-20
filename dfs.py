@@ -74,7 +74,8 @@ def test():
         '4 -3 \\frac{1}{2}',
         '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
         '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
-        'a + 2b + a'
+        'a + 2b + a',
+        '4[1 - 2(a + b)]'
     ]
 
     #testcases, _ = test_cases_x3_rational()
@@ -92,7 +93,7 @@ def test():
         test_narr = expression.tex2narr(test)
 
         with timer:
-            steps = dfs(test_narr, all_axioms, debug=False)
+            steps = dfs(test_narr, all_axioms, debug=True)
 
         for narr, a, ai in steps:
             rich.print(f'[red]{a.name()}')
@@ -130,13 +131,4 @@ if __name__ == '__main__':
         print(json.dumps(steps))
 
     else:
-        #test()
-        from test_cases import test_cases_x3_rational, test_cases_wiki131278697
-        import json
-        a, _ = test_cases_x3_rational()
-        b, _ = test_cases_wiki131278697()
-        j = {
-            'list': a + b
-        }
-        with open('data.json', 'w') as f:
-            json.dump(j, f, indent=4, sort_keys=True)
+        test()

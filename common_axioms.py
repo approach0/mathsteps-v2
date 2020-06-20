@@ -251,6 +251,7 @@ def common_axioms():
 
         .add_test('3(a + b + c + x) + 1', '1 + 3 \\times a + 3 \\times b + 3 \\times c + 3 \\times x')
         .add_test('(a - b)(-2)', '-2 \\times a - 2 \\times (-b)')
+        .add_test('2(a + 3(b + c))')
     )
 
     axioms.append(
@@ -289,6 +290,6 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() == '整数加分式的转换':
+        if axiom.name() == '乘法分配率':
             axiom.test(debug=False)
     print(f'total {len(axioms)} axioms.')

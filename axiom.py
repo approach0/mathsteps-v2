@@ -370,24 +370,27 @@ class Axiom:
         return possible_applied_narrs
 
 
-    def apply(self, narr, debug=False, max_cnt=6):
-        Q = [narr]
-        final_narrs = []
-        cnt = 0
+    def apply(self, narr, debug=False, max_depth=6):
+        Q = [(0, narr)]
+        deepest_narrs = []
         while len(Q) > 0:
-            narr = Q.pop(0)
+            depth, narr = Q.pop(0)
+            if depth >= max_depth:
+                break
+
             narrs = self._onetime_apply(narr, debug=debug)
             if not self.recursive_apply:
                 return narrs
-            else:
-                Q += narrs
-                if len(narrs) == 0 and cnt > 0:
-                    final_narrs.append(narr)
-            if cnt + 1 >= max_cnt:
+            elif len(narrs) == 0:
                 break
-            else:
-                cnt += 1
-        return final_narrs
+
+            Q += [(depth + 1, n) for n in narrs]
+            #print(len(Q))
+
+            if len(deepest_narrs) > 0 and deepest_narrs[0][0] != depth:
+                deepest_narrs = []
+            deepest_narrs += narrs
+        return deepest_narrs
 
 
 if __name__ == '__main__':
