@@ -228,6 +228,7 @@ export default {
         },
         error: function(err) {
           console.error(err)
+          vm.error_msg = '服务器好像出了问题……'
         }
       })
     },
