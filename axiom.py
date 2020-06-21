@@ -324,33 +324,23 @@ class Axiom:
 
 
     @staticmethod
-    def _uniq_append(possible_applied_narrs, new_narr):
-        applied_set = set([expression.narr2tex(narr) for narr in possible_applied_narrs])
-        new_tex = expression.narr2tex(new_narr)
+    def _uniq_append(result_narrs, new_narr):
+        is_tuple = isinstance(new_narr, tuple)
+        if is_tuple:
+            applied_set = set([expression.narr2tex(narr) for _, narr in result_narrs])
+            new_tex = expression.narr2tex(new_narr[1])
+        else:
+            applied_set = set([expression.narr2tex(narr) for narr in result_narrs])
+            new_tex = expression.narr2tex(new_narr)
         if new_tex not in applied_set:
-            possible_applied_narrs.append(new_narr)
+            result_narrs.append(new_narr)
 
-
-    def _recursive_apply(self, narr, debug=False, maxtimes=6):
-        possible_applied_narrs = []
-        tex_set = set()
-        root_sign, root_type = narr[0]
-
-        # for recursive sub-expressions
-        if root_type not in expression.terminal_tokens():
-            children = deepcopy(narr[1:])
-            for i, child in enumerate(children):
-                applied_narrs = self._recursive_apply(child, debug=debug, maxtimes=maxtimes)
-                for applied_narr in applied_narrs:
-                    # substitute with sub-routine expression
-                    new_narr = deepcopy(narr)
-                    replace_or_pass_children(new_narr, i, applied_narr)
-                    # append result
-                    Axiom()._uniq_append(possible_applied_narrs, new_narr)
-
-        # match in this level
+    def _level_apply(self, narr, debug=False):
+        _, root_type = narr[0]
         wildcards_index = get_wildcards_index(narr)
         no_permute = (wildcards_index != None) or root_type in expression.no_permute_tokens()
+
+        ret_narrs = []
         for construct_tree, brothers in self._children_permutation(narr, no_permute=no_permute):
             rewritten_narr, is_applied = self._exact_apply(construct_tree, debug=debug)
             if is_applied:
@@ -363,43 +353,90 @@ class Axiom:
                 else:
                     # the entire expression in this level gets reduced
                     new_narr = rewritten_narr
-                # append result
-                Axiom()._uniq_append(possible_applied_narrs, new_narr)
-
-        return possible_applied_narrs
+                Axiom()._uniq_append(ret_narrs, new_narr)
+        return ret_narrs
 
 
-    def apply(self, narr, debug=False, max_depth=3):
-        Q = [(0, narr)]
-        deepest_narrs = []
+    def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=6):
+        # apply at this level
+        Q = [(applied_times, narr0)]
+        deepest_Q = []
         while len(Q) > 0:
             depth, narr = Q.pop(0)
-            if depth >= max_depth:
+            narrs = self._level_apply(narr)
+
+            if len(narrs) == 0:
                 break
 
-            narrs = self._onetime_apply(narr, debug=debug)
-            if not self.recursive_apply:
-                return narrs
-            elif len(narrs) == 0:
-                break
+            # maintain a deepest level narrs
+            if len(deepest_Q) > 0 and deepest_Q[0][0] != depth:
+                deepest_Q = []
+            tmp = [(depth + 1, n) for n in narrs]
+            Q += tmp
+            deepest_Q += tmp
 
-            Q += [(depth + 1, n) for n in narrs]
-            #print(len(Q))
+            if depth + 1 >= max_times:
+                continue
 
-            if len(deepest_narrs) > 0 and deepest_narrs[0][0] != depth:
-                deepest_narrs = []
-            deepest_narrs += narrs
-        return deepest_narrs
+        # also consider the case where nothing has applied in this level
+        deepest_Q += [(applied_times, narr0)]
+
+        #for m,n in deepest_Q:
+        #    print(f'applied: {m}/{max_times}:', expression.narr2tex(n))
+        #print()
+
+        # for recursive sub-expressions
+        depth_narrs = []
+        for depth, narr in deepest_Q:
+            _, root_type = narr[0]
+            children_results = []
+            if root_type not in expression.terminal_tokens():
+                children = deepcopy(narr[1:])
+                for i, child in enumerate(children):
+                    applied_narrs = self._recursive_apply(child,
+                        debug=debug, applied_times=depth, max_times=max_times)
+
+                    for new_depth, applied_narr in applied_narrs:
+                        # substitute with sub-routine expression
+                        new_narr = deepcopy(narr)
+                        replace_or_pass_children(new_narr, i, applied_narr)
+                        # append result
+                        children_results.append((new_depth, new_narr))
+
+            #print(depth, 'fff', expression.narr2tex(narr))
+            #for x in children_results:
+            #    print(x[0], ':::', expression.narr2tex(x[1]))
+            #print()
+
+            if len(children_results) > 0:
+                max_depth = max([d for d,n in children_results])
+                if max_depth > depth:
+                    progressed_children = [(d,n) for d,n in children_results if d == max_depth]
+                    for d, n in progressed_children:
+                        Axiom()._uniq_append(depth_narrs, (d, n))
+                    continue
+
+            # include any dead-end that none of its child has been applied.
+            if depth > 0:
+                Axiom()._uniq_append(depth_narrs, (depth, narr))
+
+        return depth_narrs
+
+
+    def apply(self, narr, debug=False):
+        if self.recursive_apply:
+            return [n for d,n in self._recursive_apply(narr, debug=debug)]
+        else:
+            return [n for d,n in self._recursive_apply(narr, debug=debug, max_times=1)]
 
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='分式 加法/减法', allow_complication=True)
-        .add_rule('#\\frac{a}{c} #\\frac{b}{c}', '\\frac{#1 a #2 b}{c}')
-        .add_rule('#\\frac{a}{b} #\\frac{c}{d}', '\\frac{#1 ad #2 cb}{bd}')
+        Axiom(name='任何数加零还是它本身', recursive_apply=True)
+        .add_rule('0 + n', 'n')
+        .add_rule('n - 0', 'n')
 
-        .add_test('-\\frac{-3}{-1} - \\frac{-3}{3x}')
-        .add_test('\\frac{\sqrt{2}}{2} + \\frac{1}{2}')
+        .add_test('0+a+0+0')
     )
 
     a.test()
