@@ -98,6 +98,9 @@ def value(narr, debug=False):
     """
     计算 表达式的价值（等于各个符号频率的自定义加权和）
     """
+    if isinstance(narr, str):
+        return value(expression.tex2narr(narr))
+
     value_dict = {
         'VAR': 10,
         'NUMBER_integer': 0.5,

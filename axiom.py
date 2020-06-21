@@ -59,7 +59,6 @@ class Axiom:
             rich.print('[bold cyan][[test]][/]', end=" ")
             print(expr)
             narr = expression.tex2narr(expr) if isinstance(test, str) else test
-            #print(narr)
             possible_applied_narrs = self.apply(narr, debug=debug)
             for applied_narr in possible_applied_narrs:
                 applied_tex = expression.narr2tex(applied_narr)
@@ -332,7 +331,7 @@ class Axiom:
             possible_applied_narrs.append(new_narr)
 
 
-    def _onetime_apply(self, narr, debug=False):
+    def _recursive_apply(self, narr, debug=False, maxtimes=6):
         possible_applied_narrs = []
         tex_set = set()
         root_sign, root_type = narr[0]
@@ -341,7 +340,7 @@ class Axiom:
         if root_type not in expression.terminal_tokens():
             children = deepcopy(narr[1:])
             for i, child in enumerate(children):
-                applied_narrs = self._onetime_apply(child, debug=debug)
+                applied_narrs = self._recursive_apply(child, debug=debug, maxtimes=maxtimes)
                 for applied_narr in applied_narrs:
                     # substitute with sub-routine expression
                     new_narr = deepcopy(narr)
@@ -370,7 +369,7 @@ class Axiom:
         return possible_applied_narrs
 
 
-    def apply(self, narr, debug=False, max_depth=6):
+    def apply(self, narr, debug=False, max_depth=3):
         Q = [(0, narr)]
         deepest_narrs = []
         while len(Q) > 0:
