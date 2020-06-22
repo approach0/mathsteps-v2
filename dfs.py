@@ -80,7 +80,7 @@ def test():
         '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
         '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
         '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
-        '\\frac{x \\times 0.609 \\times (x + y) + x \\times (-1) \\times (x + y) + x \\times 50}{x + y} - 629 - x^{2} \\times 2 + y^{2} = 0'
+        '(-579 + 0.391 \\times y) \\times x + (x + y) \\times y^{2} - 629 \\times y + x^{2} \\times 0.391 + x^{2} \\times 2 \\times x + x^{2} \\times 2 \\times y = 0'
     ]
 
     #testcases, _ = test_cases_x3_rational()

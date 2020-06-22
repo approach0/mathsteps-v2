@@ -21,7 +21,7 @@ def right_padding_zeros(num):
         Int = Int // 10
     return cnt
 
-def token_stats(narr, stats={}, right_side_of_eq=False, inside_of_sqrt=False):
+def token_stats(narr, stats={}, right_side_of_eq=False, inside_of_sqrt=False, level=0):
     """
     得到 表达式内符号的频率统计
     """
@@ -72,6 +72,8 @@ def token_stats(narr, stats={}, right_side_of_eq=False, inside_of_sqrt=False):
 
         else: # count variables
             incr(stats, token)
+            if level > 2:
+                incr(stats, 'n_vars_in_grp')
 
         return stats
 
@@ -86,11 +88,11 @@ def token_stats(narr, stats={}, right_side_of_eq=False, inside_of_sqrt=False):
             incr(stats, 'n_terms')
 
         if i == 1 and token == 'eq':
-            token_stats(c, stats, right_side_of_eq=True)
+            token_stats(c, stats, right_side_of_eq=True, level=level)
         elif token == 'sqrt':
-            token_stats(c, stats, inside_of_sqrt=True)
+            token_stats(c, stats, inside_of_sqrt=True, level=level)
         else:
-            token_stats(c, stats, right_side_of_eq)
+            token_stats(c, stats, right_side_of_eq, level=level+1)
     return stats
 
 
@@ -121,6 +123,7 @@ def value(narr, debug=False):
         'sqrt': 1,
         'n_terms': 0.6,
         'n_terms_in_sqrt': 25,
+        'n_vars_in_grp': 5,
         'right_side_of_eq': 15,
     }
     stats = token_stats(narr, {})
@@ -158,5 +161,11 @@ if __name__ == '__main__':
     #test('10 \cdot x + 15 = 15')
     #test('10 \cdot x + 15 -15 = 0')
 
-    test('100 \\times 25')
-    test('2500')
+    #test('100 \\times 25')
+    #test('2500')
+
+    #test('2(x+y) + 1')
+    #test('2x+2y + 1')
+
+    test('\\frac{x \\times ((-0.391) \\times (x + y) + 50)}{x + y} - 629 - x^{2} \\times 2 + y^{2} = 0')
+    test('(2 \\times y + 2 \\times x + 0.391) \\times x^{2} + (-579 + 0.391 \\times y) \\times x + (x + y) \\times y^{2} - 629 \\times y = 0')
