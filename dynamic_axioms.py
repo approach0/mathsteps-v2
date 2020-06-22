@@ -88,7 +88,7 @@ def Euclidean_lcm(a, b):
 # Dynamic Axioms
 ###
 
-def calc_add(pattern_narr, narr, rewrite_rules, output_tempalate):
+def _calc_add(pattern_narr, narr, rewrite_rules, output_tempalate):
     a = get_atom_number(rewrite_rules['a'])
     b = get_atom_number(rewrite_rules['b'])
 
@@ -101,7 +101,7 @@ def calc_add(pattern_narr, narr, rewrite_rules, output_tempalate):
 
 calc_add = (
     Axiom(name='加减法计算')
-    .add_rule('#(a + b)', '#1 c', dynamic_procedure=calc_add)
+    .add_rule('#(a + b)', '#1 c', dynamic_procedure=_calc_add)
 
     .add_test('-12 + 3', '-9')
     .add_test('(-12 - 3 - 1)')
@@ -110,7 +110,7 @@ calc_add = (
 )
 
 
-def calc_mul(pattern_narr, narr, rewrite_rules, output_tempalate):
+def _calc_mul(pattern_narr, narr, rewrite_rules, output_tempalate):
     a = get_atom_number(rewrite_rules['a'])
     b = get_atom_number(rewrite_rules['b'])
 
@@ -123,7 +123,7 @@ def calc_mul(pattern_narr, narr, rewrite_rules, output_tempalate):
 
 calc_mul = (
     Axiom(name='乘法计算')
-    .add_rule('#ab', '#1 c', dynamic_procedure=calc_mul)
+    .add_rule('#ab', '#1 c', dynamic_procedure=_calc_mul)
 
     .add_test('3(-2)')
     .add_test('-(3 \cdot (-2))')
@@ -131,7 +131,7 @@ calc_mul = (
 )
 
 
-def calc_pow(pattern_narr, narr, rewrite_rules, output_tempalate):
+def _calc_pow(pattern_narr, narr, rewrite_rules, output_tempalate):
     a = get_atom_number(rewrite_rules['a'])
     b = get_atom_number(rewrite_rules['b'])
 
@@ -152,7 +152,7 @@ def calc_pow(pattern_narr, narr, rewrite_rules, output_tempalate):
 
 calc_pow = (
     Axiom(name='乘方计算')
-    .add_rule('#a^{b}', '#1 c', dynamic_procedure=calc_pow)
+    .add_rule('#a^{b}', '#1 c', dynamic_procedure=_calc_pow)
 
     .add_test('2^{3}', '8')
     .add_test('-2^{3}', '-8')
@@ -162,7 +162,7 @@ calc_pow = (
 )
 
 
-def calc_sqrt(pattern_narr, narr, rewrite_rules, output_tempalates):
+def _calc_sqrt(pattern_narr, narr, rewrite_rules, output_tempalates):
     x = get_atom_number(rewrite_rules['x'])
 
     if x != None and x > 0 and x.is_integer():
@@ -179,14 +179,14 @@ def calc_sqrt(pattern_narr, narr, rewrite_rules, output_tempalates):
 
 calc_sqrt = (
     Axiom(name='开方化简')
-    .add_rule('#\sqrt{x}', ['#1 c', '#1 m \\sqrt{n}'], dynamic_procedure=calc_sqrt)
+    .add_rule('#\sqrt{x}', ['#1 c', '#1 m \\sqrt{n}'], dynamic_procedure=_calc_sqrt)
 
     .add_test('-\\sqrt{8}', '-2 \\times \sqrt{2}')
     .add_test('\\sqrt{16}', '4')
 )
 
 
-def calc_abs(pattern_narr, narr, rewrite_rules, output_tempalate):
+def _calc_abs(pattern_narr, narr, rewrite_rules, output_tempalate):
     x = get_atom_number(rewrite_rules['x'])
 
     if x != None:
@@ -198,14 +198,14 @@ def calc_abs(pattern_narr, narr, rewrite_rules, output_tempalate):
 
 calc_abs = (
     Axiom(name='绝对值计算')
-    .add_rule('#\\left| #x \\right|', '#1 c', dynamic_procedure=calc_abs)
+    .add_rule('#\\left| #x \\right|', '#1 c', dynamic_procedure=_calc_abs)
 
     .add_test('-\\left| 8 \\right|', '-8')
     .add_test('\\left| -8 \\right|', '8')
 )
 
 
-def simplify_fraction(pattern_narr, narr, rewrite_rules, output_tempalates):
+def _simplify_fraction(pattern_narr, narr, rewrite_rules, output_tempalates):
     a = get_atom_number(rewrite_rules['a'])
     b = get_atom_number(rewrite_rules['b'])
 
@@ -227,7 +227,7 @@ def simplify_fraction(pattern_narr, narr, rewrite_rules, output_tempalates):
 
 simplify_fraction = (
     Axiom(name='化简分式')
-    .add_rule('#\\frac{a}{b}', ['#1 c', '#1 \\frac{a}{b}'], dynamic_procedure=simplify_fraction)
+    .add_rule('#\\frac{a}{b}', ['#1 c', '#1 \\frac{a}{b}'], dynamic_procedure=_simplify_fraction)
 
     .add_test('-\\frac{-14}{-4}', '-\\frac{7}{2}')
     .add_test('\\frac{9}{-6}', '\\frac{-3}{2}')
@@ -235,7 +235,7 @@ simplify_fraction = (
 )
 
 
-def collapse_fraction(pattern_narr, narr, rewrite_rules, output_tempalates):
+def _collapse_fraction(pattern_narr, narr, rewrite_rules, output_tempalates):
     a = get_atom_number(rewrite_rules['a'])
     b = get_atom_number(rewrite_rules['b'])
 
@@ -253,7 +253,7 @@ def collapse_fraction(pattern_narr, narr, rewrite_rules, output_tempalates):
 
 collapse_fraction = (
     Axiom(name='分式中带小数的化简')
-    .add_rule('#\\frac{a}{b}', ['#1 c', '#1 kx'], dynamic_procedure=collapse_fraction)
+    .add_rule('#\\frac{a}{b}', ['#1 c', '#1 kx'], dynamic_procedure=_collapse_fraction)
 
     .add_test('-\\frac{-6.4}{3.2}', '2')
     .add_test('\\frac{9}{-2.5}', '-3.6')
@@ -261,7 +261,7 @@ collapse_fraction = (
 )
 
 
-def collapse_fraction_add_float(pattern_narr, narr, rewrite_rules, output_tempalate):
+def _collapse_fraction_add_float(pattern_narr, narr, rewrite_rules, output_tempalate):
     a = get_atom_number(rewrite_rules['a'])
     b = get_atom_number(rewrite_rules['b'])
     c = get_atom_number(rewrite_rules['c'])
@@ -275,14 +275,14 @@ def collapse_fraction_add_float(pattern_narr, narr, rewrite_rules, output_tempal
 
 collapse_fraction_add_float = (
     Axiom(name='分式加小数的化简')
-    .add_rule('#\\frac{a}{b} # c', '#1 x #2 c', dynamic_procedure=collapse_fraction_add_float)
+    .add_rule('#\\frac{a}{b} # c', '#1 x #2 c', dynamic_procedure=_collapse_fraction_add_float)
 
     .add_test('3.25 - \\frac{1}{4}', '-0.25 + 3.25')
     .add_test('-3.25 + \\frac{1}{4}', '0.25 - 3.25')
 )
 
 
-def canonicalize(pattern_narr, narr, rewrite_rules, output_tempalate):
+def _canonicalize(pattern_narr, narr, rewrite_rules, output_tempalate):
     sign, Type = narr[0]
     if Type in expression.commutative_operators():
         new_narr, is_applied = expression.canonicalize(narr)
@@ -291,9 +291,9 @@ def canonicalize(pattern_narr, narr, rewrite_rules, output_tempalate):
 
 canonicalize = (
     Axiom(name='去括号')
-    .add_rule('# a *{1}', 'X', dynamic_procedure=canonicalize)
-    .add_rule('# a # *{1}', 'X', dynamic_procedure=canonicalize)
-    .add_rule('# a', 'X', dynamic_procedure=canonicalize)
+    .add_rule('# a *{1}', 'X', dynamic_procedure=_canonicalize)
+    .add_rule('# a # *{1}', 'X', dynamic_procedure=_canonicalize)
+    .add_rule('# a', 'X', dynamic_procedure=_canonicalize)
 
     .add_test('-ab')
 
