@@ -14,7 +14,7 @@ def common_axioms():
         Axiom(name='带分式的展开')
         .add_rule('# & \\frac{a}{b}', '#1 (v + \\frac{a}{b})')
 
-        #.add_test('-3 \\frac{-2}{4}', '-(3 + \\frac{-2}{4})')
+        .add_test('-3 \\frac{-2}{4}', '-(3 + \\frac{-2}{4})')
         .add_test('-3 \\frac{1}{2}', '-(3 + \\frac{1}{2})')
     )
 
@@ -61,7 +61,8 @@ def common_axioms():
         Axiom(name='负数的平方是其相反数的平方')
         .add_rule('#(-a)^{2}', '#1 a^{2}')
 
-        #.add_test('(6 \div (-\\frac{2}{3})^{2})')
+        .add_test('(-3)^{2} - (6 \div (-\\frac{2}{3})^{2}) -  (-2)^{2}')
+        .add_test('(6 \div (-\\frac{2}{3})^{2})')
         .add_test('3^{2} - (1 + \\frac{1}{2}) \\times \\frac{2}{9} - (6 \div (-\\frac{2}{3})^{2}) - (-2)^{2}')
     )
 
@@ -291,6 +292,6 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() == '乘法分配率':
+        if axiom.name() == '负数的平方是其相反数的平方':
             axiom.test(debug=False)
     print(f'total {len(axioms)} axioms.')

@@ -365,7 +365,15 @@ class Axiom:
             depth, narr = Q.pop(0)
             narrs = self._level_apply(narr)
 
+            #print(max_times)
+            #print(expression.narr2tex(narr))
+            #for n in narrs:
+            #    print(expression.narr2tex(n))
+            #print()
+
             if len(narrs) == 0:
+                break
+            elif depth + 1 > max_times:
                 break
 
             # maintain a deepest level narrs
@@ -374,9 +382,6 @@ class Axiom:
             tmp = [(depth + 1, n) for n in narrs]
             Q += tmp
             deepest_Q += tmp
-
-            if depth + 1 >= max_times:
-                continue
 
         # also consider the case where nothing has applied in this level
         deepest_Q += [(applied_times, narr0)]

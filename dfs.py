@@ -74,7 +74,8 @@ def test():
         '4 -3 \\frac{1}{2}',
         '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
         '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
-        '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}'
+        '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
+        '(-3)^{2}-1\\frac{1}{2}\\times\\frac{2}{9}-6\\div(-\\frac{2}{3})^{2}-(-2)^{2}'
     ]
 
     #testcases, _ = test_cases_x3_rational()

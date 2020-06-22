@@ -235,8 +235,8 @@ export default {
 
     random() {
       let list = random_list.list
-      let idx = Math.floor(Math.random() * list.length)
-      //let idx = (this.last_random_idx + 1) % list.length
+      //let idx = Math.floor(Math.random() * list.length)
+      let idx = (this.last_random_idx + 1) % list.length
       this.last_random_idx = idx
       if (typeof list[idx] == 'object') {
         this.equations = list[idx]
