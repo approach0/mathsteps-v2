@@ -330,13 +330,8 @@ class Axiom:
 
     @staticmethod
     def _uniq_append(result_narrs, new_narr):
-        is_tuple = isinstance(new_narr, tuple)
-        if is_tuple:
-            applied_set = set([expression.narr2tex(narr) for _, narr in result_narrs])
-            new_tex = expression.narr2tex(new_narr[1])
-        else:
-            applied_set = set([expression.narr2tex(narr) for narr in result_narrs])
-            new_tex = expression.narr2tex(new_narr)
+        applied_set = set([expression.narr2tex(narr) for narr in result_narrs])
+        new_tex = expression.narr2tex(new_narr)
         if new_tex not in applied_set:
             result_narrs.append(new_narr)
 
@@ -400,46 +395,31 @@ class Axiom:
         if len(deepest_Q) == 0:
             deepest_Q += [(applied_times, narr0)]
 
-        #for d,n in deepest_Q:
-        #    print(f'deepest: {d}/{max_times}:', expression.narr2tex(n))
-        #print()
+        for d,n in deepest_Q:
+            print(f'deepest: {d}/{max_times}:', expression.narr2tex(n))
+        print()
 
         # for recursive sub-expressions
-        depth_narrs = []
+        result_narrs = []
         for depth, narr in deepest_Q:
             _, root_type = narr[0]
             children_results = []
+            print(narr)
             if root_type not in expression.terminal_tokens():
                 children = narr[1:]
                 for i, child in enumerate(children):
-                    applied_narrs = self._recursive_apply(child,
-                        debug=debug, applied_times=depth, max_times=max_times, bfs_bandwith=bfs_bandwith)
+                    applied_narrs = self._recursive_apply(child, debug=debug,
+                        applied_times=depth, max_times=max_times, bfs_bandwith=bfs_bandwith)
 
                     for new_depth, applied_narr in applied_narrs:
+                        print(expression.narr2tex(applied_narr))
                         # substitute with sub-routine expression
                         new_narr = deepcopy(narr)
                         replace_or_pass_children(new_narr, i, applied_narr)
                         # append result
-                        children_results.append((new_depth, new_narr))
+                        Axiom()._uniq_append(result_narrs, new_narr)
 
-            #print(depth, 'fff', expression.narr2tex(narr))
-            #for x in children_results:
-            #    print(x[0], ':::', expression.narr2tex(x[1]))
-            #print()
-
-            if len(children_results) > 0:
-                max_depth = max([d for d,n in children_results])
-                if max_depth > depth:
-                    progressed_children = [(d,n) for d,n in children_results if d == max_depth]
-                    for d, n in progressed_children:
-                        Axiom()._uniq_append(depth_narrs, (d, n))
-                    continue
-
-            # include any dead-end that none of its child has been applied.
-            if depth > 0:
-                Axiom()._uniq_append(depth_narrs, (depth, narr))
-
-        return depth_narrs
+        return result_narrs
 
 
     def apply(self, narr, debug=False):

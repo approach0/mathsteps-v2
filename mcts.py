@@ -159,10 +159,7 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
         # when no NN presents, we can only define value by complexity difference
         expr_val = state.value(narr)
         if nn_models is None:
-            if expr_val > origin_val:
-                if debug: print(f'[roll-out found early reward]', expr)
-                reward = expr_val - origin_val
-                break
+            pass
         else:
             complexity_reward += -expr_val
 
@@ -178,7 +175,7 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
                 reward = step_reward + max_complexity_reward / max(1, complexity_reward)
                 if debug: print(f'[step reward] {max_step_reward}')
             else:
-                reward = -origin_val
+                reward = expr_val
             break
 
         elif cnt >= n_times:
@@ -195,6 +192,9 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
                 step_reward = max_step_reward / max(1, 1 - pred_val)
                 reward = step_reward + max_complexity_reward / max(1, complexity_reward)
                 if debug: print(f'[step reward] {step_reward}')
+            else:
+                reward = expr_val
+
             break
 
         # randomly select index

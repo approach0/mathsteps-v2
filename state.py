@@ -102,7 +102,7 @@ def token_stats(narr, stats={}, right_side_of_eq=False, inside_of_sqrt=False, le
     return stats
 
 
-def value(narr, debug=False):
+def value_bkup(narr, debug=False):
     """
     计算 表达式的价值（等于各个符号频率的自定义加权和）
     """
@@ -147,6 +147,34 @@ def value(narr, debug=False):
     if 'NUMBER_in_sqrt' in stats:
         accum += 1.5 * math.log(1 + stats['NUMBER_in_sqrt'])
     return -accum
+
+
+def collect_stats(narr, stats, level):
+    root = narr[0]
+    children = narr[1:]
+    sign, token = root
+    if token in expression.terminal_tokens():
+        if stats['level'] < level:
+            stats['level'] = level
+        stats['leaves'] += 1
+        return
+
+    for i, c in enumerate(children):
+        collect_stats(c, stats, level=level+1)
+    
+
+def value(narr, level=0, debug=False):
+    stats = {
+        'level': 0,
+        'leaves': 0
+    }
+
+    collect_stats(narr, stats, 0)
+
+    if debug:
+        print(stats)
+
+    return - (stats['level'] * 10 + stats['leaves'])
 
 
 def test(tex):
