@@ -83,7 +83,7 @@ def expand(father, step, prior=0):
 
 def move_policy(father, steps, debug=False, prior_arr=None):
     """
-    选择儿子就节点中下一个 rollout 的起点
+    选择儿子就节点中下一个 roll-out 的起点
     未展开充分前进行展开操作，展开充分后通过 UCT 公式选择。
     """
     q, n, _, _, _, _, children = father
@@ -141,9 +141,9 @@ def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=Fa
 
 def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3, lock=None):
     """
-    Monte-Carlo 树的 rollout 操作
-    nn_models 未指定时，完全随机进行深度为 n_times 的 rollout.
-    nn_models 指定时，通过神经网络指定 rollout 选择节点的概率。
+    Monte-Carlo 树的 roll-out 操作
+    nn_models 未指定时，完全随机进行深度为 n_times 的 roll-out.
+    nn_models 指定时，通过神经网络指定 roll-out 选择节点的概率。
     """
     cnt = 0
     reward = 0
@@ -165,20 +165,18 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
         expr_val = state.value(narr)
         if nn_models is None:
             if expr_val > origin_val:
-                if debug: print(f'[rollout found early reward]', expr)
+                if debug: print(f'[roll-out found early reward]', expr)
                 reward = expr_val - origin_val
                 break
         else:
             complexity_reward += -expr_val
 
-        if lock and nn_models: lock.acquire()
         steps, step_probs = policy_steps(
             narr, all_axioms, k=k, debug=False, nn_models=nn_models, trust_nn=True
         )
-        if lock and nn_models: lock.release()
 
         if len(steps) == 0:
-            if debug: print('[rollout reach leaf]')
+            if debug: print('[roll-out reach leaf]')
 
             if nn_models:
                 step_reward = max_step_reward
@@ -187,7 +185,7 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
             break
 
         elif cnt >= n_times:
-            if debug: print(f'[rollout stop early]')
+            if debug: print(f'[roll-out stop early]')
 
             if nn_models:
                 # use NN to estimate the number of left-over steps
@@ -213,10 +211,10 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
 
         if lock: lock.acquire()
         if rollout_idx < len(children):
-            if debug: print(f'[rollout depth={cnt}, idx={rollout_idx} (exist)]:', expr)
+            if debug: print(f'[roll-out depth={cnt}, idx={rollout_idx} (exist)]:', expr)
             next_node = children[rollout_idx]
         else:
-            if debug: print(f'[rollout depth={cnt}, idx={rollout_idx} (expand)]:', expr)
+            if debug: print(f'[roll-out depth={cnt}, idx={rollout_idx} (expand)]:', expr)
             next_node = expand(node, steps[rollout_idx])
         if lock: lock.release()
 
@@ -235,7 +233,7 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
 
 def backprop(node, reward):
     """
-    反向传播：通过 reward 更新 rollout 路径上所有节点的统计数据
+    反向传播：通过 reward 更新 roll-out 路径上所有节点的统计数据
     """
     while node is not None:
         q, n, narr, father, axiom, axiom_idx, children = node
@@ -255,8 +253,8 @@ def evaluate(
         child = move_policy(node, steps, debug=debug, prior_arr=step_probs)
         if lock: lock.release()
 
-        if debug:
-            rich.print(f"[red]worker#{worker} sample batch[/] {i}th/{n_sample_times}")
+        if True:
+            rich.print(f"[red]worker#{worker} sample[/] {i}th/{n_sample_times}")
             #print('[step probs]', step_probs)
             print('[UCT]', [round(w, 5) for w in children_weights(node)])
             #for s,a,ai in steps:
@@ -276,7 +274,7 @@ def evaluate(
 
 def evaluate_parallel(
     node, all_axioms, steps, n_sample_times, sample_depth, visited, k=0,
-    n_worker=5, batch_sz=10, debug=False, nn_models=None, use_thread=False):
+    n_worker=10, batch_sz=2, debug=False, nn_models=None, use_thread=False):
     """
     采样函数（并行版本）：进行 n_sample_times 次采样
     """
@@ -291,14 +289,14 @@ def evaluate_parallel(
             f"{n_worker} workers, each {batch_sz}/{n_sample_times} samples")
 
         if use_thread:
-            with ThreadPoolExecutor(max_workers=batch_sz) as executor:
+            with ThreadPoolExecutor(max_workers=n_worker) as executor:
                 for i in range(batch_sz):
                     executor.submit(evaluate,
                         node, all_axioms, steps, batch_sz, sample_depth, visited,
                         debug=False, nn_models=nn_models, k=k, worker=i, lock=lock
                     )
         else:
-            with ProcessPoolExecutor(max_workers=batch_sz) as executor:
+            with ProcessPoolExecutor(max_workers=n_worker) as executor:
                 for i in range(n_worker):
                     executor.submit(evaluate,
                         node, all_axioms, steps, batch_sz, sample_depth, visited,
@@ -483,7 +481,7 @@ if __name__ == '__main__':
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
-                nn_models=nn_models, force_single_thread=True)
+                nn_models=nn_models, force_single_thread=False)
 
         total_steps += len(steps)
 

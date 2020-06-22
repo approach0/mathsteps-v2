@@ -146,16 +146,16 @@ def common_axioms():
         .add_rule('#X # Xk', '(#1 1 #2 k) X')
         .add_rule('#X *{1} # X *{2}', '(#1 *{1} #2 *{2}) X')
 
-        .add_test('2 + 2', '2 + 2')
-        .add_test('x^{2} + x^{2}', '2 \\times x^{2}')
-        .add_test('x + 2x + 3x', [
-            '(1 + 2 + 3) \\times x',
-            '(3 + 2 + 1) \\times x',
-            '(1 + 3 + 2) \\times x',
-            '(2 + 1 + 3) \\times x',
-            '(3 + 1 + 2) \\times x'
-        ])
-        .add_test('2 - 3 \cdot 2', '2 - 3 \\times 2')
+        #.add_test('2 + 2', '2 + 2')
+        #.add_test('x^{2} + x^{2}', '2 \\times x^{2}')
+        #.add_test('x + 2x + 3x', [
+        #    '(1 + 2 + 3) \\times x',
+        #    '(3 + 2 + 1) \\times x',
+        #    '(1 + 3 + 2) \\times x',
+        #    '(2 + 1 + 3) \\times x',
+        #    '(3 + 1 + 2) \\times x'
+        #])
+        #.add_test('2 - 3 \cdot 2', '2 - 3 \\times 2')
         .add_test('x \\times 50 + (x + y) \\times (-629) + (x + y) \\times x^{2} \\times 2 + (x + y) \\times (-y)^{2} + (x + y) \\times x \\times 1 + 0.609 \\times x \\times x + 0.609 \\times x \\times y = (x + y) \\times 0')
     )
 
