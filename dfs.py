@@ -17,6 +17,7 @@ def possible_next_steps(narr, axioms, debug=False, restrict_rules=None, quick_re
 
     for axiom_idx, axiom in enumerate(axioms):
         possible_applied_narrs = axiom.apply(narr)
+        #print(axiom.name(), len(possible_applied_narrs))
 
         value_constrain_narrs = []
         for applied_narr in possible_applied_narrs:

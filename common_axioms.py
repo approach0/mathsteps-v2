@@ -157,7 +157,7 @@ def common_axioms():
     )
 
     axioms.append(
-        Axiom(name='合并同类项', recursive_apply=True)
+        Axiom(name='合并同类项', recursive_apply=True, allow_complication=True)
         .add_rule('X + X', '2X')
         .add_rule('- X - X', '-2X')
         .add_rule('#X # kX', '(#1 1 #2 k) X')

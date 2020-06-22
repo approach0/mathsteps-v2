@@ -273,7 +273,7 @@ def evaluate(
 
 def evaluate_parallel(
     node, all_axioms, steps, n_sample_times, sample_depth, visited, k=0,
-    n_worker=10, batch_sz=2, debug=False, nn_models=None, use_thread=False):
+    n_worker=5, batch_sz=2, debug=False, nn_models=None, use_thread=False):
     """
     采样函数（并行版本）：进行 n_sample_times 次采样
     """
@@ -388,6 +388,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
         manager = None
 
     visited = set([expression.narr2tex(narr0)])
+    final_steps = []
 
     while True:
         node = moves[-1]
@@ -454,7 +455,8 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
         final_steps = [(e, a, ai) for q, n, e, f, a, ai, c in moves]
         render_steps(final_steps)
 
-    final_steps = back_off_step(final_steps, debug=True)
+    if len(final_steps) > 0:
+        final_steps = back_off_step(final_steps, debug=True)
 
     if nn_models and training:
         # fine-tune value network
@@ -470,6 +472,7 @@ if __name__ == '__main__':
 
     #test_exprs = ['( \\frac{5}{6} + \\frac{3}{8} + \\frac{7}{4} ) 24']
     test_exprs = ['-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0']
+    test_exprs = ['x \\times 50 + x^{2} + y \\times x + x^{2} \\times 0.609 + x \\times 0.609 \\times y + x^{2} \\times 2 \\times x + x^{2} \\times 2 \\times y - 629 \\times x - 629 \\times y + y^{2} \\times x + y^{2} \\times y = 0']
 
     nn_models = None
     timer = Timer()
