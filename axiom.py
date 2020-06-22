@@ -52,9 +52,10 @@ class Axiom:
         return self
 
 
-    def test(self, debug=False):
+    def test(self, tex=None, debug=False):
         if len(self.tests) == 0: print('[no test case]')
-        for test, expect in self.tests:
+        tests = self.tests if tex is None else [(tex, None)]
+        for test, expect in tests:
             expr = test if isinstance(test, str) else expression.narr2tex(test)
             rich.print('[bold cyan][[test]][/]', end=" ")
             print(expr)
@@ -445,11 +446,14 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='任何数加零还是它本身', recursive_apply=True)
-        .add_rule('0 + n', 'n')
-        .add_rule('n - 0', 'n')
-
-        .add_test('0+a+0+0')
+        Axiom(name='合并同类项', recursive_apply=True)
+        .add_rule('X + X', '2X')
+        .add_rule('- X - X', '-2X')
+        .add_rule('#X # kX', '(#1 1 #2 k) X')
+        .add_rule('#X # Xk', '(#1 1 #2 k) X')
+        .add_rule('#X *{1} # X *{2}', '(#1 *{1} #2 *{2}) X')
     )
 
-    a.test()
+    a.test(
+        'x \\times 50 + x^{2} + y \\times x + x^{2} \\times 0.609 + x \\times 0.609 \\times y + x^{2} \\times 2 \\times x + x^{2} \\times 2 \\times y - 629 \\times x - 629 \\times y + y^{2} \\times x + y^{2} \\times y = 0'
+    )
