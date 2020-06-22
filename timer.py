@@ -12,7 +12,7 @@ class Timer():
         if type == KeyboardInterrupt:
             print('')
             print('aborted by KeyboardInterrupt')
-            quit()
+            return
         self.time_end = time.time()
         time_elapsed = self.time_end - self.time_start
         print(f'[timer] {time_elapsed:.4f}s')

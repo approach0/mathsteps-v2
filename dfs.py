@@ -53,12 +53,16 @@ def possible_next_steps(narr, axioms, debug=False, restrict_rules=None, quick_re
 
 
 def dfs(narr, axioms, debug=False):
-    next_steps = [(narr, Axiom(name='原式'), -1)]
-    return_steps = []
-    while len(next_steps) > 0:
-        narr, axiom, axiom_idx = next_steps[0]
-        return_steps.append((narr, axiom, axiom_idx))
-        next_steps = possible_next_steps(narr, axioms, quick_return=True, debug=debug)
+    try:
+        next_steps = [(narr, Axiom(name='原式'), -1)]
+        return_steps = []
+        while len(next_steps) > 0:
+            narr, axiom, axiom_idx = next_steps[0]
+            return_steps.append((narr, axiom, axiom_idx))
+            next_steps = possible_next_steps(narr, axioms, quick_return=True, debug=debug)
+    except KeyboardInterrupt:
+        return return_steps
+
     return return_steps
 
 
@@ -74,8 +78,7 @@ def test():
         '4 -3 \\frac{1}{2}',
         '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
         '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
-        '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
-        '(-3)^{2}-1\\frac{1}{2}\\times\\frac{2}{9}-6\\div(-\\frac{2}{3})^{2}-(-2)^{2}'
+        '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}'
     ]
 
     #testcases, _ = test_cases_x3_rational()

@@ -156,6 +156,7 @@ def common_axioms():
             '(3 + 1 + 2) \\times x'
         ])
         .add_test('2 - 3 \cdot 2', '2 - 3 \\times 2')
+        .add_test('x \\times 50 + (x + y) \\times (-629) + (x + y) \\times x^{2} \\times 2 + (x + y) \\times (-y)^{2} + (x + y) \\times x \\times 1 + 0.609 \\times x \\times x + 0.609 \\times x \\times y = (x + y) \\times 0')
     )
 
     axioms.append(
@@ -292,6 +293,6 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() == '负数的平方是其相反数的平方':
+        if axiom.name() == '合并同类项':
             axiom.test(debug=False)
     print(f'total {len(axioms)} axioms.')

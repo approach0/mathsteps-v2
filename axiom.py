@@ -357,37 +357,40 @@ class Axiom:
         return ret_narrs
 
 
-    def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=6):
+    def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=6, bfs_bandwith=20):
         # apply at this level
         Q = [(applied_times, narr0)]
-        deepest_Q = []
+        candidates = []
         while len(Q) > 0:
             depth, narr = Q.pop(0)
+            if depth + 1 > max_times:
+                break
+
+            #print('@', depth, '/', max_times)
+            #print('>', expression.narr2tex(narr))
+
             narrs = self._level_apply(narr)
 
-            #print(max_times)
-            #print(expression.narr2tex(narr))
-            #for n in narrs:
-            #    print(expression.narr2tex(n))
-            #print()
+            # keep adding next level or dead ends to candidates
+            if len(narrs) > 0:
+                tmp = [(depth + 1, n) for n in narrs]
+                candidates += tmp
+            else:
+                candidates.append((depth, narr))
+                continue
 
-            if len(narrs) == 0:
-                break
-            elif depth + 1 > max_times:
-                break
-
-            # maintain a deepest level narrs
-            if len(deepest_Q) > 0 and deepest_Q[0][0] != depth:
-                deepest_Q = []
-            tmp = [(depth + 1, n) for n in narrs]
+            # update Q
             Q += tmp
-            deepest_Q += tmp
+            if len(Q) > bfs_bandwith:
+                break
 
-        # also consider the case where nothing has applied in this level
+        # start from the deepest level narrs
+        deepest = max([d for d, n in candidates]) if len(candidates) > 0 else 0
+        deepest_Q = [(d, n) for d, n in candidates if d == deepest]
         deepest_Q += [(applied_times, narr0)]
 
-        #for m,n in deepest_Q:
-        #    print(f'applied: {m}/{max_times}:', expression.narr2tex(n))
+        #for d,n in deepest_Q:
+        #    print(f'applied: {d}/{max_times}:', expression.narr2tex(n))
         #print()
 
         # for recursive sub-expressions
