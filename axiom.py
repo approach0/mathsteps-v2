@@ -52,7 +52,8 @@ class Axiom:
         return self
 
 
-    def test(self, tex=None, debug=False):
+    def test(self, tex=None, debug=False, render=True):
+        import render_math
         if len(self.tests) == 0: print('[no test case]')
         tests = self.tests if tex is None else [(tex, None)]
         for test, expect in tests:
@@ -61,8 +62,12 @@ class Axiom:
             print(expr)
             narr = expression.tex2narr(expr) if isinstance(test, str) else test
             possible_applied_narrs = self.apply(narr, debug=debug)
-            for applied_narr in possible_applied_narrs:
-                applied_tex = expression.narr2tex(applied_narr)
+            possible_applied_texs = [expression.narr2tex(_) for _ in possible_applied_narrs]
+
+            if render:
+                render_math.render_equations([expr] + possible_applied_texs)
+
+            for applied_tex in possible_applied_texs:
                 print('[result]', applied_tex)
                 if expect is not None:
                     if applied_tex in expect:

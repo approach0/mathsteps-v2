@@ -296,4 +296,5 @@ if __name__ == '__main__':
             #import cProfile
             #cProfile.run('axiom.test(debug=False)')
             axiom.test(debug=False)
+
     print(f'total {len(axioms)} axioms.')
