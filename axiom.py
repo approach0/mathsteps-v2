@@ -382,7 +382,7 @@ class Axiom:
             # update Q
             Q += tmp
             if len(Q) > bfs_bandwith:
-                break
+                Q = Q[-bfs_bandwith:]
 
         # start from the deepest level narrs
         deepest = max([d for d, n in candidates]) if len(candidates) > 0 else 0
@@ -390,7 +390,7 @@ class Axiom:
         deepest_Q += [(applied_times, narr0)]
 
         #for d,n in deepest_Q:
-        #    print(f'applied: {d}/{max_times}:', expression.narr2tex(n))
+        #    print(f'deepest: {d}/{max_times}:', expression.narr2tex(n))
         #print()
 
         # for recursive sub-expressions
@@ -402,7 +402,7 @@ class Axiom:
                 children = deepcopy(narr[1:])
                 for i, child in enumerate(children):
                     applied_narrs = self._recursive_apply(child,
-                        debug=debug, applied_times=depth, max_times=max_times)
+                        debug=debug, applied_times=depth, max_times=max_times, bfs_bandwith=bfs_bandwith)
 
                     for new_depth, applied_narr in applied_narrs:
                         # substitute with sub-routine expression
@@ -433,7 +433,7 @@ class Axiom:
 
     def apply(self, narr, debug=False):
         if self.recursive_apply:
-            return [n for d,n in self._recursive_apply(narr, debug=debug)]
+            return [n for d,n in self._recursive_apply(narr, debug=debug, bfs_bandwith=1)]
         else:
             return [n for d,n in self._recursive_apply(narr, debug=debug, max_times=1)]
 
