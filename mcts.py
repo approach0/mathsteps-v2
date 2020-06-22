@@ -250,7 +250,8 @@ def evaluate(
         child = move_policy(node, steps, debug=debug, prior_arr=step_probs)
         if lock: lock.release()
 
-        if True:
+        if debug:
+        #if True:
             rich.print(f"[red]worker#{worker} sample[/] {i+1}th/{n_sample_times}")
             #print('[step probs]', step_probs)
             #print('[expr]', expression.narr2tex(node[2]))

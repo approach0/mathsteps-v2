@@ -1,4 +1,5 @@
 import math
+import expression
 
 def right_padding_zeros(num):
     """
@@ -28,6 +29,8 @@ def token_stats(narr, stats={}, right_side_of_eq=False, inside_of_sqrt=False, le
     root = narr[0]
     children = narr[1:]
     sign, token = root
+
+    #print(f'L{level}', expression.narr2tex(narr))
 
     def incr(d, k, v=1):
         if right_side_of_eq and k in [
@@ -73,7 +76,10 @@ def token_stats(narr, stats={}, right_side_of_eq=False, inside_of_sqrt=False, le
         else: # count variables
             incr(stats, token)
             if level > 2:
-                stats['n_deepest_var_level'] = level
+                if 'n_deepest_var_level' not in stats:
+                    stats['n_deepest_var_level'] = level
+                elif stats['n_deepest_var_level'] < level:
+                    stats['n_deepest_var_level'] = level
 
         return stats
 
@@ -134,7 +140,7 @@ def value(narr, debug=False):
     # symbol type values
     for key in stats:
         if key in value_dict:
-            accum += stats[key] * value_dict[key] 
+            accum += stats[key] * value_dict[key]
     # number sum values
     if 'NUMBER_sum' in stats:
         accum += math.log(1 + stats['NUMBER_sum']) / 2
@@ -167,5 +173,5 @@ if __name__ == '__main__':
     #test('2(x+y) + 1')
     #test('2x+2y + 1')
 
-    test('x \\times 50 + (x + y) \\times (-0.391) \\times x + (x + y) \\times (-629) + (x + y) \\times y^{2} + x^{2} \\times 2 \\times x + x^{2} \\times 2 \\times y = 0')
-    test('((x + y) \\times (-0.391) + 50) \\times x + (y^{2} - 629) \\times (x + y) + (2 \\times y + 2 \\times x) \\times x^{2} = 0')
+    test('-629 - x^{2} \\times 2 + y^{2} + x \\times 0.609 + x \\times \\frac{50}{x + y} - x \\times 1 = 0')
+    test('(-1 + \\frac{50}{x + y} + 0.609) \\times x - 629 - x^{2} \\times 2 + y^{2} = 0')
