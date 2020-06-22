@@ -375,7 +375,7 @@ def back_off_step(steps, debug=False):
     return steps
 
 
-def mcts(narr0, all_axioms, sample_depth=8, n_sample_times=200, n_maxsteps=150, k=3,
+def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=150, k=3,
          debug=False, nn_models=None, training=False, force_single_thread=False):
     #       q  n   narr  father  axiom   axiomIdx  children
     root = [0, 1, narr0, None,  None,      -1,       []    ]
@@ -468,8 +468,8 @@ if __name__ == '__main__':
     from render_math import render_steps
     axioms = common_axioms()
 
-    test_exprs = ['( \\frac{5}{6} + \\frac{3}{8} + \\frac{7}{4} ) 24']
-    #test_exprs = ['-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0']
+    #test_exprs = ['( \\frac{5}{6} + \\frac{3}{8} + \\frac{7}{4} ) 24']
+    test_exprs = ['-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0']
 
     nn_models = None
     timer = Timer()

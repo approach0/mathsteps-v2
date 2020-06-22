@@ -317,10 +317,9 @@ class Axiom:
             is_commutative = True if root[1] in expression.commutative_operators() else False
             # generate binary operations
             for (cl, cr), (i, j) in self._children_choose_two(children, is_commutative):
-                construct_tree = deepcopy([root, cl, cr])
+                construct_tree = [root, cl, cr]
                 brothers = [c for k, c in enumerate(children) if k != i and k != j and j >= 0]
-                brothers = deepcopy(brothers)
-                yield construct_tree, brothers
+                yield deepcopy(construct_tree), deepcopy(brothers)
 
 
     @staticmethod
@@ -336,11 +335,16 @@ class Axiom:
             result_narrs.append(new_narr)
 
     def _level_apply(self, narr, debug=False):
+        ret_narrs = []
         _, root_type = narr[0]
+
+        # ignore terminal tokens (no operator)
+        if root_type in expression.terminal_tokens():
+            return ret_narrs
+
         wildcards_index = get_wildcards_index(narr)
         no_permute = (wildcards_index != None) or root_type in expression.no_permute_tokens()
 
-        ret_narrs = []
         for construct_tree, brothers in self._children_permutation(narr, no_permute=no_permute):
             rewritten_narr, is_applied = self._exact_apply(construct_tree, debug=debug)
             if is_applied:
@@ -399,7 +403,7 @@ class Axiom:
             _, root_type = narr[0]
             children_results = []
             if root_type not in expression.terminal_tokens():
-                children = deepcopy(narr[1:])
+                children = narr[1:]
                 for i, child in enumerate(children):
                     applied_narrs = self._recursive_apply(child,
                         debug=debug, applied_times=depth, max_times=max_times, bfs_bandwith=bfs_bandwith)
