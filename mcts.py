@@ -248,15 +248,16 @@ def evaluate(
     """
     采样函数（顺序执行版）：进行 n_sample_times 次采样
     """
-    for i, _ in enumerate(range(n_sample_times)):
+    for i in range(n_sample_times):
         if lock: lock.acquire()
         child = move_policy(node, steps, debug=debug, prior_arr=step_probs)
         if lock: lock.release()
 
         if True:
-            rich.print(f"[red]worker#{worker} sample[/] {i}th/{n_sample_times}")
+            rich.print(f"[red]worker#{worker} sample[/] {i+1}th/{n_sample_times}")
             #print('[step probs]', step_probs)
-            print('[UCT]', [round(w, 5) for w in children_weights(node)])
+            print('[expr]', expression.narr2tex(node[2]))
+            print('[UCT]', [(c[4].name(), round(w, 5)) for c, w in zip(node[6], children_weights(node))])
             #for s,a,ai in steps:
             #    print(f'axiom#{ai}', a, end='\n---\n')
             #    print(expression.narr2tex(s))
@@ -356,11 +357,12 @@ def back_off_step(steps, debug=False):
     """
     裁剪 MCTS 最后几步的探索步骤，确保得到的 value 比较小
     """
-    max_val = max([val for val, narr, a, ai in steps])
+    max_val = max([state.value(narr) for narr, a, ai in steps])
 
     while len(steps) > 1:
         cur_step = steps[-1]
-        val, narr, _, _ = cur_step
+        narr, _, _ = cur_step
+        val = state.value(narr)
 
         if val >= max_val:
             break
@@ -431,7 +433,7 @@ def mcts(narr0, all_axioms, sample_depth=8, n_sample_times=200, n_maxsteps=150, 
 
         # selection
         move_choice, w = best_child_of(node, c_param=.0, debug=debug)
-        move_to_expr = move_choice[2]
+        move_to_expr = expression.narr2tex(move_choice[2])
         if w == 0 or move_to_expr in visited:
             print(f'[abort] best w={w:.2f}, visited: {move_to_expr in visited}')
             break
@@ -451,12 +453,12 @@ def mcts(narr0, all_axioms, sample_depth=8, n_sample_times=200, n_maxsteps=150, 
                 break
 
     # construct steps to be returned
-    steps = [(state.value(e), e, a, ai) for q, n, e, f, a, ai, c in moves]
+    steps = [(e, a, ai) for q, n, e, f, a, ai, c in moves]
     steps = back_off_step(steps, debug=True)
 
     if nn_models and training:
         # fine-tune value network
-        for i, (_, e, _, _) in enumerate(steps):
+        for i, (e, _, _) in enumerate(steps):
             value = -(len(steps) - i - 1)
             #value_fine_tuning(nn_models, e, value, debug=debug)
     return steps
@@ -466,8 +468,8 @@ if __name__ == '__main__':
     from render_math import render_steps
     axioms = common_axioms()
 
-    test_exprs = ['( \\frac{5}{6} + \\frac{3}{8} ) 24']
-    test_exprs = ['-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0']
+    test_exprs = ['( \\frac{5}{6} + \\frac{3}{8} + \\frac{7}{4} ) 24']
+    #test_exprs = ['-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0']
 
     nn_models = None
     timer = Timer()
@@ -477,24 +479,14 @@ if __name__ == '__main__':
     for i, expr in enumerate(test_exprs):
         narr = expression.tex2narr(expr)
 
-        n_sample_times = 10 if nn_models else 200
+        n_sample_times = 10 if nn_models else 100
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
                 nn_models=nn_models, force_single_thread=False)
 
-        total_steps += len(steps)
-
         render_steps(steps)
         print(f'Test case: {i} / {len(test_exprs) - 1}')
 
-        answer = steps[-1][1]
-        truths = answers[i]
-        if answer in truths:
-            rich.print('[bold green]pass[/bold green]')
-        else:
-            print('[truths]', truths)
-            rich.print('[bold red]failed[/]')
-
-            #print('Enter to continue')
-            #input()
+        #print('Enter to continue')
+        #input()

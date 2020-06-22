@@ -357,7 +357,7 @@ class Axiom:
         return ret_narrs
 
 
-    def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=6, bfs_bandwith=20):
+    def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=6, bfs_bandwith=10):
         # apply at this level
         Q = [(applied_times, narr0)]
         candidates = []
