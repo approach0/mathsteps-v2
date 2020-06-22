@@ -131,16 +131,6 @@ def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=Fa
     else:
         # default steps without prior
         steps = possible_next_steps(narr, all_axioms)
-        uniq_axioms = set([ai for s,a,ai in steps])
-        uniq_steps = []
-        for s,a,ai in steps:
-            if ai in uniq_axioms:
-                uniq_steps.append((s,a,ai))
-                uniq_axioms.remove(ai)
-                if len(uniq_axioms) == 0:
-                    break
-
-        steps = uniq_steps
         return steps, [0 for _ in steps]
 
 
@@ -263,7 +253,7 @@ def evaluate(
         if True:
             rich.print(f"[red]worker#{worker} sample[/] {i+1}th/{n_sample_times}")
             #print('[step probs]', step_probs)
-            print('[expr]', expression.narr2tex(node[2]))
+            #print('[expr]', expression.narr2tex(node[2]))
             print('[UCT]', [(c[4].name(), round(w, 5)) for c, w in zip(node[6], children_weights(node))])
             #for s,a,ai in steps:
             #    print(f'axiom#{ai}', a, end='\n---\n')
@@ -398,72 +388,71 @@ def mcts(narr0, all_axioms, sample_depth=8, n_sample_times=200, n_maxsteps=50, k
 
     visited = set([expression.narr2tex(narr0)])
 
-    try:
-        while True:
-            node = moves[-1]
-            q, n, narr, father, axiom, axiom_idx, children = node
+    while True:
+        node = moves[-1]
+        q, n, narr, father, axiom, axiom_idx, children = node
 
-            # debug print
-            if True:
-            #if debug:
-                print('\033[94m', end='')
-                expr_val = state.value(narr)
-                print(f'[current] step={len(moves)}, val={expr_val:.1f}:',
-                    expression.narr2tex(narr), end='')
-                print('\033[0m', end='\n')
+        # debug print
+        if True:
+        #if debug:
+            print('\033[94m', end='')
+            expr_val = state.value(narr)
+            print(f'[current] step={len(moves)}, val={expr_val:.1f}:',
+                expression.narr2tex(narr), end='')
+            print('\033[0m', end='\n')
 
-            steps, step_probs = policy_steps(
-                narr, all_axioms, k=k, debug=debug, nn_models=nn_models, trust_nn=False
+        steps, step_probs = policy_steps(
+            narr, all_axioms, k=k, debug=debug, nn_models=nn_models, trust_nn=False
+        )
+
+        if debug:
+            rich.print(f'[magenta]candidate steps={len(steps)}[/]')
+            for n, a, ai in steps:
+                print(a.name(), ':')
+                print(expression.narr2tex(n), end='\n\n')
+
+        if len(steps) == 0:
+            if nn_models and training:
+                policy = 0
+                #policy_fine_tuning(nn_models, expr, policy, debug=debug, all_axioms=all_axioms)
+            break
+
+        if manager:
+            evaluate_parallel(
+                node, all_axioms, steps, n_sample_times, sample_depth, visited,
+                debug=debug, nn_models=nn_models, k=k
+            )
+        else:
+            evaluate(
+                node, all_axioms, steps, n_sample_times, sample_depth, visited,
+                debug=debug, nn_models=nn_models, k=k, step_probs=step_probs
             )
 
-            if debug:
-                rich.print(f'[magenta]candidate steps={len(steps)}[/]')
-                for n, a, ai in steps:
-                    print(a.name(), ':')
-                    print(expression.narr2tex(n), end='\n\n')
-
-            if len(steps) == 0:
-                if nn_models and training:
-                    policy = 0
-                    #policy_fine_tuning(nn_models, expr, policy, debug=debug, all_axioms=all_axioms)
-                break
+        # selection
+        move_choice, w = best_child_of(node, c_param=.0, debug=debug)
+        move_to_expr = expression.narr2tex(move_choice[2])
+        if w == 0 or move_to_expr in visited:
+            print(f'[abort] best w={w:.2f}, visited: {move_to_expr in visited}')
+            break
+        else:
+            if nn_models and training:
+                policy = move_choice[5] + 1
+                #policy_fine_tuning(nn_models, expr, policy, debug=debug, all_axioms=all_axioms)
 
             if manager:
-                evaluate_parallel(
-                    node, all_axioms, steps, n_sample_times, sample_depth, visited,
-                    debug=debug, nn_models=nn_models, k=k
-                )
-            else:
-                evaluate(
-                    node, all_axioms, steps, n_sample_times, sample_depth, visited,
-                    debug=debug, nn_models=nn_models, k=k, step_probs=step_probs
-                )
+                move_choice = manager.list(move_choice)
+            moves.append(move_choice)
 
-            # selection
-            move_choice, w = best_child_of(node, c_param=.0, debug=debug)
-            move_to_expr = expression.narr2tex(move_choice[2])
-            if w == 0 or move_to_expr in visited:
-                print(f'[abort] best w={w:.2f}, visited: {move_to_expr in visited}')
+            visited.add(move_to_expr)
+            #if debug: print('[visited]', visited)
+
+            if len(moves) > n_maxsteps:
                 break
-            else:
-                if nn_models and training:
-                    policy = move_choice[5] + 1
-                    #policy_fine_tuning(nn_models, expr, policy, debug=debug, all_axioms=all_axioms)
 
-                if manager:
-                    move_choice = manager.list(move_choice)
-                moves.append(move_choice)
+        # construct steps to be returned
+        steps = [(e, a, ai) for q, n, e, f, a, ai, c in moves]
+        render_steps(steps)
 
-                visited.add(move_to_expr)
-                #if debug: print('[visited]', visited)
-
-                if len(moves) > n_maxsteps:
-                    break
-    except KeyboardInterrupt:
-        pass
-
-    # construct steps to be returned
-    steps = [(e, a, ai) for q, n, e, f, a, ai, c in moves]
     steps = back_off_step(steps, debug=True)
 
     if nn_models and training:
@@ -480,8 +469,8 @@ if __name__ == '__main__':
 
     #test_exprs = ['( \\frac{5}{6} + \\frac{3}{8} + \\frac{7}{4} ) 24']
     test_exprs = ['-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0']
-    test_exprs = ['-629 - x^{2} \\times 2 + y^{2} + x \\times 0.609 + x \\times \\frac{50}{x + y} + x \\times (-1) = 0']
-    test_exprs = ['(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}']
+    test_exprs = ['-629 - x^{2} \\times 2 + y^{2} + x \\times 0.609 + x \\times \\frac{50}{x + y} - x = 0']
+    test_exprs = ['-629 - x^{2} \\times 2 + y^{2} + x \\times 0.609 + \\frac{x \\times 50}{x + y} - x = 0']
 
     nn_models = None
     timer = Timer()
@@ -492,6 +481,7 @@ if __name__ == '__main__':
         narr = expression.tex2narr(expr)
 
         n_sample_times = 10 if nn_models else 100
+
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,

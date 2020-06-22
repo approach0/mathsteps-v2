@@ -361,7 +361,7 @@ class Axiom:
         return ret_narrs
 
 
-    def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=6, bfs_bandwith=10):
+    def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=6, bfs_bandwith=1):
         # apply at this level
         Q = [(applied_times, narr0)]
         candidates = []
@@ -391,7 +391,8 @@ class Axiom:
         # start from the deepest level narrs
         deepest = max([d for d, n in candidates]) if len(candidates) > 0 else 0
         deepest_Q = [(d, n) for d, n in candidates if d == deepest]
-        deepest_Q += [(applied_times, narr0)]
+        if len(deepest_Q) == 0:
+            deepest_Q += [(applied_times, narr0)]
 
         #for d,n in deepest_Q:
         #    print(f'deepest: {d}/{max_times}:', expression.narr2tex(n))
