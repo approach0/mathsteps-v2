@@ -33,10 +33,6 @@ def children_weights(father, c_param=1.4, debug=False):
     得到节点所有儿子的 UCT 权重
     """
     q, n, _, _, _, _, children = father
-
-    if debug:
-        print('[Q weights]', [c[0] for c in children])
-
     weights = [
         c[0] / c[1] + c_param * math.sqrt(2 * math.log(n) / c[1])
         if c[1] != 0 else 0
@@ -135,7 +131,16 @@ def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=Fa
     else:
         # default steps without prior
         steps = possible_next_steps(narr, all_axioms)
+        uniq_axioms = set([ai for s,a,ai in steps])
+        uniq_steps = []
+        for s,a,ai in steps:
+            if ai in uniq_axioms:
+                uniq_steps.append((s,a,ai))
+                uniq_axioms.remove(ai)
+                if len(uniq_axioms) == 0:
+                    break
 
+        steps = uniq_steps
         return steps, [0 for _ in steps]
 
 
@@ -182,6 +187,8 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
                 step_reward = max_step_reward
                 reward = step_reward + max_complexity_reward / max(1, complexity_reward)
                 if debug: print(f'[step reward] {max_step_reward}')
+            else:
+                reward = -origin_val
             break
 
         elif cnt >= n_times:
@@ -375,7 +382,7 @@ def back_off_step(steps, debug=False):
     return steps
 
 
-def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=150, k=3,
+def mcts(narr0, all_axioms, sample_depth=8, n_sample_times=200, n_maxsteps=50, k=3,
          debug=False, nn_models=None, training=False, force_single_thread=False):
     #       q  n   narr  father  axiom   axiomIdx  children
     root = [0, 1, narr0, None,  None,      -1,       []    ]
@@ -470,6 +477,7 @@ if __name__ == '__main__':
 
     #test_exprs = ['( \\frac{5}{6} + \\frac{3}{8} + \\frac{7}{4} ) 24']
     test_exprs = ['-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0']
+    test_exprs = ['-629 - x^{2} \\times 2 + y^{2} + x \\times 0.609 + x \\times \\frac{50}{x + y} + x \\times (-1) = 0']
 
     nn_models = None
     timer = Timer()
