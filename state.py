@@ -73,7 +73,7 @@ def token_stats(narr, stats={}, right_side_of_eq=False, inside_of_sqrt=False, le
         else: # count variables
             incr(stats, token)
             if level > 2:
-                incr(stats, 'n_vars_in_grp')
+                stats['n_deepest_var_level'] = level
 
         return stats
 
@@ -123,7 +123,7 @@ def value(narr, debug=False):
         'sqrt': 1,
         'n_terms': 0.6,
         'n_terms_in_sqrt': 25,
-        'n_vars_in_grp': 5,
+        'n_deepest_var_level': 100,
         'right_side_of_eq': 15,
     }
     stats = token_stats(narr, {})
@@ -167,5 +167,5 @@ if __name__ == '__main__':
     #test('2(x+y) + 1')
     #test('2x+2y + 1')
 
-    test('\\frac{x \\times ((-0.391) \\times (x + y) + 50)}{x + y} - 629 - x^{2} \\times 2 + y^{2} = 0')
-    test('(2 \\times y + 2 \\times x + 0.391) \\times x^{2} + (-579 + 0.391 \\times y) \\times x + (x + y) \\times y^{2} - 629 \\times y = 0')
+    test('x \\times 50 + (x + y) \\times (-0.391) \\times x + (x + y) \\times (-629) + (x + y) \\times y^{2} + x^{2} \\times 2 \\times x + x^{2} \\times 2 \\times y = 0')
+    test('((x + y) \\times (-0.391) + 50) \\times x + (y^{2} - 629) \\times (x + y) + (2 \\times y + 2 \\times x) \\times x^{2} = 0')

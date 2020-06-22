@@ -372,7 +372,7 @@ def back_off_step(steps, debug=False):
     return steps
 
 
-def mcts(narr0, all_axioms, sample_depth=8, n_sample_times=200, n_maxsteps=50, k=3,
+def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, k=3,
          debug=False, nn_models=None, training=False, force_single_thread=False):
     #       q  n   narr  father  axiom   axiomIdx  children
     root = [0, 1, narr0, None,  None,      -1,       []    ]
@@ -450,17 +450,17 @@ def mcts(narr0, all_axioms, sample_depth=8, n_sample_times=200, n_maxsteps=50, k
                 break
 
         # construct steps to be returned
-        steps = [(e, a, ai) for q, n, e, f, a, ai, c in moves]
-        render_steps(steps)
+        final_steps = [(e, a, ai) for q, n, e, f, a, ai, c in moves]
+        render_steps(final_steps)
 
-    steps = back_off_step(steps, debug=True)
+    final_steps = back_off_step(final_steps, debug=True)
 
     if nn_models and training:
         # fine-tune value network
-        for i, (e, _, _) in enumerate(steps):
-            value = -(len(steps) - i - 1)
+        for i, (e, _, _) in enumerate(final_steps):
+            value = -(len(final_steps) - i - 1)
             #value_fine_tuning(nn_models, e, value, debug=debug)
-    return steps
+    return final_steps
 
 
 if __name__ == '__main__':
@@ -469,8 +469,6 @@ if __name__ == '__main__':
 
     #test_exprs = ['( \\frac{5}{6} + \\frac{3}{8} + \\frac{7}{4} ) 24']
     test_exprs = ['-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0']
-    test_exprs = ['-629 - x^{2} \\times 2 + y^{2} + x \\times 0.609 + x \\times \\frac{50}{x + y} - x = 0']
-    test_exprs = ['-629 - x^{2} \\times 2 + y^{2} + x \\times 0.609 + \\frac{x \\times 50}{x + y} - x = 0']
 
     nn_models = None
     timer = Timer()
@@ -480,7 +478,7 @@ if __name__ == '__main__':
     for i, expr in enumerate(test_exprs):
         narr = expression.tex2narr(expr)
 
-        n_sample_times = 10 if nn_models else 100
+        n_sample_times = 10 if nn_models else 200
 
         with timer:
             steps = mcts(narr, axioms,
