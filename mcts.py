@@ -45,12 +45,12 @@ def best_child_of(father, c_param=1.4, debug=False):
     """
     根据 UCT 选择最好的儿子节点
     """
-    q, n, _, _, _, _, children = father
+    q, n, narr, _, _, _, children = father
     weights = children_weights(father, debug=debug)
     argmax_idx = argmax(weights)
 
     if debug:
-        print(f"father: [n={n}]")
+        print(f"\nfather: [n={n}]", expression.narr2tex(narr))
         for i, ((q,n,narr,_,a,ai, _), w) in enumerate(zip(children, weights)):
             print()
             print( f"child [[{i}]] of axiom#{ai}", a.name())
@@ -104,9 +104,9 @@ def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=Fa
         rules, probs, _ = nn.predict_policy(expr, nn_models, k=k)
 
         if trust_nn:
-            steps = possible_next_steps(narr, all_axioms, restrict_rules=rules)
+            steps = possible_next_steps(narr, all_axioms, state_value, restrict_rules=rules)
         else:
-            steps = possible_next_steps(narr, all_axioms, restrict_rules=None)
+            steps = possible_next_steps(narr, all_axioms, state_value, restrict_rules=None)
 
         # combine NN priors
         rules = rules.tolist()
@@ -129,7 +129,7 @@ def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=Fa
         return steps, step_probs
     else:
         # default steps without prior
-        steps = possible_next_steps(narr, all_axioms)
+        steps = possible_next_steps(narr, all_axioms, state_value)
         return steps, [0 for _ in steps]
 
 
@@ -141,28 +141,33 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
     """
     cnt = 0
     reward = 0
-    max_step_reward = 100
+    max_step_reward = 1000
     max_complexity_reward = 10
     complexity_reward = 0
-    origin_val = state_value(node[2])
+    #origin_val = state_value(node[2])
+    best_value = -max_step_reward
     while True:
         q, n, narr, father, axiom, axiom_idx, children = node
         expr = expression.narr2tex(narr)
+        expr_val = state_value(narr)
+        if best_value < expr_val:
+            best_value = expr_val
 
         if debug:
             axiom_name = axiom.name() if cnt > 0 else '初始'
-            print(f'[roll-out depth={cnt}]', axiom_name, expr)
+            print(f'[roll-out depth={cnt}]', end=' ')
+            rich.print(f'[blue]{expr_val}[/]', end=' ')
+            print(axiom_name, expr)
 
         if expr in visited:
             if debug: rich.print(f'[[roll-out]] [red]visited![/]')
             if nn_models:
                 reward = -max_step_reward
             else:
-                reward = -max_step_reward
+                reward = best_value
             break
 
         # when no NN presents, we can only define value by complexity difference
-        expr_val = state_value(narr)
         if nn_models is None:
             pass
         else:
@@ -198,7 +203,7 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
                 reward = step_reward + max_complexity_reward / max(1, complexity_reward)
                 if debug: print(f'[step reward] {step_reward}')
             else:
-                reward = expr_val
+                reward = best_value
 
             break
 
@@ -223,11 +228,14 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
         node = next_node
         cnt += 1
 
+    # calculate rewards
+    x = reward / 10
+    norm_reward = x / (1 + abs(x)) + 1.0
     if debug:
-        if reward > 0: print('\033[91m', end='')
-        print(f'[reward] val={reward:.2f}')
+        print('\033[91m', end='')
+        print(f'[reward] val={reward:.2f} -> {norm_reward}')
         print('\033[0m')
-    return node, reward
+    return node, norm_reward
 
 
 def backprop(node, reward):
@@ -483,7 +491,7 @@ if __name__ == '__main__':
 
     #test_exprs = ['( \\frac{5}{6} + \\frac{3}{8} + \\frac{7}{4} ) 24']
     test_exprs = ['x \\times 50 + x^{2} + y \\times x + x^{2} \\times 0.609 + x \\times 0.609 \\times y + x^{2} \\times 2 \\times x + x^{2} \\times 2 \\times y - 629 \\times x - 629 \\times y + y^{2} \\times x + y^{2} \\times y = 0']
-    test_exprs = ['3y + x + 3x']
+    test_exprs = ['(1+0.609)x^{2} + 50 x + x^{2} + x \\times 0.609 \\times y + x^{2} \\times 2 \\times x - 629 \\times x + y^{2} \\times y = 0']
 
     nn_models = None
     timer = Timer()

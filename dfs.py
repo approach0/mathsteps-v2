@@ -7,11 +7,12 @@ from axiom import Axiom
 from timer import Timer
 from common_axioms import common_axioms
 
-def possible_next_steps(narr, axioms, debug=False, restrict_rules=None, quick_return=False):
+def possible_next_steps(narr, axioms, state_value,
+                        debug=False, restrict_rules=None, quick_return=False):
     return_steps = []
     if debug:
         tex = expression.narr2tex(narr)
-        value = state.value(narr)
+        value = state_value(narr)
         rich.print(f'[light]{value:.2f}', end=' ')
         print(tex)
 
@@ -22,8 +23,8 @@ def possible_next_steps(narr, axioms, debug=False, restrict_rules=None, quick_re
         value_constrain_narrs = []
         for applied_narr in possible_applied_narrs:
             if not axiom.allow_complication:
-                curr_value = state.value(narr)
-                next_value = state.value(applied_narr)
+                curr_value = state_value(narr)
+                next_value = state_value(applied_narr)
                 if next_value < curr_value:
                     if debug:
                         rich.print('[grey50][[x]]', end=' ')
@@ -36,7 +37,7 @@ def possible_next_steps(narr, axioms, debug=False, restrict_rules=None, quick_re
 
         if quick_return and len(value_constrain_narrs) > 0: break
 
-    return_steps.sort(key=lambda x: (x[2], -state.value(x[0])))
+    return_steps.sort(key=lambda x: (x[2], -state_value(x[0])))
 
     if debug:
         for i, (narr, axiom, axiom_idx) in enumerate(return_steps):
@@ -47,7 +48,7 @@ def possible_next_steps(narr, axioms, debug=False, restrict_rules=None, quick_re
                 rich.print(f'[grey50][[ ]]', end=' ')
             print(axiom.name(), end=" ")
             # print value
-            value = state.value(narr)
+            value = state_value(narr)
             rich.print(f'[light]{value:.2f}', end=' ')
             # print tex
             tex = expression.narr2tex(narr)
@@ -63,7 +64,8 @@ def dfs(narr, axioms, debug=False):
         while len(next_steps) > 0:
             narr, axiom, axiom_idx = next_steps[0]
             return_steps.append((narr, axiom, axiom_idx))
-            next_steps = possible_next_steps(narr, axioms, quick_return=True, debug=debug)
+            next_steps = possible_next_steps(narr, axioms, state.value,
+                                             quick_return=True, debug=debug)
     except KeyboardInterrupt:
         return return_steps
 
@@ -85,15 +87,15 @@ def test():
         '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
         'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
         '-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0',
-        '(1 + 3) x + 3 y'
+        '(1 + 0.609 + 1) \\times x^{2} + (-579 + 0.609 \\times y + x^{2} \\times 2) \\times x + y^{2} \\times y = 0'
     ]
 
     #testcases, _ = test_cases_x3_rational()
     #testcases, _ = test_cases_wiki131278697()
 
-    if False:
+    if True:
         narr = expression.tex2narr(testcases[-1])
-        next_steps = possible_next_steps(narr, all_axioms, debug=True)
+        next_steps = possible_next_steps(narr, all_axioms, state.value_v2, debug=True)
         quit()
 
     begin_from = 0

@@ -156,7 +156,10 @@ def collect_stats(narr, stats, level):
     if token in expression.terminal_tokens():
         if stats['level'] < level:
             stats['level'] = level
-        stats['leaves'] += 1
+        if token == 'NUMBER':
+            stats['leaves'] += level + 1
+        else:
+            stats['leaves'] += (level + 1) * 2
         return
 
     for i, c in enumerate(children):
@@ -174,7 +177,7 @@ def value_v2(narr, level=0, debug=False):
     if debug:
         print(stats)
 
-    return - (stats['level'] * 10 + stats['leaves'])
+    return - (stats['leaves'])
 
 
 def value(narr, debug=False):
@@ -182,14 +185,14 @@ def value(narr, debug=False):
     #return value_v2(narr, debug=debug)
 
 
-def test(tex):
+def test(tex, state_value):
     """
     包装测试函数
     """
     import expression
     narr = expression.tex2narr(tex)
     print(tex)
-    print(value(narr, debug=True))
+    print(state_value(narr, debug=True))
     print()
 
 
@@ -206,5 +209,5 @@ if __name__ == '__main__':
     #test('2(x+y) + 1')
     #test('2x+2y + 1')
 
-    test('-629 - x^{2} \\times 2 + y^{2} + x \\times 0.609 + x \\times \\frac{50}{x + y} - x \\times 1 = 0')
-    test('(-1 + \\frac{50}{x + y} + 0.609) \\times x - 629 - x^{2} \\times 2 + y^{2} = 0')
+    test('2(x+y)', value_v2)
+    test('x(2+3)', value_v2)
