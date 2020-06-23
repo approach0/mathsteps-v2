@@ -149,7 +149,7 @@ def value_v1(narr, debug=False):
     return -accum
 
 
-def collect_stats(narr, stats, level):
+def collect_stats(narr, stats, level, grandRoot):
     root = narr[0]
     children = narr[1:]
     sign, token = root
@@ -160,29 +160,63 @@ def collect_stats(narr, stats, level):
     if token in expression.terminal_tokens():
         if stats['max_level'] < level:
             stats['max_level'] = level
+
         if token == 'NUMBER':
-            stats['leaves'] += level + 1
+            num = children[0]
+
+            stats['leaves_weight'] += level + 1
+            stats['NUMBER_sum'] += abs(num)
+            if grandRoot and grandRoot[1] == 'sqrt':
+                stats['NUMBER_in_sqrt'] += abs(num)
+
+            if num.is_integer():
+                if abs(num) == 1:
+                    stats['NUMBER_one'] += 1
+                elif abs(num) == 0:
+                    stats['NUMBER_zero'] += 1
+
+                n_zeros = right_padding_zeros(num)
+                stats['NUMBER_pad_zeros'] += n_zeros
+            else:
+                stats['NUMBER_decimal'] += 1
         else:
-            stats['leaves'] += (level + 1) * 2
+            stats['leaves_weight'] += (level + 1) * 2
         return
 
     for i, c in enumerate(children):
-        collect_stats(c, stats, level=level+1)
-    
+        collect_stats(c, stats, level+1, root)
+
 
 def value_v2(narr, level=0, debug=False):
     stats = {
+        'neg': 0,
         'max_level': 0,
-        'leaves': 0,
-        'neg': 0
+        'NUMBER_sum': 0,
+        'NUMBER_in_sqrt': 0,
+        'NUMBER_one': 0,
+        'NUMBER_zero': 0,
+        'NUMBER_pad_zeros': 0,
+        'NUMBER_decimal': 0,
+        'leaves_weight': 0
     }
 
-    collect_stats(narr, stats, 0)
+    collect_stats(narr, stats, 0, None)
 
     if debug:
         print(stats)
 
-    return - (stats['leaves'] + stats['neg'])
+    complexity = (0
+        + stats['neg']
+        + 0.5 * math.log(1 + stats['NUMBER_sum'])
+        + 1.5 * math.log(1 + stats['NUMBER_in_sqrt'])
+        - 0.1 * stats['NUMBER_one']
+        + 0.1 * stats['NUMBER_zero']
+        - 0.2 * stats['NUMBER_pad_zeros']
+        + 2.0 * stats['NUMBER_decimal']
+        + stats['leaves_weight']
+    )
+
+    return -complexity
 
 
 def value(narr, debug=False):
@@ -196,7 +230,7 @@ def test(tex, state_value):
     """
     import expression
     narr = expression.tex2narr(tex)
-    print(tex)
+    print('[expression]', tex)
     print(state_value(narr, debug=True))
     print()
 
@@ -208,11 +242,23 @@ if __name__ == '__main__':
     #test('10 \cdot x + 15 = 15')
     #test('10 \cdot x + 15 -15 = 0')
 
-    #test('100 \\times 25')
-    #test('2500')
+    test('100 \\times 25', value_v2)
+    test('2500', value_v2)
 
-    #test('2(x+y) + 1')
-    #test('2x+2y + 1')
+    test('2(x+y)+1+2', value_v2)
+    test('2x+2y+3+4', value_v2)
 
     test('-3', value_v2)
     test('3', value_v2)
+
+    test('10 + 2', value_v2)
+    test('7 + 5', value_v2)
+
+    test('0 + 3', value_v2)
+    test('6 - 3', value_v2)
+
+    test('3 \\sqrt{3}', value_v2)
+    test('\\sqrt{27}', value_v2)
+
+    test('81 \\sqrt{9}', value_v2)
+    test('\\sqrt{59049}', value_v2)
