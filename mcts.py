@@ -423,15 +423,21 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
                 policy = 0
                 #policy_fine_tuning(nn_models, expr, policy, debug=debug, all_axioms=all_axioms)
             break
+        elif len(steps) == 1:
+            sample_times = 1
+            force_single_thread = True
+        else:
+            sample_times = n_sample_times
+            force_single_thread = False
 
-        if manager:
+        if manager and not force_single_thread:
             evaluate_parallel(
-                node, all_axioms, steps, n_sample_times, sample_depth, visited,
+                node, all_axioms, steps, sample_times, sample_depth, visited,
                 debug=debug, nn_models=nn_models, k=k
             )
         else:
             evaluate(
-                node, all_axioms, steps, n_sample_times, sample_depth, visited,
+                node, all_axioms, steps, sample_times, sample_depth, visited,
                 debug=debug, nn_models=nn_models, k=k, step_probs=step_probs
             )
 
@@ -478,7 +484,6 @@ if __name__ == '__main__':
     #test_exprs = ['( \\frac{5}{6} + \\frac{3}{8} + \\frac{7}{4} ) 24']
     test_exprs = ['x \\times 50 + x^{2} + y \\times x + x^{2} \\times 0.609 + x \\times 0.609 \\times y + x^{2} \\times 2 \\times x + x^{2} \\times 2 \\times y - 629 \\times x - 629 \\times y + y^{2} \\times x + y^{2} \\times y = 0']
     test_exprs = ['3y + x + 3x']
-    test_exprs = ['(1 + 3) x + 3 y']
 
     nn_models = None
     timer = Timer()
