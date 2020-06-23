@@ -86,11 +86,11 @@ def move_policy(father, steps, debug=False, prior_arr=None):
         idx = len(children)
         step = steps[idx]
         prior = prior_arr[idx] * 100.0 if prior_arr is not None else 0
-        if debug: print('[expand] ', '(prior=%.5f)' % prior, '\n', step[1])
+        if debug: print('[expand] ', '(prior=%.5f)' % prior, step[1].name())
         return expand(father, step, prior=prior)
     else:
         child, w = best_child_of(father, debug=False)
-        if debug: print(f'[best child] w={w:.5f}\n', child[4])
+        if debug: print(f'[best child] w={w:.5f}', child[4].name())
         return child
 
 
@@ -149,9 +149,15 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
         q, n, narr, father, axiom, axiom_idx, children = node
         expr = expression.narr2tex(narr)
 
+        if debug:
+            axiom_name = axiom.name() if cnt > 0 else '初始'
+            print(f'[roll-out depth={cnt}]', axiom_name, expr)
+
         if expr in visited:
-            if debug: print('\033[91m', 'visited!', '\033[0m', expr)
+            if debug: rich.print(f'[[roll-out]] [red]visited![/]')
             if nn_models:
+                reward = -max_step_reward
+            else:
                 reward = -max_step_reward
             break
 
@@ -174,11 +180,11 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
                 reward = step_reward + max_complexity_reward / max(1, complexity_reward)
                 if debug: print(f'[step reward] {max_step_reward}')
             else:
-                reward = expr_val
+                reward = max_step_reward
             break
 
         elif cnt >= n_times:
-            if debug: print(f'[roll-out stop early]')
+            if debug: print(f'[roll-out stop early (max times reached)]')
 
             if nn_models:
                 # use NN to estimate the number of left-over steps
@@ -207,22 +213,19 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
 
         if lock: lock.acquire()
         if rollout_idx < len(children):
-            if debug: print(f'[roll-out depth={cnt}, idx={rollout_idx} (exist)]:', expr)
+            #if debug: print(f'[exist idx={rollout_idx}]')
             next_node = children[rollout_idx]
         else:
-            if debug: print(f'[roll-out depth={cnt}, idx={rollout_idx} (expand)]:', expr)
+            #if debug: print(f'[expand idx={rollout_idx}]')
             next_node = expand(node, steps[rollout_idx])
         if lock: lock.release()
 
         node = next_node
         cnt += 1
 
-        if debug:
-            print(end='\n')
-
     if debug:
         if reward > 0: print('\033[91m', end='')
-        print(f'[reward ] val={reward:.2f}')
+        print(f'[reward] val={reward:.2f}')
         print('\033[0m')
     return node, reward
 
@@ -473,8 +476,9 @@ if __name__ == '__main__':
     axioms = common_axioms()
 
     #test_exprs = ['( \\frac{5}{6} + \\frac{3}{8} + \\frac{7}{4} ) 24']
-    test_exprs = ['-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0']
     test_exprs = ['x \\times 50 + x^{2} + y \\times x + x^{2} \\times 0.609 + x \\times 0.609 \\times y + x^{2} \\times 2 \\times x + x^{2} \\times 2 \\times y - 629 \\times x - 629 \\times y + y^{2} \\times x + y^{2} \\times y = 0']
+    test_exprs = ['3y + x + 3x']
+    test_exprs = ['(1 + 3) x + 3 y']
 
     nn_models = None
     timer = Timer()

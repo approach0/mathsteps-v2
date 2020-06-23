@@ -40,14 +40,17 @@ def possible_next_steps(narr, axioms, debug=False, restrict_rules=None, quick_re
 
     if debug:
         for i, (narr, axiom, axiom_idx) in enumerate(return_steps):
-            value = state.value(narr)
+            # print axiom name
             if i == 0:
                 rich.print(f'[bright_green][[✓]]', end=' ')
             else:
                 rich.print(f'[grey50][[ ]]', end=' ')
-            tex = expression.narr2tex(applied_narr)
             print(axiom.name(), end=" ")
+            # print value
+            value = state.value(narr)
             rich.print(f'[light]{value:.2f}', end=' ')
+            # print tex
+            tex = expression.narr2tex(narr)
             print(tex)
         print()
     return return_steps
@@ -61,7 +64,6 @@ def dfs(narr, axioms, debug=False):
             narr, axiom, axiom_idx = next_steps[0]
             return_steps.append((narr, axiom, axiom_idx))
             next_steps = possible_next_steps(narr, axioms, quick_return=True, debug=debug)
-            #quit()
     except KeyboardInterrupt:
         return return_steps
 
@@ -82,11 +84,17 @@ def test():
         '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
         '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
         'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
-        '-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0'
+        '-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0',
+        '(1 + 3) x + 3 y'
     ]
 
     #testcases, _ = test_cases_x3_rational()
     #testcases, _ = test_cases_wiki131278697()
+
+    if False:
+        narr = expression.tex2narr(testcases[-1])
+        next_steps = possible_next_steps(narr, all_axioms, debug=True)
+        quit()
 
     begin_from = 0
 

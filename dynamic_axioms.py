@@ -107,6 +107,7 @@ calc_add = (
     .add_test('(-12 - 3 - 1)')
     .add_test('-(12 - 1)', '-11')
     .add_test('0.25 - 3.25', '-3')
+    .add_test('(1 + 3) x + 3 y', '4 \\times x + 3 \\times y')
 )
 
 
@@ -349,5 +350,5 @@ canonicalize = (
 
 if __name__ == '__main__':
     #a = canonicalize
-    a = calc_abs
+    a = calc_add
     a.test()

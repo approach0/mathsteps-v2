@@ -102,7 +102,7 @@ def token_stats(narr, stats={}, right_side_of_eq=False, inside_of_sqrt=False, le
     return stats
 
 
-def value_bkup(narr, debug=False):
+def value_v1(narr, debug=False):
     """
     计算 表达式的价值（等于各个符号频率的自定义加权和）
     """
@@ -163,7 +163,7 @@ def collect_stats(narr, stats, level):
         collect_stats(c, stats, level=level+1)
     
 
-def value(narr, level=0, debug=False):
+def value_v2(narr, level=0, debug=False):
     stats = {
         'level': 0,
         'leaves': 0
@@ -175,6 +175,11 @@ def value(narr, level=0, debug=False):
         print(stats)
 
     return - (stats['level'] * 10 + stats['leaves'])
+
+
+def value(narr, debug=False):
+    #return value_v1(narr, debug=debug)
+    return value_v2(narr, debug=debug)
 
 
 def test(tex):

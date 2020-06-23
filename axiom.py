@@ -409,23 +409,22 @@ class Axiom:
         result_narrs = []
         for depth, narr in candidates:
             _, root_type = narr[0]
-            if root_type in expression.terminal_tokens():
-                continue
-            children = narr[1:]
             none_applied = True
-            for i, child in enumerate(children):
-                applied_narrs = self._recursive_apply(child, debug=debug,
-                    applied_times=depth, max_times=max_times, bfs_bandwith=bfs_bandwith)
+            if root_type not in expression.terminal_tokens():
+                children = narr[1:]
+                for i, child in enumerate(children):
+                    applied_narrs = self._recursive_apply(child, debug=debug,
+                        applied_times=depth, max_times=max_times, bfs_bandwith=bfs_bandwith)
 
-                for applied_narr in applied_narrs:
-                    none_applied = False
-                    # substitute with sub-routine expression
-                    new_narr = deepcopy(narr)
-                    replace_or_pass_children(new_narr, i, applied_narr)
-                    # append result
-                    if not Axiom()._uniq_append(result_narrs, new_narr,
-                                                max_results=max_results):
-                        return result_narrs
+                    for applied_narr in applied_narrs:
+                        none_applied = False
+                        # substitute with sub-routine expression
+                        new_narr = deepcopy(narr)
+                        replace_or_pass_children(new_narr, i, applied_narr)
+                        # append result
+                        if not Axiom()._uniq_append(result_narrs, new_narr,
+                                                    max_results=max_results):
+                            return result_narrs
             if none_applied and depth > 0:
                 if not Axiom()._uniq_append(result_narrs, narr,
                                             max_results=max_results):
