@@ -164,8 +164,8 @@ def common_axioms():
         .add_rule('#X # Xk', '(#1 1 #2 k) X')
         .add_rule('#X *{1} # X *{2}', '(#1 *{1} #2 *{2}) X')
 
-        #.add_test('2 + 2', '2 + 2')
-        #.add_test('x^{2} + x^{2}', '2 \\times x^{2}')
+        .add_test('2 + 2', '2 + 2')
+        .add_test('x^{2} + x^{2}', '2 \\times x^{2}')
         .add_test('x + 2x + 3x', [
             '(1 + 2 + 3) \\times x',
             '(3 + 2 + 1) \\times x',
@@ -173,7 +173,7 @@ def common_axioms():
             '(2 + 1 + 3) \\times x',
             '(3 + 1 + 2) \\times x'
         ])
-        #.add_test('2 - 3 \cdot 2', '2 - 3 \\times 2')
+        .add_test('2 - 3 \cdot 2', '2 - 3 \\times 2')
     )
 
     axioms.append(
@@ -253,7 +253,6 @@ def common_axioms():
         .add_test('3(a + b + c) + 1', '1 + 3 \\times a + 3 \\times b + 3 \\times c')
         .add_test('(a - b)(-2)', '-2 \\times a - 2 \\times (-b)')
         .add_test('2(a + 3(b + c))')
-        .add_test('x^{2} \\times 2 \\times (x + y) + x \\times 0.609 \\times (x + y) + y^{2} \\times (x + y) + x \\times (50 - x \\times 1 - y \\times 1) + (x + y) \\times (-629) = (x + y) \\times 0')
     )
 
     axioms.append(
@@ -292,7 +291,7 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() == '合并同类项':
+        if axiom.name() == '乘法分配率':
             #import cProfile
             #cProfile.run('axiom.test(debug=False)')
             axiom.test(debug=False)

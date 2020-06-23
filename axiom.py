@@ -64,16 +64,18 @@ class Axiom:
             possible_applied_narrs = self.apply(narr, debug=debug)
             possible_applied_texs = [expression.narr2tex(_) for _ in possible_applied_narrs]
 
-            if render:
-                render_math.render_equations([expr] + possible_applied_texs)
-
             for applied_tex in possible_applied_texs:
-                print('[result]', applied_tex)
+                print('[result]', applied_tex, end=" ")
                 if expect is not None:
                     if applied_tex in expect:
                         rich.print('[bold green]pass[/]')
                     else:
                         rich.print('[bold red]failed[/]')
+                else:
+                    print()
+
+            if render:
+                render_math.render_equations([expr] + possible_applied_texs)
 
 
     def __str__(self):
@@ -329,11 +331,14 @@ class Axiom:
 
 
     @staticmethod
-    def _uniq_append(result_narrs, new_narr):
+    def _uniq_append(result_narrs, new_narr, max_results=100):
+        if len(result_narrs) + 1 >= max_results:
+            return False
         applied_set = set([expression.narr2tex(narr) for narr in result_narrs])
         new_tex = expression.narr2tex(new_narr)
         if new_tex not in applied_set:
             result_narrs.append(new_narr)
+        return True
 
     def _level_apply(self, narr, debug=False):
         ret_narrs = []
@@ -362,7 +367,12 @@ class Axiom:
         return ret_narrs
 
 
-    def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=6, bfs_bandwith=1):
+    def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=4,
+                         bfs_bandwith=20, max_results=20):
+        # safe guard
+        if applied_times >= max_times:
+            return [narr0]
+
         # apply at this level
         Q = [(applied_times, narr0)]
         candidates = []
@@ -370,9 +380,6 @@ class Axiom:
             depth, narr = Q.pop(0)
             if depth + 1 > max_times:
                 break
-
-            #print('@', depth, '/', max_times)
-            #print('>', expression.narr2tex(narr))
 
             narrs = self._level_apply(narr)
 
@@ -389,44 +396,49 @@ class Axiom:
             if len(Q) > bfs_bandwith:
                 Q = Q[-bfs_bandwith:]
 
-        # start from the deepest level narrs
-        deepest = max([d for d, n in candidates]) if len(candidates) > 0 else 0
-        deepest_Q = [(d, n) for d, n in candidates if d == deepest]
-        if len(deepest_Q) == 0:
-            deepest_Q += [(applied_times, narr0)]
+        # take original expression if it doesn't get applied at this level
+        if len(candidates) == 0:
+            candidates += [(applied_times, narr0)]
 
-        for d,n in deepest_Q:
-            print(f'deepest: {d}/{max_times}:', expression.narr2tex(n))
-        print()
+        #print(expression.narr2tex(narr0))
+        #for d,n in candidates:
+        #    print(f'candidate: {d}/{max_times}:', expression.narr2tex(n))
+        #print()
 
         # for recursive sub-expressions
         result_narrs = []
-        for depth, narr in deepest_Q:
+        for depth, narr in candidates:
             _, root_type = narr[0]
-            children_results = []
-            print(narr)
-            if root_type not in expression.terminal_tokens():
-                children = narr[1:]
-                for i, child in enumerate(children):
-                    applied_narrs = self._recursive_apply(child, debug=debug,
-                        applied_times=depth, max_times=max_times, bfs_bandwith=bfs_bandwith)
+            if root_type in expression.terminal_tokens():
+                continue
+            children = narr[1:]
+            none_applied = True
+            for i, child in enumerate(children):
+                applied_narrs = self._recursive_apply(child, debug=debug,
+                    applied_times=depth, max_times=max_times, bfs_bandwith=bfs_bandwith)
 
-                    for new_depth, applied_narr in applied_narrs:
-                        print(expression.narr2tex(applied_narr))
-                        # substitute with sub-routine expression
-                        new_narr = deepcopy(narr)
-                        replace_or_pass_children(new_narr, i, applied_narr)
-                        # append result
-                        Axiom()._uniq_append(result_narrs, new_narr)
+                for applied_narr in applied_narrs:
+                    none_applied = False
+                    # substitute with sub-routine expression
+                    new_narr = deepcopy(narr)
+                    replace_or_pass_children(new_narr, i, applied_narr)
+                    # append result
+                    if not Axiom()._uniq_append(result_narrs, new_narr,
+                                                max_results=max_results):
+                        return result_narrs
+            if none_applied and depth > 0:
+                if not Axiom()._uniq_append(result_narrs, narr,
+                                            max_results=max_results):
+                    return result_narrs
 
         return result_narrs
 
 
     def apply(self, narr, debug=False):
         if self.recursive_apply:
-            return [n for d,n in self._recursive_apply(narr, debug=debug, bfs_bandwith=1)]
+            return [n for n in self._recursive_apply(narr, debug=debug, bfs_bandwith=1)]
         else:
-            return [n for d,n in self._recursive_apply(narr, debug=debug, max_times=1)]
+            return [n for n in self._recursive_apply(narr, debug=debug, max_times=1)]
 
 
 if __name__ == '__main__':
@@ -437,8 +449,20 @@ if __name__ == '__main__':
         .add_rule('#X # kX', '(#1 1 #2 k) X')
         .add_rule('#X # Xk', '(#1 1 #2 k) X')
         .add_rule('#X *{1} # X *{2}', '(#1 *{1} #2 *{2}) X')
+
+        .add_test('2 + 2', '2 + 2')
+        .add_test('x^{2} + x^{2}', '2 \\times x^{2}')
+        .add_test('x + 2x + 3x', [
+            '(1 + 2 + 3) \\times x',
+            '(3 + 2 + 1) \\times x',
+            '(1 + 3 + 2) \\times x',
+            '(2 + 1 + 3) \\times x',
+            '(3 + 1 + 2) \\times x'
+        ])
+        .add_test('2 - 3 \cdot 2', '2 - 3 \\times 2')
     )
 
+    a.test()
     a.test(
         'x \\times 50 + x^{2} + y \\times x + x^{2} \\times 0.609 + x \\times 0.609 \\times y + x^{2} \\times 2 \\times x + x^{2} \\times 2 \\times y - 629 \\times x - 629 \\times y + y^{2} \\times x + y^{2} \\times y = 0'
     )
