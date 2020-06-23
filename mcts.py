@@ -170,6 +170,7 @@ def rollout(father, node, all_axioms, n_times, visited,
     if debug:
         rich.print(f'[blue]{father_val}[/]', end=' ')
         print('父节点', expression.narr2tex(father))
+        #print('roll from', expression.narr2tex(node[2]))
 
     while True:
         q, n, narr, father, axiom, axiom_idx, children = node
@@ -244,11 +245,15 @@ def rollout(father, node, all_axioms, n_times, visited,
             rollout_idx = random.randint(0, len(steps) - 1)
 
         if lock: lock.acquire()
+        _, _, _, _, _, _, children = node
         if rollout_idx < len(children):
-            #if debug: print(f'[exist idx={rollout_idx}]')
+            #print(f'[exist depth={cnt}, idx={rollout_idx}]',
+            #    expression.narr2tex(children[rollout_idx][2]))
             next_node = children[rollout_idx]
         else:
-            #if debug: print(f'[expand idx={rollout_idx}]')
+            rollout_idx = len(children)
+            #print(f'[expand depth={cnt}, idx={rollout_idx}]',
+            #    expression.narr2tex(steps[rollout_idx][0]))
             next_node = expand(node, steps[rollout_idx])
         if lock: lock.release()
 
@@ -518,9 +523,9 @@ if __name__ == '__main__':
     axioms = common_axioms()
 
     #test_exprs = ['( \\frac{5}{6} + \\frac{3}{8} + \\frac{7}{4} ) 24']
-    test_exprs = ['x \\times 50 + x^{2} + y \\times x + x^{2} \\times 0.609 + x \\times 0.609 \\times y + x^{2} \\times 2 \\times x + x^{2} \\times 2 \\times y - 629 \\times x - 629 \\times y + y^{2} \\times x + y^{2} \\times y = 0']
     test_exprs = ['(1+0.609)x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0']
-    #test_exprs = ['(1 + 1 + 0.609) \\times x^{2} - x^{2} \\times 2 \\times x = 0']
+    #test_exprs = ['1.609 x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0']
+    #test_exprs = ['(1 + 1.609) \\times x^{2} + x^{2} \\times 2 \\times x = 0']
 
     nn_models = None
     timer = Timer()
@@ -535,7 +540,7 @@ if __name__ == '__main__':
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
-                nn_models=nn_models, force_single_thread=True)
+                nn_models=nn_models, force_single_thread=False)
 
         render_steps(steps)
         print(f'Test case: {i} / {len(test_exprs) - 1}')
