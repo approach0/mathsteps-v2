@@ -11,7 +11,7 @@ def common_axioms():
     axioms.append(dynamic_axioms.canonicalize)
 
     axioms.append(
-        Axiom(name='带分式的展开')
+        Axiom(name='带分式的展开', allow_complication=True)
         .add_rule('# & \\frac{a}{b}', '#1 (v + \\frac{a}{b})')
 
         .add_test('-3 \\frac{-2}{4}', '-(3 + \\frac{-2}{4})')
@@ -67,7 +67,7 @@ def common_axioms():
     )
 
     axioms.append(
-        Axiom(name='除以一个数等于乘上它的倒数')
+        Axiom(name='除以一个数等于乘上它的倒数', allow_complication=True)
         .add_rule('# (#\\frac{w}{x}) \\div (# \\frac{y}{z})', '#0 \\frac{wz}{xy}')
         .add_rule('# x \\div (# \\frac{y}{z})', '#0 \\frac{xz}{y}')
 
@@ -106,13 +106,14 @@ def common_axioms():
     axioms.append(
         Axiom(name='分子分母消除公因子', recursive_apply=True)
         .add_rule('# \\frac{# x *{1} }{# x *{2} }', '#1 \\frac{#2 *{1}}{#3 *{2}}')
-        .add_rule('# \\frac{# x }{# x *{2} }', '#1 \\frac{#2 1}{#3 *{2}}')
+        .add_rule('# \\frac{# x }{# x *{2} }', '#0 \\frac{1}{*{2}}')
         .add_rule('# \\frac{# x *{1} }{# x }', '#0 *{1}')
         .add_rule('# \\frac{# x }{# x }', '#0 1')
 
         .add_test('- \\frac{bx}{ax}', '-\\frac{b}{a}')
         .add_test('- \\frac{-bx}{xa}', '-\\frac{-b}{a}')
         .add_test('- \\frac{-bxy}{-xay}', '-\\frac{-b}{-a}')
+        .add_test('- \\frac{-x}{ax}', '\\frac{1}{a}')
         .add_test('\\frac{-x}{xay}', '\\frac{-1}{a \\times y}')
         .add_test('\\frac{3xy}{-xy}', '-3')
         .add_test('-\\frac{-a}{-a}', '-1')
@@ -121,7 +122,7 @@ def common_axioms():
     )
 
     axioms.append(
-        Axiom(name='乘积写成乘方的形式')
+        Axiom(name='乘积写成乘方的形式', allow_complication=True)
         .add_rule('#(#X)(#X)', '#0 X^{2}')
 
         .add_test('xx')
@@ -237,7 +238,7 @@ def common_axioms():
     )
 
     axioms.append(
-        Axiom(name='系数乘进分式的分子里面', allow_complication=True)
+        Axiom(name='系数乘进分式的分子', allow_complication=True)
         .add_rule('# a \\times \\frac{# 1}{b}', '#0 \\frac{a}{b}')
         .add_rule('# a \\times \\frac{# c}{b}', '#0 \\frac{ac}{b}')
 
@@ -291,7 +292,7 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() == '乘法分配率':
+        if axiom.name() == '分子分母消除公因子':
             #import cProfile
             #cProfile.run('axiom.test(debug=False)')
             axiom.test(debug=False)

@@ -411,13 +411,15 @@ def back_off_step(steps, debug=False):
         else:
             if debug:
                 expr = expression.narr2tex(narr)
-                rich.print(f'[magenta]back-off[/magenta] {expr}')
+                val = state_value(narr)
+                rich.print(f'[magenta]back-off[/] [blue]val={val:.3f}[/]', end=' ')
+                print(expr)
             steps.pop()
 
     return steps
 
 
-def mcts(narr0, all_axioms, sample_depth=3, n_sample_times=200, n_maxsteps=100, k=3,
+def mcts(narr0, all_axioms, sample_depth=8, n_sample_times=200, n_maxsteps=100, k=3,
          debug=False, nn_models=None, training=False, force_single_thread=False):
     #       q  n   narr  father  axiom   axiomIdx  children
     root = [0, 1, narr0, None,  None,      -1,       []    ]
@@ -497,15 +499,15 @@ def mcts(narr0, all_axioms, sample_depth=3, n_sample_times=200, n_maxsteps=100, 
                 move_choice = manager.list(move_choice)
             moves.append(move_choice)
 
+            # construct steps to be returned
+            final_steps = [(e, a, ai) for q, n, e, f, a, ai, c in moves]
+            render_steps(final_steps)
+
             visited.add(move_to_expr)
             #if debug: print('[visited]', visited)
 
-            if len(moves) > n_maxsteps:
+            if len(moves) >= n_maxsteps:
                 break
-
-        # construct steps to be returned
-        final_steps = [(e, a, ai) for q, n, e, f, a, ai, c in moves]
-        render_steps(final_steps)
 
     if len(final_steps) > 0:
         final_steps = back_off_step(final_steps, debug=True)
@@ -522,15 +524,28 @@ if __name__ == '__main__':
     from render_math import render_steps
     axioms = common_axioms()
 
-    #test_exprs = ['( \\frac{5}{6} + \\frac{3}{8} + \\frac{7}{4} ) 24']
-    test_exprs = ['1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0']
+    testcases = ['1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0']
+
+    testcases = [
+        '\\frac{12a}{3a + a + 20a} - \\frac{1}{4}',
+        '1 + \\frac{7}{3}',
+        '4 -3 \\frac{1}{2}',
+        '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
+        '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
+        '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
+        'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
+        '-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0',
+        '1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0',
+        '\\frac{-3\\frac{1}{3}}{(2\\frac{1}{3}) \\times \\frac{7}{10}}'
+    ]
 
     nn_models = None
     timer = Timer()
 
     debug = True
 
-    for i, expr in enumerate(test_exprs):
+    for i, expr in enumerate(testcases[-1:]):
+    #for i, expr in enumerate(testcases[5:]):
         narr = expression.tex2narr(expr)
 
         n_sample_times = 10 if nn_models else 200
@@ -538,16 +553,16 @@ if __name__ == '__main__':
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
-                nn_models=nn_models, force_single_thread=False)
+                nn_models=nn_models, force_single_thread=True)
 
-            for i, (narr, axiom, axiom_idx) in enumerate(steps):
-                val = state_value(narr)
-                expr = expression.narr2tex(narr)
-                axiom_name = axiom.name() if axiom is not None else '原式'
-                rich.print(f'step{i} {axiom_name} [blue]val={val}[/]', expr)
+        for j, (narr, axiom, axiom_idx) in enumerate(steps):
+            val = state_value(narr)
+            expr = expression.narr2tex(narr)
+            axiom_name = axiom.name() if axiom is not None else '原式'
+            rich.print(f'step{j} {axiom_name} [blue]val={val}[/]', expr)
 
         render_steps(steps)
-        print(f'Test case: {i} / {len(test_exprs) - 1}')
+        print(f'Test case: {i} / {len(testcases) - 1}')
 
-        #print('Enter to continue')
-        #input()
+        print('Enter to continue')
+        input()
