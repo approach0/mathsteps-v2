@@ -93,7 +93,7 @@ def test():
     #testcases, _ = test_cases_x3_rational()
     #testcases, _ = test_cases_wiki131278697()
 
-    if True:
+    if False:
         narr = expression.tex2narr(testcases[-1])
         next_steps = possible_next_steps(narr, all_axioms, state.value_v2, debug=True)
         quit()

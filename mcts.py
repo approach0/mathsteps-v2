@@ -523,9 +523,7 @@ if __name__ == '__main__':
     axioms = common_axioms()
 
     #test_exprs = ['( \\frac{5}{6} + \\frac{3}{8} + \\frac{7}{4} ) 24']
-    test_exprs = ['(1+0.609)x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0']
-    #test_exprs = ['1.609 x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0']
-    #test_exprs = ['(1 + 1.609) \\times x^{2} + x^{2} \\times 2 \\times x = 0']
+    test_exprs = ['1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0']
 
     nn_models = None
     timer = Timer()
@@ -541,6 +539,12 @@ if __name__ == '__main__':
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
                 nn_models=nn_models, force_single_thread=False)
+
+            for i, (narr, axiom, axiom_idx) in enumerate(steps):
+                val = state_value(narr)
+                expr = expression.narr2tex(narr)
+                axiom_name = axiom.name() if axiom is not None else '原式'
+                rich.print(f'step{i} {axiom_name} [blue]val={val}[/]', expr)
 
         render_steps(steps)
         print(f'Test case: {i} / {len(test_exprs) - 1}')
