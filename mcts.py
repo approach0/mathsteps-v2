@@ -53,8 +53,7 @@ def best_child_of(father, c_param=1.4, debug=False):
         print(f"father: [n={n}]")
         for i, ((q,n,narr,_,a,ai, _), w) in enumerate(zip(children, weights)):
             print()
-            print( f"child [[{i}]] of axiom#{ai}")
-            print(a)
+            print( f"child [[{i}]] of axiom#{ai}", a.name())
             print(f"[w={w:.4f}, q={q:.2f}, n={n}]", expression.narr2tex(narr))
         print('\n[choice index]', f"[[{argmax_idx}]]")
         print()
@@ -273,7 +272,7 @@ def evaluate(
 
 def evaluate_parallel(
     node, all_axioms, steps, n_sample_times, sample_depth, visited, k=0,
-    n_worker=5, batch_sz=2, debug=False, nn_models=None, use_thread=False):
+    n_worker=10, batch_sz=2, debug=False, nn_models=None, use_thread=False):
     """
     采样函数（并行版本）：进行 n_sample_times 次采样
     """
@@ -286,6 +285,9 @@ def evaluate_parallel(
             name = 'multi-thread' if use_thread else 'multi-process'
             rich.print(f"[red]{name} stage[/] {b + 1}th/{n_stages} with " +
             f"{n_worker} workers, each {batch_sz}/{n_sample_times} samples")
+
+            print('[UCT]', [(c[4].name(), round(w, 5)) for c, w in
+                            zip(node[6], children_weights(node))])
 
         if use_thread:
             with ThreadPoolExecutor(max_workers=n_worker) as executor:
