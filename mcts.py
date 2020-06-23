@@ -41,20 +41,32 @@ def children_weights(father, c_param=1.4, debug=False):
     return weights
 
 
-def best_child_of(father, c_param=1.4, debug=False):
+def print_UCT(father):
+    q, n, _, _, _, _, children = father
+    children_visits = [c[1] for c in children]
+    zip_arr = zip(children, children_weights(father, c_param=.0), children_visits)
+    arr = [(c[4].name(), round(w, 5), f'{visits}/{n}') for c, w, visits in zip_arr]
+    arr.sort(key=lambda x: x[1], reverse=True)
+    print('[UCT]', arr)
+
+
+def best_child_of(father, c_param=None, debug=False):
     """
     根据 UCT 选择最好的儿子节点
     """
     q, n, narr, _, _, _, children = father
-    weights = children_weights(father, debug=debug)
+    if c_param is None:
+        weights = children_weights(father, debug=debug)
+    else:
+        weights = children_weights(father, c_param=c_param, debug=debug)
     argmax_idx = argmax(weights)
 
     if debug:
         print(f"\nfather: [n={n}]", expression.narr2tex(narr))
-        for i, ((q,n,narr,_,a,ai, _), w) in enumerate(zip(children, weights)):
+        for i, ((q,n,narr,_,a,ai, _), UCT) in enumerate(zip(children, weights)):
             print()
             print( f"child [[{i}]] of axiom#{ai}", a.name())
-            print(f"[w={w:.4f}, q={q:.2f}, n={n}]", expression.narr2tex(narr))
+            print(f"[UCT={UCT:.4f}, q/n={q:.2f}/{n}={q/n:.3f}]", expression.narr2tex(narr))
         print('\n[choice index]', f"[[{argmax_idx}]]")
         print()
     return children[argmax_idx], weights[argmax_idx]
@@ -68,7 +80,7 @@ def expand(father, step, prior=0):
     narr, axiom, axiom_idx = step
 
     # actual append
-    to_be_appended = [prior, 100, narr, father, axiom, axiom_idx, []]
+    to_be_appended = [prior, 0, narr, father, axiom, axiom_idx, []]
     if manager: to_be_appended = manager.list(to_be_appended)
     children.append(to_be_appended)
     father[6] = children
@@ -86,11 +98,15 @@ def move_policy(father, steps, debug=False, prior_arr=None):
         idx = len(children)
         step = steps[idx]
         prior = prior_arr[idx] * 100.0 if prior_arr is not None else 0
-        if debug: print('[expand] ', '(prior=%.5f)' % prior, step[1].name())
+        if debug:
+            print('[expand] ', '(prior=%.5f)' % prior, end="")
+            rich.print('[yellow]' + step[1].name())
         return expand(father, step, prior=prior)
     else:
         child, w = best_child_of(father, debug=False)
-        if debug: print(f'[best child] w={w:.5f}', child[4].name())
+        if debug:
+            print(f'[best child] w={w:.5f}', end=" ")
+            rich.print('[yellow]' + child[4].name())
         return child
 
 
@@ -133,7 +149,8 @@ def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=Fa
         return steps, [0 for _ in steps]
 
 
-def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3, lock=None):
+def rollout(father, node, all_axioms, n_times, visited,
+            debug=False, nn_models=None, k=3, lock=None):
     """
     Monte-Carlo 树的 roll-out 操作
     nn_models 未指定时，完全随机进行深度为 n_times 的 roll-out.
@@ -144,8 +161,16 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
     max_step_reward = 1000
     max_complexity_reward = 10
     complexity_reward = 0
-    #origin_val = state_value(node[2])
+
     best_value = -max_step_reward
+
+    father_val = state_value(father)
+    origin_val = max(father_val, state_value(node[2]))
+
+    if debug:
+        rich.print(f'[blue]{father_val}[/]', end=' ')
+        print('父节点', expression.narr2tex(father))
+
     while True:
         q, n, narr, father, axiom, axiom_idx, children = node
         expr = expression.narr2tex(narr)
@@ -154,7 +179,7 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
             best_value = expr_val
 
         if debug:
-            axiom_name = axiom.name() if cnt > 0 else '初始'
+            axiom_name = axiom.name()
             print(f'[roll-out depth={cnt}]', end=' ')
             rich.print(f'[blue]{expr_val}[/]', end=' ')
             print(axiom_name, expr)
@@ -164,7 +189,7 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
             if nn_models:
                 reward = -max_step_reward
             else:
-                reward = best_value
+                reward = -max_step_reward
             break
 
         # when no NN presents, we can only define value by complexity difference
@@ -203,8 +228,10 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
                 reward = step_reward + max_complexity_reward / max(1, complexity_reward)
                 if debug: print(f'[step reward] {step_reward}')
             else:
-                reward = best_value
-
+                if best_value > origin_val:
+                    reward = best_value
+                else:
+                    reward = -max_step_reward
             break
 
         # randomly select index
@@ -229,7 +256,7 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
         cnt += 1
 
     # calculate rewards
-    x = reward / 10
+    x = reward
     norm_reward = x / (1 + abs(x)) + 1.0
     if debug:
         print('\033[91m', end='')
@@ -255,6 +282,7 @@ def evaluate(
     """
     采样函数（顺序执行版）：进行 n_sample_times 次采样
     """
+    _, _, father, _, _, _, _ = node
     for i in range(n_sample_times):
         if lock: lock.acquire()
         child = move_policy(node, steps, debug=debug, prior_arr=step_probs)
@@ -263,16 +291,16 @@ def evaluate(
         if debug:
         #if True:
             rich.print(f"[red]worker#{worker} sample[/] {i+1}th/{n_sample_times}")
+            print_UCT(node)
             #print('[step probs]', step_probs)
             #print('[expr]', expression.narr2tex(node[2]))
-            print('[UCT]', [(c[4].name(), round(w, 5)) for c, w in zip(node[6], children_weights(node))])
             #for s,a,ai in steps:
             #    print(f'axiom#{ai}', a, end='\n---\n')
             #    print(expression.narr2tex(s))
             #    print()
 
-        bottom_node, reward = rollout(
-            child, all_axioms, sample_depth, visited, debug=debug,
+        bottom_node, reward = rollout(father, child,
+            all_axioms, sample_depth, visited, debug=debug,
             nn_models=nn_models, k=k, lock=lock
         )
 
@@ -296,9 +324,7 @@ def evaluate_parallel(
             name = 'multi-thread' if use_thread else 'multi-process'
             rich.print(f"[red]{name} stage[/] {b + 1}th/{n_stages} with " +
             f"{n_worker} workers, each {batch_sz}/{n_sample_times} samples")
-
-            print('[UCT]', [(c[4].name(), round(w, 5)) for c, w in
-                            zip(node[6], children_weights(node))])
+            print_UCT(node)
 
         if use_thread:
             with ThreadPoolExecutor(max_workers=n_worker) as executor:
@@ -386,7 +412,7 @@ def back_off_step(steps, debug=False):
     return steps
 
 
-def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, k=3,
+def mcts(narr0, all_axioms, sample_depth=3, n_sample_times=200, n_maxsteps=100, k=3,
          debug=False, nn_models=None, training=False, force_single_thread=False):
     #       q  n   narr  father  axiom   axiomIdx  children
     root = [0, 1, narr0, None,  None,      -1,       []    ]
@@ -423,7 +449,9 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
         if debug:
             rich.print(f'[magenta]candidate steps={len(steps)}[/]')
             for n, a, ai in steps:
-                print(a.name(), ':')
+                val = state_value(n)
+                print(a.name(), ':', end=' ')
+                rich.print(f'val={val}', end=' ')
                 print(expression.narr2tex(n), end='\n\n')
 
         if len(steps) == 0:
@@ -491,7 +519,8 @@ if __name__ == '__main__':
 
     #test_exprs = ['( \\frac{5}{6} + \\frac{3}{8} + \\frac{7}{4} ) 24']
     test_exprs = ['x \\times 50 + x^{2} + y \\times x + x^{2} \\times 0.609 + x \\times 0.609 \\times y + x^{2} \\times 2 \\times x + x^{2} \\times 2 \\times y - 629 \\times x - 629 \\times y + y^{2} \\times x + y^{2} \\times y = 0']
-    test_exprs = ['(1+0.609)x^{2} + 50 x + x^{2} + x \\times 0.609 \\times y + x^{2} \\times 2 \\times x - 629 \\times x + y^{2} \\times y = 0']
+    test_exprs = ['(1+0.609)x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0']
+    #test_exprs = ['(1 + 1 + 0.609) \\times x^{2} - x^{2} \\times 2 \\times x = 0']
 
     nn_models = None
     timer = Timer()
@@ -506,7 +535,7 @@ if __name__ == '__main__':
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
-                nn_models=nn_models, force_single_thread=False)
+                nn_models=nn_models, force_single_thread=True)
 
         render_steps(steps)
         print(f'Test case: {i} / {len(test_exprs) - 1}')

@@ -153,9 +153,13 @@ def collect_stats(narr, stats, level):
     root = narr[0]
     children = narr[1:]
     sign, token = root
+
+    if sign < 0:
+        stats['neg'] += 1
+
     if token in expression.terminal_tokens():
-        if stats['level'] < level:
-            stats['level'] = level
+        if stats['max_level'] < level:
+            stats['max_level'] = level
         if token == 'NUMBER':
             stats['leaves'] += level + 1
         else:
@@ -168,8 +172,9 @@ def collect_stats(narr, stats, level):
 
 def value_v2(narr, level=0, debug=False):
     stats = {
-        'level': 0,
-        'leaves': 0
+        'max_level': 0,
+        'leaves': 0,
+        'neg': 0
     }
 
     collect_stats(narr, stats, 0)
@@ -177,7 +182,7 @@ def value_v2(narr, level=0, debug=False):
     if debug:
         print(stats)
 
-    return - (stats['leaves'])
+    return - (stats['leaves'] + stats['neg'])
 
 
 def value(narr, debug=False):
@@ -209,5 +214,5 @@ if __name__ == '__main__':
     #test('2(x+y) + 1')
     #test('2x+2y + 1')
 
-    test('2(x+y)', value_v2)
-    test('x(2+3)', value_v2)
+    test('-3', value_v2)
+    test('3', value_v2)

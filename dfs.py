@@ -87,7 +87,7 @@ def test():
         '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
         'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
         '-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0',
-        '(1 + 0.609 + 1) \\times x^{2} + (-579 + 0.609 \\times y + x^{2} \\times 2) \\times x + y^{2} \\times y = 0'
+        '(1 + 1 + 0.609) \\times x^{2} + (-x)^{2} \\times 2 \\times x = 0'
     ]
 
     #testcases, _ = test_cases_x3_rational()
