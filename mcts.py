@@ -149,7 +149,7 @@ def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=Fa
         return steps, [0 for _ in steps]
 
 
-def rollout(father, node, all_axioms, n_times, visited,
+def rollout(father, node, all_axioms, n_times, visited, great_reward=1000,
             debug=False, nn_models=None, k=3, lock=None):
     """
     Monte-Carlo 树的 roll-out 操作
@@ -158,11 +158,10 @@ def rollout(father, node, all_axioms, n_times, visited,
     """
     cnt = 0
     reward = 0
-    max_step_reward = 1000
     max_complexity_reward = 10
     complexity_reward = 0
 
-    best_value = -max_step_reward
+    best_value = -great_reward
 
     father_val = state_value(father)
     origin_val = max(father_val, state_value(node[2]))
@@ -188,9 +187,9 @@ def rollout(father, node, all_axioms, n_times, visited,
         if expr in visited:
             if debug: rich.print(f'[[roll-out]] [red]visited![/]')
             if nn_models:
-                reward = -max_step_reward
+                reward = -great_reward
             else:
-                reward = -max_step_reward
+                reward = -great_reward
             break
 
         # when no NN presents, we can only define value by complexity difference
@@ -207,11 +206,11 @@ def rollout(father, node, all_axioms, n_times, visited,
             if debug: print('[roll-out reach leaf]')
 
             if nn_models:
-                step_reward = max_step_reward
+                step_reward = great_reward
                 reward = step_reward + max_complexity_reward / max(1, complexity_reward)
-                if debug: print(f'[step reward] {max_step_reward}')
+                if debug: print(f'[step reward] {great_reward}')
             else:
-                reward = max_step_reward
+                reward = great_reward
             break
 
         elif cnt >= n_times:
@@ -225,14 +224,14 @@ def rollout(father, node, all_axioms, n_times, visited,
 
                 if debug: print(f'[predict value]', pred_val)
 
-                step_reward = max_step_reward / max(1, 1 - pred_val)
+                step_reward = great_reward / max(1, 1 - pred_val)
                 reward = step_reward + max_complexity_reward / max(1, complexity_reward)
                 if debug: print(f'[step reward] {step_reward}')
             else:
                 if best_value > origin_val:
                     reward = best_value
                 else:
-                    reward = -max_step_reward
+                    reward = -great_reward
             break
 
         # randomly select index
@@ -260,14 +259,7 @@ def rollout(father, node, all_axioms, n_times, visited,
         node = next_node
         cnt += 1
 
-    # calculate rewards
-    x = reward
-    norm_reward = x / (1 + abs(x)) + 1.0
-    if debug:
-        print('\033[91m', end='')
-        print(f'[reward] val={reward:.2f} -> {norm_reward}')
-        print('\033[0m')
-    return node, norm_reward
+    return node, reward
 
 
 def backprop(node, reward):
@@ -288,6 +280,8 @@ def evaluate(
     采样函数（顺序执行版）：进行 n_sample_times 次采样
     """
     _, _, father, _, _, _, _ = node
+    great_reward = 1000
+    any_feasible = False
     for i in range(n_sample_times):
         if lock: lock.acquire()
         child = move_policy(node, steps, debug=debug, prior_arr=step_probs)
@@ -306,12 +300,24 @@ def evaluate(
 
         bottom_node, reward = rollout(father, child,
             all_axioms, sample_depth, visited, debug=debug,
-            nn_models=nn_models, k=k, lock=lock
+            nn_models=nn_models, k=k, lock=lock, great_reward=great_reward
         )
 
+        if reward != -great_reward:
+            any_feasible = True
+
+        # normalize rewards
+        norm_reward = reward / (1 + abs(reward)) + 1.0
+        if debug:
+            print('\033[91m', end='')
+            print(f'[reward] val={reward:.2f} -> {norm_reward}')
+            print('\033[0m')
+
         if lock: lock.acquire()
-        backprop(bottom_node, reward)
+        backprop(bottom_node, norm_reward)
         if lock: lock.release()
+
+    return any_feasible
 
 
 def evaluate_parallel(
@@ -322,6 +328,7 @@ def evaluate_parallel(
     """
     n_stages = n_sample_times // n_worker // batch_sz
     lock = manager.Lock() if manager else None
+    any_feasible = False
 
     for b in range(n_stages):
         #if debug:
@@ -331,21 +338,29 @@ def evaluate_parallel(
             f"{n_worker} workers, each {batch_sz}/{n_sample_times} samples")
             print_UCT(node)
 
+        job = [None] * n_worker
+
         if use_thread:
             with ThreadPoolExecutor(max_workers=n_worker) as executor:
-                for i in range(batch_sz):
-                    executor.submit(evaluate,
+                for i in range(n_worker):
+                    job[i] = executor.submit(evaluate,
                         node, all_axioms, steps, batch_sz, sample_depth, visited,
                         debug=False, nn_models=nn_models, k=k, worker=i, lock=lock
                     )
         else:
             with ProcessPoolExecutor(max_workers=n_worker) as executor:
                 for i in range(n_worker):
-                    executor.submit(evaluate,
+                    job[i] = executor.submit(evaluate,
                         node, all_axioms, steps, batch_sz, sample_depth, visited,
                         debug=False, nn_models=nn_models, k=k, worker=i, lock=lock
                     )
-    #quit()
+
+        for i in range(n_worker):
+            feasible = job[i].result()
+            if feasible:
+                any_feasible = True
+
+    return any_feasible
 
 
 #def policy_fine_tuning(nn_models, expr, policy, debug=False, all_axioms=[]):
@@ -419,7 +434,7 @@ def back_off_step(steps, debug=False):
     return steps
 
 
-def mcts(narr0, all_axioms, sample_depth=8, n_sample_times=200, n_maxsteps=100, k=3,
+def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, k=3,
          debug=False, nn_models=None, training=False, force_single_thread=False):
     #       q  n   narr  father  axiom   axiomIdx  children
     root = [0, 1, narr0, None,  None,      -1,       []    ]
@@ -474,12 +489,12 @@ def mcts(narr0, all_axioms, sample_depth=8, n_sample_times=200, n_maxsteps=100, 
             force_single_thread = False
 
         if manager and not force_single_thread:
-            evaluate_parallel(
+            any_feasible = evaluate_parallel(
                 node, all_axioms, steps, sample_times, sample_depth, visited,
                 debug=debug, nn_models=nn_models, k=k
             )
         else:
-            evaluate(
+            any_feasible = evaluate(
                 node, all_axioms, steps, sample_times, sample_depth, visited,
                 debug=debug, nn_models=nn_models, k=k, step_probs=step_probs
             )
@@ -487,8 +502,9 @@ def mcts(narr0, all_axioms, sample_depth=8, n_sample_times=200, n_maxsteps=100, 
         # selection
         move_choice, w = best_child_of(node, c_param=.0, debug=debug)
         move_to_expr = expression.narr2tex(move_choice[2])
-        if w == 0 or move_to_expr in visited:
-            print(f'[abort] best w={w:.2f}, visited: {move_to_expr in visited}')
+        if w == 0 or not any_feasible or move_to_expr in visited:
+            print(f'[abort] w={w:.2f}, any_feasible={any_feasible}, ' +
+                   'visited: {move_to_expr in visited}')
             break
         else:
             if nn_models and training:
@@ -534,9 +550,9 @@ if __name__ == '__main__':
         '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
         '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
         'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
-        '-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0',
         '1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0',
-        '\\frac{-3\\frac{1}{3}}{(2\\frac{1}{3}) \\times \\frac{7}{10}}'
+        '\\frac{-3\\frac{1}{3}}{(2\\frac{1}{3}) \\times \\frac{7}{10}}',
+        '-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0'
     ]
 
     nn_models = None
@@ -545,7 +561,6 @@ if __name__ == '__main__':
     debug = True
 
     for i, expr in enumerate(testcases[-1:]):
-    #for i, expr in enumerate(testcases[5:]):
         narr = expression.tex2narr(expr)
 
         n_sample_times = 10 if nn_models else 200
@@ -553,7 +568,7 @@ if __name__ == '__main__':
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
-                nn_models=nn_models, force_single_thread=True)
+                nn_models=nn_models, force_single_thread=False)
 
         for j, (narr, axiom, axiom_idx) in enumerate(steps):
             val = state_value(narr)
