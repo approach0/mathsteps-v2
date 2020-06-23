@@ -1,4 +1,4 @@
-import state
+from state import value_v2 as state_value
 import expression
 from common_axioms import common_axioms
 from copy import deepcopy
@@ -144,7 +144,7 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
     max_step_reward = 100
     max_complexity_reward = 10
     complexity_reward = 0
-    origin_val = state.value(node[2])
+    origin_val = state_value(node[2])
     while True:
         q, n, narr, father, axiom, axiom_idx, children = node
         expr = expression.narr2tex(narr)
@@ -162,7 +162,7 @@ def rollout(node, all_axioms, n_times, visited, debug=False, nn_models=None, k=3
             break
 
         # when no NN presents, we can only define value by complexity difference
-        expr_val = state.value(narr)
+        expr_val = state_value(narr)
         if nn_models is None:
             pass
         else:
@@ -360,12 +360,12 @@ def back_off_step(steps, debug=False):
     """
     裁剪 MCTS 最后几步的探索步骤，确保得到的 value 比较小
     """
-    max_val = max([state.value(narr) for narr, a, ai in steps])
+    max_val = max([state_value(narr) for narr, a, ai in steps])
 
     while len(steps) > 1:
         cur_step = steps[-1]
         narr, _, _ = cur_step
-        val = state.value(narr)
+        val = state_value(narr)
 
         if val >= max_val:
             break
@@ -403,7 +403,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
         if True:
         #if debug:
             print('\033[94m', end='')
-            expr_val = state.value(narr)
+            expr_val = state_value(narr)
             print(f'[current] step={len(moves)}, val={expr_val:.1f}:',
                 expression.narr2tex(narr), end='')
             print('\033[0m', end='\n')

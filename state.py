@@ -178,8 +178,8 @@ def value_v2(narr, level=0, debug=False):
 
 
 def value(narr, debug=False):
-    #return value_v1(narr, debug=debug)
-    return value_v2(narr, debug=debug)
+    return value_v1(narr, debug=debug)
+    #return value_v2(narr, debug=debug)
 
 
 def test(tex):
