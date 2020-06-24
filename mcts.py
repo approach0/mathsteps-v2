@@ -164,7 +164,6 @@ def rollout(father, node, all_axioms, n_times, visited, great_reward=1000,
     best_value = -great_reward
 
     father_val = state_value(father)
-    origin_val = max(father_val, state_value(node[2]))
 
     if debug:
         rich.print(f'[blue]{father_val}[/]', end=' ')
@@ -228,7 +227,7 @@ def rollout(father, node, all_axioms, n_times, visited, great_reward=1000,
                 reward = step_reward + max_complexity_reward / max(1, complexity_reward)
                 if debug: print(f'[step reward] {step_reward}')
             else:
-                if best_value > origin_val:
+                if best_value > father_val:
                     reward = best_value
                 else:
                     reward = -great_reward
@@ -307,7 +306,9 @@ def evaluate(
             any_feasible = True
 
         # normalize rewards
-        norm_reward = reward / (1 + abs(reward)) + 1.0
+        def sigmoid(x):
+            return 1 / (1 + math.exp(-x))
+        norm_reward = sigmoid(reward / 60) * 2.0
         if debug:
             print('\033[91m', end='')
             print(f'[reward] val={reward:.2f} -> {norm_reward}')
@@ -434,7 +435,7 @@ def back_off_step(steps, debug=False):
     return steps
 
 
-def mcts(narr0, all_axioms, sample_depth=3, n_sample_times=200, n_maxsteps=100, k=3,
+def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, k=3,
          debug=False, nn_models=None, training=False, force_single_thread=False):
     #       q  n   narr  father  axiom   axiomIdx  children
     root = [0, 1, narr0, None,  None,      -1,       []    ]
