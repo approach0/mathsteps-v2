@@ -66,7 +66,7 @@ def dfs(narr, axioms, debug=False, maxsteps=150):
         while len(next_steps) > 0:
             narr, axiom, axiom_idx = next_steps[0]
             return_steps.append((narr, axiom, axiom_idx))
-            next_steps = possible_next_steps(narr, axioms, state.value,
+            next_steps = possible_next_steps(narr, axioms, state.value_v1,
                                              fast_return=True, debug=debug)
             if cnt > maxsteps:
                 any_err = True

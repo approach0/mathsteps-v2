@@ -233,11 +233,6 @@ def value_v2(narr, level=0, debug=False):
     return -sum(complexity)
 
 
-def value(narr, debug=False):
-    return value_v1(narr, debug=debug)
-    #return value_v2(narr, debug=debug)
-
-
 def test(tex, state_value):
     """
     包装测试函数
