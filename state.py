@@ -164,27 +164,30 @@ def collect_stats(narr, stats, level, grandRoot):
         if token == 'NUMBER':
             num = children[0]
 
-            stats['leaves_weight'] += level + 1
             stats['NUMBER_sum'] += abs(num)
             if grandRoot and grandRoot[1] == 'sqrt':
                 stats['NUMBER_in_sqrt'] += abs(num)
 
             if num.is_integer():
-                if abs(num) == 1:
-                    stats['NUMBER_one'] += 1
-                elif abs(num) == 0:
-                    stats['NUMBER_zero'] += 1
+                if abs(num) == 1 or abs(num) == 0:
+                    stats['NUMBER_one_zero'] += 1
+                else:
+                    stats['NUMBER_other_ints'] += 1
 
                 n_zeros = right_padding_zeros(num)
                 stats['NUMBER_pad_zeros'] += n_zeros
             else:
                 stats['NUMBER_decimal'] += 1
         else:
-            stats['leaves_weight'] += (level + 1) * 2
+            stats['VAR_cnt'] += 1
+
         return
 
     for i, c in enumerate(children):
-        collect_stats(c, stats, level+1, root)
+        if token in ['frac', 'ifrac']:
+            collect_stats(c, stats, level + 5, root)
+        else:
+            collect_stats(c, stats, level + 1, root)
 
 
 def value_v2(narr, level=0, debug=False):
@@ -193,30 +196,36 @@ def value_v2(narr, level=0, debug=False):
         'max_level': 0,
         'NUMBER_sum': 0,
         'NUMBER_in_sqrt': 0,
-        'NUMBER_one': 0,
-        'NUMBER_zero': 0,
+        'NUMBER_one_zero': 0,
+        'NUMBER_other_ints': 0,
         'NUMBER_pad_zeros': 0,
         'NUMBER_decimal': 0,
-        'leaves_weight': 0
+        'VAR_cnt': 0
     }
 
     collect_stats(narr, stats, 0, None)
 
+    complexity = [
+        stats['max_level'] ** 2,
+        1.0 * math.log(1 + math.log(1 + stats['NUMBER_sum'])),
+        5.0 * math.log(1 + stats['NUMBER_in_sqrt']),
+        1.0 * math.log(1
+            + 0.2 * stats['NUMBER_one_zero']
+            + 1.0 * stats['NUMBER_other_ints']
+            + 1.0 * stats['neg']
+            + 3.0 + stats['NUMBER_decimal']
+            - 0.1 * stats['NUMBER_pad_zeros'],
+        ),
+        1.5 * math.log(1
+            + 3.0 * stats['VAR_cnt']
+        )
+    ]
+
     if debug:
         print(stats)
+        print(complexity)
 
-    complexity = (0
-        + stats['neg']
-        + 0.5 * math.log(1 + stats['NUMBER_sum'])
-        + 1.5 * math.log(1 + stats['NUMBER_in_sqrt'])
-        - 0.1 * stats['NUMBER_one']
-        + 0.1 * stats['NUMBER_zero']
-        - 0.2 * stats['NUMBER_pad_zeros']
-        + 2.0 * stats['NUMBER_decimal']
-        + stats['leaves_weight']
-    )
-
-    return -complexity
+    return -sum(complexity)
 
 
 def value(narr, debug=False):
@@ -239,26 +248,40 @@ if __name__ == '__main__':
     #print(right_padding_zeros(-100))
     #print(right_padding_zeros(0))
 
-    #test('10 \cdot x + 15 = 15')
-    #test('10 \cdot x + 15 -15 = 0')
+    #test('0 + 0 + 0', value_v2)
+    #test('0', value_v2)
 
-    test('100 \\times 25', value_v2)
-    test('2500', value_v2)
+    #test('10 \cdot x + 15 = 15', value_v2)
+    #test('10 \cdot x + 15 -15 = 0', value_v2)
 
-    test('2(x+y)+1+2', value_v2)
-    test('2x+2y+3+4', value_v2)
+    #test('100 \\times 25', value_v2)
+    #test('2500', value_v2)
 
-    test('-3', value_v2)
-    test('3', value_v2)
+    #test('2(x+y)+1+2', value_v2)
+    #test('2x+2y+3+4', value_v2)
 
-    test('10 + 2', value_v2)
-    test('7 + 5', value_v2)
+    #test('-3', value_v2)
+    #test('3', value_v2)
 
-    test('0 + 3', value_v2)
-    test('6 - 3', value_v2)
+    #test('10 + 2', value_v2)
+    #test('7 + 5', value_v2)
 
-    test('3 \\sqrt{3}', value_v2)
-    test('\\sqrt{27}', value_v2)
+    #test('0 + 3', value_v2)
+    #test('6 - 3', value_v2)
 
-    test('81 \\sqrt{9}', value_v2)
-    test('\\sqrt{59049}', value_v2)
+    #test('3 \\sqrt{3}', value_v2)
+    #test('\\sqrt{27}', value_v2)
+
+    #test('81 \\sqrt{9}', value_v2)
+    #test('\\sqrt{59049}', value_v2)
+
+    #test('-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0', value_v2)
+    #test('x \\times 50 + (x + y) \\times (-629 - x^{2} \\times 2 + y^{2}) + x^{2} \\times 0.391 + x \\times 0.391 \\times y = 0', value_v2)
+    #test('x \\times 50 + x^{2} \\times 0.391 + x \\times 0.391 \\times y + 2 \\times x^{2} \\times x + 2 \\times x^{2} \\times y - 629 \\times x - 629 \\times y + y^{2} \\times x + y^{2} \\times y = 0', value_v2)
+
+    #test('\\frac{1}{2}', value_v2)
+    #test('4 - 3 \\frac{1}{2}', value_v2)
+
+    test('-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + \\frac{50 \\times x}{x + y} = 0', value_v2)
+    test('50 \\times x + (x + y) \\times (-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2}) = (x + y) \\times 0', value_v2)
+    test('50 \\times x + (x + y) \\times x \\times 0.391 + (-629 - x^{2} \\times 2 + y^{2}) \\times x - y \\times 629 + y \\times x^{2} \\times 2 + y \\times y^{2} = 0', value_v2)

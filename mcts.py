@@ -441,6 +441,8 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
     moves = [root]
     global manager
 
+    render_steps([(narr0, None, -1)])
+
     if nn_models is None and not force_single_thread:
         # prepare proxy structure for parallel processes
         root = manager.list(root)
@@ -477,6 +479,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
                 print(expression.narr2tex(n), end='\n\n')
 
         if len(steps) == 0:
+            if debug: print('[no more candidate steps]')
             if nn_models and training:
                 policy = 0
                 #policy_fine_tuning(nn_models, expr, policy, debug=debug, all_axioms=all_axioms)
@@ -504,7 +507,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
         move_to_expr = expression.narr2tex(move_choice[2])
         if w == 0 or not any_feasible or move_to_expr in visited:
             print(f'[abort] w={w:.2f}, any_feasible={any_feasible}, ' +
-                   'visited: {move_to_expr in visited}')
+                  f'visited: {move_to_expr in visited}')
             break
         else:
             if nn_models and training:
@@ -523,6 +526,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
             #if debug: print('[visited]', visited)
 
             if len(moves) >= n_maxsteps:
+                if debug: print('[exceed max steps]')
                 break
 
     if len(final_steps) > 0:
@@ -540,8 +544,6 @@ if __name__ == '__main__':
     from render_math import render_steps
     axioms = common_axioms()
 
-    testcases = ['1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0']
-
     testcases = [
         '\\frac{12a}{3a + a + 20a} - \\frac{1}{4}',
         '1 + \\frac{7}{3}',
@@ -551,8 +553,8 @@ if __name__ == '__main__':
         '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
         'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
         '1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0',
-        '\\frac{-3\\frac{1}{3}}{(2\\frac{1}{3}) \\times \\frac{7}{10}}',
-        '-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0'
+        '-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0',
+        '-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + \\frac{50 x}{x + y} = 0'
     ]
 
     nn_models = None
@@ -568,7 +570,7 @@ if __name__ == '__main__':
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
-                nn_models=nn_models, force_single_thread=False)
+                nn_models=nn_models, force_single_thread=True)
 
         for j, (narr, axiom, axiom_idx) in enumerate(steps):
             val = state_value(narr)
