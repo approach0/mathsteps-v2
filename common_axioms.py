@@ -2,7 +2,7 @@ from axiom import Axiom
 import dynamic_axioms
 
 
-def common_axioms():
+def common_axioms(extract_var_only=True):
     """
     常用的规则集合（优先级已经按照数组元素的索引确定）
     """
@@ -157,15 +157,28 @@ def common_axioms():
         .add_test('\\frac{x}{2} + a - b = z', 'x + 2 \\times (a - b) = 2 \\times z')
     )
 
-    axioms.append(
-        Axiom(name='合并同类项', recursive_apply=True, allow_complication=True)
-        .add_rule('X + X', '2X')
-        .add_rule('- X - X', '-2X')
-        .add_rule('#X # kX', '(#1 1 #2 k) X')
-        .add_rule('#X # Xk', '(#1 1 #2 k) X')
-        .add_rule('#X *{1} # X *{2}', '(#1 *{1} #2 *{2}) X')
+    if extract_var_only:
+        tmp_axiom = (
+            Axiom(name='合并同类项', recursive_apply=True, allow_complication=True)
+            .add_rule('X + X', '2X')
+            .add_rule('- X - X', '-2X')
+            .add_rule('#X # kX', '(#1 1 #2 k) X')
+            .add_rule('#X # Xk', '(#1 1 #2 k) X')
+            .add_rule('#X *{1} # X *{2}', '(#1 *{1} #2 *{2}) X')
+        )
+    else:
+        tmp_axiom = (
+            Axiom(name='合并同类项', recursive_apply=True, allow_complication=True)
+            .add_rule('x + x', '2x')
+            .add_rule('- x - x', '-2x')
+            .add_rule('#x # kx', '(#1 1 #2 k) x')
+            .add_rule('#x # xk', '(#1 1 #2 k) x')
+            .add_rule('#x *{1} # x *{2}', '(#1 *{1} #2 *{2}) x')
+        )
 
-        .add_test('2 + 2', '2 + 2')
+    axioms.append(
+        tmp_axiom
+        .add_test('2 + 2')
         .add_test('x^{2} + x^{2}', '2 \\times x^{2}')
         .add_test('x + 2x + 3x', [
             '(1 + 2 + 3) \\times x',

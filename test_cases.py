@@ -762,174 +762,174 @@ def test_cases_wiki131278697():
     )
     answers.append([])
 
-    questions.append(
-        "3x + 3 = 2x - 1"
-    )
-    answers.append([])
+    #questions.append(
+    #    "3x + 3 = 2x - 1"
+    #)
+    #answers.append([])
 
-    questions.append(
-        "2(2x + 3) + 3(2x + 3) = 15"
-    )
-    answers.append([])
+    #questions.append(
+    #    "2(2x + 3) + 3(2x + 3) = 15"
+    #)
+    #answers.append([])
 
-    questions.append(
-        "\\frac{2x + 1}{3} - \\frac{5x - 1}{6} = 1"
-    )
-    answers.append([])
+    #questions.append(
+    #    "\\frac{2x + 1}{3} - \\frac{5x - 1}{6} = 1"
+    #)
+    #answers.append([])
 
-    questions.append(
-        "1 - \\frac{3}{2}x = 3x + 5 \div 2"
-    )
-    answers.append([])
+    #questions.append(
+    #    "1 - \\frac{3}{2}x = 3x + 5 \div 2"
+    #)
+    #answers.append([])
 
-    questions.append(
-        "\\frac{5x + 4}{3} + \\frac{x - 1}{4} = 2 - \\frac{5x - 5}{12}"
-    )
-    answers.append([])
+    #questions.append(
+    #    "\\frac{5x + 4}{3} + \\frac{x - 1}{4} = 2 - \\frac{5x - 5}{12}"
+    #)
+    #answers.append([])
 
-    questions.append(
-        "\\frac{5y - 1}{4} - \\frac{2y + 6}{3} = 1"
-    )
-    answers.append([])
+    #questions.append(
+    #    "\\frac{5y - 1}{4} - \\frac{2y + 6}{3} = 1"
+    #)
+    #answers.append([])
 
-    questions.append(
-        "\\frac{2a - 0.3}{0.5} - \\frac{a + 0.4}{0.3} = 1"
-    )
-    answers.append([])
+    #questions.append(
+    #    "\\frac{2a - 0.3}{0.5} - \\frac{a + 0.4}{0.3} = 1"
+    #)
+    #answers.append([])
 
-    questions.append(
-        "\\frac{0.1(2x - 4) - 1}{0.2} = \\frac{0.2(4 - 2x) - 0.1}{0.3} - 1"
-    )
-    answers.append([])
+    #questions.append(
+    #    "\\frac{0.1(2x - 4) - 1}{0.2} = \\frac{0.2(4 - 2x) - 0.1}{0.3} - 1"
+    #)
+    #answers.append([])
 
-    questions.append(
-        "2x + 3[x - 2(x - 1) + 4] = 8"
-    )
-    answers.append([])
+    #questions.append(
+    #    "2x + 3[x - 2(x - 1) + 4] = 8"
+    #)
+    #answers.append([])
 
-    questions.append(
-        "2 [\\frac{8}{3}x - (2x - \\frac{1}{2})] = \\frac{3}{4}x"
-    )
-    answers.append([])
+    #questions.append(
+    #    "2 [\\frac{8}{3}x - (2x - \\frac{1}{2})] = \\frac{3}{4}x"
+    #)
+    #answers.append([])
 
-    questions.append(
-        [
-            'y = 2x',
-            '3x + 5y = 26',
-        ]
-    )
-    answers.append([])
+    #questions.append(
+    #    [
+    #        'y = 2x',
+    #        '3x + 5y = 26',
+    #    ]
+    #)
+    #answers.append([])
 
-    questions.append(
-        [
-            'a + 5b = 6',
-            '3a - 6b = 4',
-        ]
-    )
-    answers.append([])
+    #questions.append(
+    #    [
+    #        'a + 5b = 6',
+    #        '3a - 6b = 4',
+    #    ]
+    #)
+    #answers.append([])
 
-    questions.append(
-        [
-            '5x + 2y = 9',
-            '10x + y = 12',
-        ]
-    )
-    answers.append([])
+    #questions.append(
+    #    [
+    #        '5x + 2y = 9',
+    #        '10x + y = 12',
+    #    ]
+    #)
+    #answers.append([])
 
-    questions.append(
-        [
-            '3x + 2y + 3 = 0',
-            '\\frac{5x + y}{2} = 2x + y',
-        ]
-    )
-    answers.append([])
+    #questions.append(
+    #    [
+    #        '3x + 2y + 3 = 0',
+    #        '\\frac{5x + y}{2} = 2x + y',
+    #    ]
+    #)
+    #answers.append([])
 
-    questions.append(
-        [
-            '2x - y = -2',
-            'x + y = 5',
-        ]
-    )
-    answers.append([])
+    #questions.append(
+    #    [
+    #        '2x - y = -2',
+    #        'x + y = 5',
+    #    ]
+    #)
+    #answers.append([])
 
-    questions.append(
-        [
-            '2x - y = 3',
-            '3x - y = 8',
-        ]
-    )
-    answers.append([])
+    #questions.append(
+    #    [
+    #        '2x - y = 3',
+    #        '3x - y = 8',
+    #    ]
+    #)
+    #answers.append([])
 
-    questions.append(
-        [
-            '2x - y = 5',
-            '7x - 3y = 20',
-        ]
-    )
-    answers.append([])
+    #questions.append(
+    #    [
+    #        '2x - y = 5',
+    #        '7x - 3y = 20',
+    #    ]
+    #)
+    #answers.append([])
 
-    questions.append(
-        [
-            '2x - 3y = 4',
-            '3x - 2y = 6',
-        ]
-    )
-    answers.append([])
+    #questions.append(
+    #    [
+    #        '2x - 3y = 4',
+    #        '3x - 2y = 6',
+    #    ]
+    #)
+    #answers.append([])
 
-    questions.append(
-        [
-            '\\frac{2s}{3} + \\frac{3t}{4} = \\frac{1}{2}',
-            '\\frac{4s}{5} + \\frac{5t}{6} = \\frac{7}{15}',
-        ]
-    )
-    answers.append([])
+    #questions.append(
+    #    [
+    #        '\\frac{2s}{3} + \\frac{3t}{4} = \\frac{1}{2}',
+    #        '\\frac{4s}{5} + \\frac{5t}{6} = \\frac{7}{15}',
+    #    ]
+    #)
+    #answers.append([])
 
-    questions.append(
-        [
-            'x + 2y + z = 0',
-            '2x -y -z = 1',
-            '3x -y -z = 2',
-        ]
-    )
-    answers.append([])
+    #questions.append(
+    #    [
+    #        'x + 2y + z = 0',
+    #        '2x -y -z = 1',
+    #        '3x -y -z = 2',
+    #    ]
+    #)
+    #answers.append([])
 
-    questions.append(
-        [
-            'a - 2b + 4c = 12',
-            '3a + 2b = 1',
-            '4a - c = 7',
-        ]
-    )
-    answers.append([])
+    #questions.append(
+    #    [
+    #        'a - 2b + 4c = 12',
+    #        '3a + 2b = 1',
+    #        '4a - c = 7',
+    #    ]
+    #)
+    #answers.append([])
 
-    questions.append(
-        '(5a^{2} + 2a - 1) - 4[3 - 2(4a + a^{2})]'
-    )
-    answers.append([])
+    #questions.append(
+    #    '(5a^{2} + 2a - 1) - 4[3 - 2(4a + a^{2})]'
+    #)
+    #answers.append([])
 
-    questions.append(
-        '3x^{2} - [7x - (4x - 3) - 2x^{2}]'
-    )
-    answers.append([])
+    #questions.append(
+    #    '3x^{2} - [7x - (4x - 3) - 2x^{2}]'
+    #)
+    #answers.append([])
 
-    questions.append(
-        '3(a^{2} - 2ab) - 2(-3ab + b^{2})'
-    )
-    answers.append([])
+    #questions.append(
+    #    '3(a^{2} - 2ab) - 2(-3ab + b^{2})'
+    #)
+    #answers.append([])
 
-    questions.append(
-        '4(2x^{2} - 3x + 1) - 2(4x^{2} - 2x + 3)'
-    )
-    answers.append([])
+    #questions.append(
+    #    '4(2x^{2} - 3x + 1) - 2(4x^{2} - 2x + 3)'
+    #)
+    #answers.append([])
 
-    questions.append(
-        '5a^{2}b - [2ab^{2} - 2(ab - \\frac{5}{2} a^{2} b) + ab] + 5ab^{2}' # not being able to handle now!
-    )
-    answers.append([])
+    #questions.append(
+    #    '5a^{2}b - [2ab^{2} - 2(ab - \\frac{5}{2} a^{2} b) + ab] + 5ab^{2}' # not being able to handle now!
+    #)
+    #answers.append([])
 
-    questions.append(
-        '2 \cdot (a - c) \cdot b'
-    )
-    answers.append([])
+    #questions.append(
+    #    '2 \cdot (a - c) \cdot b'
+    #)
+    #answers.append([])
 
     return questions, answers

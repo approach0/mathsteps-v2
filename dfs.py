@@ -8,7 +8,7 @@ from timer import Timer
 from common_axioms import common_axioms
 
 def possible_next_steps(narr, axioms, state_value,
-                        debug=False, restrict_rules=None, quick_return=False):
+                        debug=False, restrict_rules=None, fast_return=False):
     return_steps = []
     if debug:
         tex = expression.narr2tex(narr)
@@ -35,7 +35,7 @@ def possible_next_steps(narr, axioms, state_value,
 
         return_steps += value_constrain_narrs
 
-        if quick_return and len(value_constrain_narrs) > 0: break
+        if fast_return and len(value_constrain_narrs) > 0: break
 
     return_steps.sort(key=lambda x: (x[2], -state_value(x[0])))
 
@@ -57,19 +57,25 @@ def possible_next_steps(narr, axioms, state_value,
     return return_steps
 
 
-def dfs(narr, axioms, debug=False):
+def dfs(narr, axioms, debug=False, maxsteps=150):
+    any_err = False
     try:
         next_steps = [(narr, Axiom(name='原式'), -1)]
         return_steps = []
+        cnt = 0
         while len(next_steps) > 0:
             narr, axiom, axiom_idx = next_steps[0]
             return_steps.append((narr, axiom, axiom_idx))
             next_steps = possible_next_steps(narr, axioms, state.value,
-                                             quick_return=True, debug=debug)
+                                             fast_return=True, debug=debug)
+            if cnt > maxsteps:
+                any_err = True
+                break
+            cnt += 1
     except KeyboardInterrupt:
-        return return_steps
+        pass
 
-    return return_steps
+    return return_steps, any_err
 
 
 def test():
@@ -85,15 +91,14 @@ def test():
         '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
         '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
         '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
-        'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
-        '-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0',
-        '1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0',
-        '-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0',
-        '50 \\times x + y^{2} \\times x + y^{2} \\times y - 629 \\times x + (-629) \\times y + x^{2} \\times 0.391 + x \\times 0.391 \\times y + x^{2} \\times 2 \\times x + x^{2} \\times 2 \\times y = 0'
+        'a - x^{2} + x^{2} \\times 0.609 + 1 = 0'
     ]
 
-    #testcases, _ = test_cases_x3_rational()
-    #testcases, _ = test_cases_wiki131278697()
+    tmp, _ = test_cases_x3_rational()
+    testcases += tmp
+
+    tmp, _ = test_cases_wiki131278697()
+    testcases += tmp
 
     if False:
         narr = expression.tex2narr(testcases[-1])
@@ -106,14 +111,18 @@ def test():
     n_steps = 0
     timer = Timer()
 
-    #for i, test in enumerate(testcases):
-    for i, test in enumerate(testcases[-1:]):
+    for i, test in enumerate(testcases):
+    #for i, test in enumerate(testcases[-1:]):
         if i < begin_from: continue
 
         test_narr = expression.tex2narr(test)
 
         with timer:
-            steps = dfs(test_narr, all_axioms, debug=True)
+            steps, err = dfs(test_narr, all_axioms, debug=True)
+            if err:
+                print('DFS error!')
+                render_steps(steps)
+                quit()
 
         for narr, a, ai in steps:
             rich.print(f'[red]{a.name()}')
@@ -126,7 +135,7 @@ def test():
         print(f'steps: {len(steps)}')
         print(f'test case: {i} / {len(testcases)}')
 
-        input('Enter to continue...')
+        #input('Enter to continue...')
 
     timer.show_stats(n_steps=n_steps)
 
