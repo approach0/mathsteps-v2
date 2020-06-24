@@ -708,7 +708,7 @@ def test_cases_wiki131278697():
     answers.append([])
 
     questions.append(
-        "- (3 + \\frac{4}{17}) (2 + \\frac{2}{15}) - (7 + \\frac{4}{17}) (14 + 13 \div 15) - 4 (-(14 + 13 \div 15))"
+        "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})"
     )
     answers.append([])
 

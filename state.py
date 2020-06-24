@@ -210,7 +210,7 @@ def value_v2(narr, level=0, debug=False):
 
     complexity = [
         stats['max_level'] ** 2,
-        1.0 * parentheses_cnt,
+        #1.0 * parentheses_cnt,
         1.0 * math.log(1 + math.log(1 + stats['NUMBER_sum'])),
         5.0 * math.log(1 + stats['NUMBER_in_sqrt']),
         1.0 * math.log(1

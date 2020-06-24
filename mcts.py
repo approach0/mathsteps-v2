@@ -41,13 +41,25 @@ def children_weights(father, c_param=1.4, debug=False):
     return weights
 
 
-def print_UCT(father):
+def print_UCT(father, detailed=False):
     q, n, _, _, _, _, children = father
     children_visits = [c[1] for c in children]
-    zip_arr = zip(children, children_weights(father, c_param=.0), children_visits)
-    arr = [(c[4].name(), round(w, 5), f'{visits}/{n}') for c, w, visits in zip_arr]
+    children_narrs = [c[2] for c in children]
+    zip_arr = zip(children, children_weights(father, c_param=.0), children_visits, children_narrs)
+
+    if detailed:
+        arr = [(c[4].name(), round(w, 3), f'{visits}/{n}', narr) for c, w, visits, narr in zip_arr]
+    else:
+        arr = [(c[4].name(), round(w, 3), f'{visits}/{n}') for c, w, visits, _ in zip_arr]
+
     arr.sort(key=lambda x: x[1], reverse=True)
-    print('[UCT]', arr)
+
+    if detailed:
+        for axiom_name, UCT, visits, narr in arr:
+            rich.print('[green]UCT:[/]', end=" ")
+            print(UCT, visits, axiom_name, expression.narr2tex(narr))
+    else:
+        print('[UCT]', arr)
 
 
 def best_child_of(father, c_param=None, debug=False):
@@ -157,17 +169,17 @@ def rollout(father, node, all_axioms, n_times, visited, great_reward=1000,
     nn_models 指定时，通过神经网络指定 roll-out 选择节点的概率。
     """
     cnt = 0
-    reward = 0
+    best_steps = 0
+    best_value = -great_reward
+    father_val = state_value(father)
+
     max_complexity_reward = 10
     complexity_reward = 0
 
-    best_value = -great_reward
-
-    father_val = state_value(father)
-
     if debug:
-        rich.print(f'[blue]{father_val}[/]', end=' ')
-        print('父节点', expression.narr2tex(father))
+        print('[roll-out origin]', end=' ')
+        rich.print(f'[blue]{father_val:.2f}[/]', end=' ')
+        print(expression.narr2tex(father))
         #print('roll from', expression.narr2tex(node[2]))
 
     while True:
@@ -176,11 +188,12 @@ def rollout(father, node, all_axioms, n_times, visited, great_reward=1000,
         expr_val = state_value(narr)
         if best_value < expr_val:
             best_value = expr_val
+            best_steps = cnt
 
         if debug:
             axiom_name = axiom.name()
             print(f'[roll-out depth={cnt}]', end=' ')
-            rich.print(f'[blue]{expr_val}[/]', end=' ')
+            rich.print(f'[blue]{expr_val:.2f}[/]', end=' ')
             print(axiom_name, expr)
 
         if expr in visited:
@@ -209,7 +222,7 @@ def rollout(father, node, all_axioms, n_times, visited, great_reward=1000,
                 reward = step_reward + max_complexity_reward / max(1, complexity_reward)
                 if debug: print(f'[step reward] {great_reward}')
             else:
-                reward = great_reward
+                reward = best_value / (best_steps + 1)
             break
 
         elif cnt >= n_times:
@@ -228,7 +241,7 @@ def rollout(father, node, all_axioms, n_times, visited, great_reward=1000,
                 if debug: print(f'[step reward] {step_reward}')
             else:
                 if best_value > father_val:
-                    reward = best_value
+                    reward = best_value / (best_steps + 1)
                 else:
                     reward = -great_reward
             break
@@ -289,7 +302,7 @@ def evaluate(
         if debug:
         #if True:
             rich.print(f"[red]worker#{worker} sample[/] {i+1}th/{n_sample_times}")
-            print_UCT(node)
+            print_UCT(node, detailed=True)
             #print('[step probs]', step_probs)
             #print('[expr]', expression.narr2tex(node[2]))
             #for s,a,ai in steps:
@@ -308,10 +321,10 @@ def evaluate(
         # normalize rewards
         def sigmoid(x):
             return 1 / (1 + math.exp(-x))
-        norm_reward = sigmoid(reward / 60) * 2.0
+        norm_reward = sigmoid(reward / 10) * 2.0
         if debug:
             print('\033[91m', end='')
-            print(f'[reward] val={reward:.2f} -> {norm_reward}')
+            print(f'[reward] {reward:.2f}, normalized: {norm_reward}')
             print('\033[0m')
 
         if lock: lock.acquire()
@@ -545,15 +558,20 @@ if __name__ == '__main__':
     axioms = common_axioms(extract_var_only=False)
 
     testcases = [
-        '\\frac{12a}{3a + a + 20a} - \\frac{1}{4}',
-        '1 + \\frac{7}{3}',
-        '4 -3 \\frac{1}{2}',
-        '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
-        '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
-        '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
-        'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
-        '1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0',
-        '-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0'
+        #'\\frac{12a}{3a + a + 20a} - \\frac{1}{4}',
+        #'1 + \\frac{7}{3}',
+        #'4 -3 \\frac{1}{2}',
+        #'\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
+        #'\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
+        #'(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
+        #'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
+        #'1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0',
+        #'-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0',
+
+        # some tests for extracting common factors
+        "25 \cdot 48 + 103 \cdot 25 - 25 \cdot 51",
+        #"-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
+        #"- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
     ]
 
     nn_models = None
@@ -570,7 +588,7 @@ if __name__ == '__main__':
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
-                nn_models=nn_models, force_single_thread=False)
+                nn_models=nn_models, force_single_thread=True)
 
         for j, (narr, axiom, axiom_idx) in enumerate(steps):
             val = state_value(narr)
