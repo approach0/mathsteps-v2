@@ -185,7 +185,7 @@ def collect_stats(narr, stats, level, grandRoot):
 
     for i, c in enumerate(children):
         if token in ['frac', 'ifrac']:
-            collect_stats(c, stats, level + 6, root)
+            collect_stats(c, stats, level + 3, root)
         else:
             collect_stats(c, stats, level + 1, root)
 
@@ -209,7 +209,7 @@ def value_v2(narr, level=0, debug=False):
     parentheses_cnt = tex.count('(')
 
     complexity = [
-        stats['max_level'] ** 2,
+        stats['max_level'],
         #1.0 * parentheses_cnt,
         1.0 * math.log(1 + math.log(1 + stats['NUMBER_sum'])),
         5.0 * math.log(1 + stats['NUMBER_in_sqrt']),

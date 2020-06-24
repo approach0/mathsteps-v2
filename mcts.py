@@ -161,7 +161,7 @@ def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=Fa
         return steps, [0 for _ in steps]
 
 
-def rollout(father, node, all_axioms, n_times, visited, great_reward=1000,
+def rollout(father, node, all_axioms, n_times, visited,
             debug=False, nn_models=None, k=3, lock=None):
     """
     Monte-Carlo 树的 roll-out 操作
@@ -169,9 +169,8 @@ def rollout(father, node, all_axioms, n_times, visited, great_reward=1000,
     nn_models 指定时，通过神经网络指定 roll-out 选择节点的概率。
     """
     cnt = 0
-    best_steps = 0
-    best_value = -great_reward
     father_val = state_value(father)
+    best_value = father_val
 
     max_complexity_reward = 10
     complexity_reward = 0
@@ -188,7 +187,6 @@ def rollout(father, node, all_axioms, n_times, visited, great_reward=1000,
         expr_val = state_value(narr)
         if best_value < expr_val:
             best_value = expr_val
-            best_steps = cnt
 
         if debug:
             axiom_name = axiom.name()
@@ -199,9 +197,9 @@ def rollout(father, node, all_axioms, n_times, visited, great_reward=1000,
         if expr in visited:
             if debug: rich.print(f'[[roll-out]] [red]visited![/]')
             if nn_models:
-                reward = -great_reward
+                reward = -1000
             else:
-                reward = -great_reward
+                reward = 0
             break
 
         # when no NN presents, we can only define value by complexity difference
@@ -218,11 +216,11 @@ def rollout(father, node, all_axioms, n_times, visited, great_reward=1000,
             if debug: print('[roll-out reach leaf]')
 
             if nn_models:
-                step_reward = great_reward
+                step_reward = 1000
                 reward = step_reward + max_complexity_reward / max(1, complexity_reward)
-                if debug: print(f'[step reward] {great_reward}')
+                if debug: print(f'[step reward] {reward}')
             else:
-                reward = best_value / (best_steps + 1)
+                reward = best_value - father_val
             break
 
         elif cnt >= n_times:
@@ -236,14 +234,14 @@ def rollout(father, node, all_axioms, n_times, visited, great_reward=1000,
 
                 if debug: print(f'[predict value]', pred_val)
 
-                step_reward = great_reward / max(1, 1 - pred_val)
+                step_reward = 1000 / max(1, 1 - pred_val)
                 reward = step_reward + max_complexity_reward / max(1, complexity_reward)
                 if debug: print(f'[step reward] {step_reward}')
             else:
                 if best_value > father_val:
-                    reward = best_value / (best_steps + 1)
+                    reward = best_value - father_val
                 else:
-                    reward = -great_reward
+                    reward = 0
             break
 
         # randomly select index
@@ -292,7 +290,6 @@ def evaluate(
     采样函数（顺序执行版）：进行 n_sample_times 次采样
     """
     _, _, father, _, _, _, _ = node
-    great_reward = 1000
     any_feasible = False
     for i in range(n_sample_times):
         if lock: lock.acquire()
@@ -312,23 +309,23 @@ def evaluate(
 
         bottom_node, reward = rollout(father, child,
             all_axioms, sample_depth, visited, debug=debug,
-            nn_models=nn_models, k=k, lock=lock, great_reward=great_reward
+            nn_models=nn_models, k=k, lock=lock
         )
 
-        if reward != -great_reward:
+        if reward != 0:
             any_feasible = True
 
         # normalize rewards
-        def sigmoid(x):
-            return 1 / (1 + math.exp(-x))
-        norm_reward = sigmoid(reward / 10) * 2.0
+        def normalize(x):
+            return x / (1 + abs(x))
+        scaled_reward = normalize(reward * 2)
         if debug:
             print('\033[91m', end='')
-            print(f'[reward] {reward:.2f}, normalized: {norm_reward}')
+            print(f'[reward] {reward:.2f}, scaled: {scaled_reward:.3f}')
             print('\033[0m')
 
         if lock: lock.acquire()
-        backprop(bottom_node, norm_reward)
+        backprop(bottom_node, scaled_reward)
         if lock: lock.release()
 
     return any_feasible
@@ -350,7 +347,7 @@ def evaluate_parallel(
             name = 'multi-thread' if use_thread else 'multi-process'
             rich.print(f"[red]{name} stage[/] {b + 1}th/{n_stages} with " +
             f"{n_worker} workers, each {batch_sz}/{n_sample_times} samples")
-            print_UCT(node)
+            print_UCT(node, detailed=True)
 
         job = [None] * n_worker
 
@@ -448,7 +445,7 @@ def back_off_step(steps, debug=False):
     return steps
 
 
-def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, k=3,
+def mcts(narr0, all_axioms, sample_depth=7, n_sample_times=200, n_maxsteps=100, k=3,
          debug=False, nn_models=None, training=False, force_single_thread=False):
     #       q  n   narr  father  axiom   axiomIdx  children
     root = [0, 1, narr0, None,  None,      -1,       []    ]
@@ -569,8 +566,8 @@ if __name__ == '__main__':
         #'-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0',
 
         # some tests for extracting common factors
-        "25 \cdot 48 + 103 \cdot 25 - 25 \cdot 51",
-        #"-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
+        #"25 \cdot 48 + 103 \cdot 25 - 25 \cdot 51",
+        "-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
         #"- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
     ]
 
@@ -579,8 +576,8 @@ if __name__ == '__main__':
 
     debug = True
 
-    #for i, expr in enumerate(testcases[-1:]):
-    for i, expr in enumerate(testcases[:]):
+    for i, expr in enumerate(testcases[-1:]):
+    #for i, expr in enumerate(testcases[:]):
         narr = expression.tex2narr(expr)
 
         n_sample_times = 10 if nn_models else 200
