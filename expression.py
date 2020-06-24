@@ -106,8 +106,14 @@ class Tree2NestedArr(Transformer):
         """
         转换 带分数 (improper fraction)
         """
-        if x[0] == '&': num_narr = [(1, 'VAR'), 'v']
-        else: num_narr = self.number([x[0]])
+        if x[0] == '&':
+            num_narr = [(1, 'VAR'), 'v']
+        else:
+            num = float(x[0])
+            num_narr = self.number([x[0]])
+            if not num.is_integer():
+                return self.mul([num_narr, self.frac([x[1], x[2]])])
+
         return [(+1, 'ifrac'), num_narr, x[1], x[2]]
 
     def sqrt(self, x):
@@ -367,6 +373,7 @@ def canonicalize(narr):
 
 if __name__ == '__main__':
     debug = True
+    lark = Lark.open('grammar.lark', rel_to=__file__, parser='lalr', debug=debug)
 
     test_expressions = [
         '-(a+b)',
@@ -392,7 +399,8 @@ if __name__ == '__main__':
         '-(-a)(-b)',
         '& \\frac{y}{x}',
         'a-b-c+d-f',
-        '-a(-2)(-3)4'
+        '-a(-2)(-3)4',
+        '3.2 \\frac{1}{2}'
     ]
 
     for expr in test_expressions[-1:]:
