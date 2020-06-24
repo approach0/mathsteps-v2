@@ -434,7 +434,7 @@ def back_off_step(steps, debug=False):
     return steps
 
 
-def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, k=3,
+def mcts(narr0, all_axioms, sample_depth=3, n_sample_times=200, n_maxsteps=100, k=3,
          debug=False, nn_models=None, training=False, force_single_thread=False):
     #       q  n   narr  father  axiom   axiomIdx  children
     root = [0, 1, narr0, None,  None,      -1,       []    ]
@@ -446,15 +446,15 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
     if nn_models is None and not force_single_thread:
         # prepare proxy structure for parallel processes
         root = manager.list(root)
-        moves = manager.list([root])
+        moves = [root]
     else:
         manager = None
 
+    node = root
     visited = set([expression.narr2tex(narr0)])
     final_steps = []
 
     while True:
-        node = moves[-1]
         q, n, narr, father, axiom, axiom_idx, children = node
 
         # debug print
@@ -514,9 +514,8 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
                 policy = move_choice[5] + 1
                 #policy_fine_tuning(nn_models, expr, policy, debug=debug, all_axioms=all_axioms)
 
-            if manager:
-                move_choice = manager.list(move_choice)
             moves.append(move_choice)
+            node = move_choice
 
             # construct steps to be returned
             final_steps = [(e, a, ai) for q, n, e, f, a, ai, c in moves]
@@ -570,7 +569,7 @@ if __name__ == '__main__':
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
-                nn_models=nn_models, force_single_thread=True)
+                nn_models=nn_models, force_single_thread=False)
 
         for j, (narr, axiom, axiom_idx) in enumerate(steps):
             val = state_value(narr)
