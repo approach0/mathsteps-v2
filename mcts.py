@@ -553,8 +553,7 @@ if __name__ == '__main__':
         '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
         'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
         '1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0',
-        '-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0',
-        '-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + \\frac{50 x}{x + y} = 0'
+        '-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0'
     ]
 
     nn_models = None
@@ -562,7 +561,8 @@ if __name__ == '__main__':
 
     debug = True
 
-    for i, expr in enumerate(testcases[-1:]):
+    #for i, expr in enumerate(testcases[-1:]):
+    for i, expr in enumerate(testcases[:]):
         narr = expression.tex2narr(expr)
 
         n_sample_times = 10 if nn_models else 200

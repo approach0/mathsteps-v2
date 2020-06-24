@@ -88,7 +88,8 @@ def test():
         'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
         '-629 + (0.609 + \\frac{50}{x + y} -1) \cdot x -x^{2} \cdot 2 + y^{2} = 0',
         '1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0',
-        '-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0'
+        '-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0',
+        '50 \\times x + y^{2} \\times x + y^{2} \\times y - 629 \\times x + (-629) \\times y + x^{2} \\times 0.391 + x \\times 0.391 \\times y + x^{2} \\times 2 \\times x + x^{2} \\times 2 \\times y = 0'
     ]
 
     #testcases, _ = test_cases_x3_rational()
@@ -97,6 +98,7 @@ def test():
     if False:
         narr = expression.tex2narr(testcases[-1])
         next_steps = possible_next_steps(narr, all_axioms, state.value_v2, debug=True)
+        render_steps(next_steps)
         quit()
 
     begin_from = 0
