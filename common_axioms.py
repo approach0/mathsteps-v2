@@ -262,15 +262,7 @@ def common_axioms(extract_var_only=True):
         .add_test('2(a + 3(b + c))')
     )
 
-    axioms.append(
-        Axiom(name='整数加分式的转换', allow_complication=True)
-        .add_rule('#a # \\frac{b}{c}', '\\frac{#1 ac #2 b}{c}')
-        .add_rule('#(#a # \\frac{b}{c})', '#1\\frac{#2 ac #3 b}{c}')
-
-        .add_test('- 1 - \\frac{-1}{2}', '\\frac{(-1) \\times 2 + 1}{2}')
-        .add_test('- \\frac{-1}{2} + 1', '\\frac{1 \\times 2 + 1}{2}')
-        .add_test('\\left| -(5 + \\frac{1}{2})  \\right|')
-    )
+    axioms.append(dynamic_axioms.fraction_int_addition)
 
     axioms.append(
         Axiom(name='和平方公式', allow_complication=True)
@@ -298,7 +290,7 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() == '分子分母消除公因子':
+        if axiom.name() == '整数加分式的转换':
             #import cProfile
             #cProfile.run('axiom.test(debug=False)')
             axiom.test(debug=False)

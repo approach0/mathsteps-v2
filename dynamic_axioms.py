@@ -267,7 +267,30 @@ fraction_addition = (
     .add_test('\\frac{4}{3} - \\frac{1}{3}', '1')
     .add_test('-\\frac{1}{3} - \\frac{5}{3}', '-2')
     .add_test('-\\frac{1}{3} + \\frac{5}{3}', '\\frac{4}{3}')
+    .add_test('\\frac{1}{3a} - \\frac{5}{3a}', '\\frac{-4}{3 \\times a}')
     .add_test('-\\frac{1}{-2} - \\frac{-2}{3}')
+)
+
+
+def _fraction_int_addition(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
+    a = get_atom_number(rewrite_rules['a'])
+    b = get_atom_number(rewrite_rules['b'])
+    c = get_atom_number(rewrite_rules['c'])
+
+    if a != None and a.is_integer():
+        return rewrite_by_alpha(output_tempalate, rewrite_rules), True
+
+    return narr, False
+
+fraction_int_addition = (
+    Axiom(name='整数加分式的转换', allow_complication=True)
+    .add_rule('#a # \\frac{b}{c}', '\\frac{#1 ac #2 b}{c}', dynamic_procedure=_fraction_int_addition)
+    .add_rule('#(#a # \\frac{b}{c})', '#1\\frac{#2 ac #3 b}{c}', dynamic_procedure=_fraction_int_addition)
+
+    .add_test('-\\frac{1}{3} - \\frac{2}{3}')
+    .add_test('- 1 - \\frac{-1}{2}', '\\frac{-2 + 1}{2}')
+    .add_test('- \\frac{-1}{2} + 1', '\\frac{2 + 1}{2}')
+    .add_test('\\left| -(5 + \\frac{1}{2})  \\right|', '\left|-\\frac{10 + 1}{2}\\right|')
 )
 
 
@@ -385,7 +408,7 @@ canonicalize = (
 
 if __name__ == '__main__':
     #a = calc_add
-    a = fraction_addition
+    a = fraction_int_addition
     #a = canonicalize
     a.test()
     pass

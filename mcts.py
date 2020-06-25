@@ -567,7 +567,8 @@ if __name__ == '__main__':
 
         # some tests for extracting common factors
         #"25 \cdot 48 + 103 \cdot 25 - 25 \cdot 51",
-        "-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
+        #"-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
+        "- 0.34 - 13 \\times \\frac{2}{3} - \\frac{1}{3} \\times 13"
         #"- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
     ]
 
@@ -585,7 +586,7 @@ if __name__ == '__main__':
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
-                nn_models=nn_models, force_single_thread=False)
+                nn_models=nn_models, force_single_thread=True)
 
         for j, (narr, axiom, axiom_idx) in enumerate(steps):
             val = state_value(narr)
