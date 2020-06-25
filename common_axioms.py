@@ -192,7 +192,7 @@ def common_axioms(full=False):
 
     if full:
         axioms.append(
-            Axiom(name='负号提出括号', recursive_apply=True)
+            Axiom(name='负号提出括号', recursive_apply=True, strict_simplify=True)
             .add_rule('x + *{1}', '-(-x - *{1})')
 
             .add_test('-3-\\frac{4}{17}')
@@ -274,7 +274,7 @@ def common_axioms(full=False):
 
     if full:
         axioms.append(
-            Axiom(name='负号乘进括号', recursive_apply=True)
+            Axiom(name='负号乘进括号', recursive_apply=True, strict_simplify=True)
             .add_rule('-(x + *{1})', '-x - *{1}')
             .add_rule('-(x + *{1}) *{2} ', '(-x - *{1}) *{2}')
 

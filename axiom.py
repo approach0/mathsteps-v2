@@ -10,13 +10,14 @@ import numpy as np
 
 class Axiom:
 
-    def __init__(self, recursive_apply=False, allow_complication=False, name=None):
+    def __init__(self, recursive_apply=False, allow_complication=False, strict_simplify=False, name=None):
         self.rules = {}
         self.dp = {}
         self.narrs = {}
         self.signs = {}
         self.recursive_apply = recursive_apply
         self.allow_complication = allow_complication
+        self.strict_simplify = strict_simplify
         self._name = name
         self.tests = []
 
@@ -96,6 +97,11 @@ class Axiom:
             if self.allow_complication:
                 retstr += '\033[92m'
                 retstr += ' allow_complication'
+                retstr += '\033[0m'
+
+            if self.strict_simplify:
+                retstr += '\033[92m'
+                retstr += ' strict_simplify'
                 retstr += '\033[0m'
 
             if self.recursive_apply:

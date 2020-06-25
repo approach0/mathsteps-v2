@@ -25,11 +25,15 @@ def possible_next_steps(narr, axioms, state_value,
             if not axiom.allow_complication:
                 curr_value = state_value(narr)
                 next_value = state_value(applied_narr)
-                if next_value < curr_value:
+                if ((axiom.strict_simplify and next_value <= curr_value) or
+                   next_value < curr_value):
                     if debug:
                         rich.print('[grey50][[x]]', end=' ')
+                        value = state_value(applied_narr)
                         tex = expression.narr2tex(applied_narr)
-                        print(axiom.name(), tex)
+                        print(axiom.name(), end=' ')
+                        rich.print(f'[light]{value:.2f}', end=' ')
+                        print(tex)
                     continue
             value_constrain_narrs.append((applied_narr, axiom, axiom_idx))
 
@@ -98,12 +102,16 @@ def test():
         '4 -3 \\frac{1}{2}',
         '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
         '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
-        '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
         'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
 
-        # some tests for extracting common factors
         "25 \cdot 48 + 103 \cdot 25 - 25 \cdot 51",
-        "-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34"
+        "-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
+        '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
+
+        "(-18) \div ((2\\frac{1}{4}) \\times (1 - \\frac{3}{4}))",
+
+        #"(-3 - \\frac{4}{17}) (14\\frac{13}{15}) - (3\\frac{4}{17}) (2 + \\frac{2}{15})",
+        "b + 3x^{2} +2b + 3b + x^{2}= 0"
     ]
 
 
@@ -119,8 +127,8 @@ def test():
     n_steps = 0
     timer = Timer()
 
-    for i, test in enumerate(testcases):
-    #for i, test in enumerate(testcases[-1:]):
+    #for i, test in enumerate(testcases):
+    for i, test in enumerate(testcases[-1:]):
         if i < begin_from: continue
 
         test_narr = expression.tex2narr(test)

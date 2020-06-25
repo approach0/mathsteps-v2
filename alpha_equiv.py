@@ -111,8 +111,8 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
         #print(narr2)
         #print()
 
-        # uppercase pattern such as X, Y only match variables
-        if name1.isupper() and type2 == 'NUMBER':
+        # uppercase pattern such as X, Y only match variables / polynomials
+        if name1.isupper() and type2 not in ['sup', 'VAR']:
             return False, []
         # same variables must match same structures
         else:
