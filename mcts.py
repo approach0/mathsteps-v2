@@ -585,7 +585,7 @@ if __name__ == '__main__':
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
-                nn_models=nn_models, force_single_thread=True)
+                nn_models=nn_models, force_single_thread=False)
 
         for j, (narr, axiom, axiom_idx) in enumerate(steps):
             val = state_value(narr)

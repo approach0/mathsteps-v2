@@ -88,7 +88,7 @@ def Euclidean_lcm(a, b):
 # Dynamic Axioms
 ###
 
-def _calc_add(pattern_narr, narr, rewrite_rules, output_tempalate):
+def _calc_add(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
     a = get_atom_number(rewrite_rules['a'])
     b = get_atom_number(rewrite_rules['b'])
 
@@ -111,7 +111,7 @@ calc_add = (
 )
 
 
-def _calc_mul(pattern_narr, narr, rewrite_rules, output_tempalate):
+def _calc_mul(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
     a = get_atom_number(rewrite_rules['a'])
     b = get_atom_number(rewrite_rules['b'])
 
@@ -132,7 +132,7 @@ calc_mul = (
 )
 
 
-def _calc_pow(pattern_narr, narr, rewrite_rules, output_tempalate):
+def _calc_pow(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
     a = get_atom_number(rewrite_rules['a'])
     b = get_atom_number(rewrite_rules['b'])
 
@@ -163,7 +163,7 @@ calc_pow = (
 )
 
 
-def _calc_sqrt(pattern_narr, narr, rewrite_rules, output_tempalates):
+def _calc_sqrt(pattern_narr, signs, narr, rewrite_rules, output_tempalates):
     x = get_atom_number(rewrite_rules['x'])
 
     if x != None and x > 0 and x.is_integer():
@@ -187,7 +187,7 @@ calc_sqrt = (
 )
 
 
-def _calc_abs(pattern_narr, narr, rewrite_rules, output_tempalate):
+def _calc_abs(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
     x = get_atom_number(rewrite_rules['x'])
 
     if x != None:
@@ -206,7 +206,7 @@ calc_abs = (
 )
 
 
-def _simplify_fraction(pattern_narr, narr, rewrite_rules, output_tempalates):
+def _simplify_fraction(pattern_narr, signs, narr, rewrite_rules, output_tempalates):
     a = get_atom_number(rewrite_rules['a'])
     b = get_atom_number(rewrite_rules['b'])
 
@@ -236,7 +236,42 @@ simplify_fraction = (
 )
 
 
-def _collapse_fraction(pattern_narr, narr, rewrite_rules, output_tempalates):
+def _fraction_addition_same_denom(pattern_narr, signs, narr, rewrite_rules, output_tempalates):
+    a = get_atom_number(rewrite_rules['a'])
+    b = get_atom_number(rewrite_rules['b'])
+    c = get_atom_number(rewrite_rules['c'])
+
+    if a != None and b != None:
+        if a.is_integer() and b.is_integer():
+            a = a * signs[0]
+            b = b * signs[1]
+            z = a + b
+            if c != None and c.is_integer() and c != 0:
+                if (z / c).is_integer():
+                    rewrite_rules['z'] = gen_atom_number(z / c)
+                    return rewrite_by_alpha(output_tempalates[0], rewrite_rules), True
+
+            rewrite_rules['z'] = gen_atom_number(z)
+            return rewrite_by_alpha(output_tempalates[1], rewrite_rules), True
+
+    return narr, False
+
+fraction_addition = (
+    Axiom(name='分式 加法/减法', allow_complication=True)
+    .add_rule('#\\frac{a}{c} #\\frac{b}{c}', [
+        'z',
+        '\\frac{z}{c}'
+    ], dynamic_procedure=_fraction_addition_same_denom)
+    .add_rule('#\\frac{a}{b} #\\frac{c}{d}', '\\frac{#1 ad #2 cb}{bd}')
+
+    .add_test('\\frac{4}{3} - \\frac{1}{3}', '1')
+    .add_test('-\\frac{1}{3} - \\frac{5}{3}', '-2')
+    .add_test('-\\frac{1}{3} + \\frac{5}{3}', '\\frac{4}{3}')
+    .add_test('-\\frac{1}{-2} - \\frac{-2}{3}')
+)
+
+
+def _collapse_fraction(pattern_narr, signs, narr, rewrite_rules, output_tempalates):
     a = get_atom_number(rewrite_rules['a'])
     b = get_atom_number(rewrite_rules['b'])
 
@@ -262,7 +297,7 @@ collapse_fraction = (
 )
 
 
-def _collapse_fraction_add_float(pattern_narr, narr, rewrite_rules, output_tempalate):
+def _collapse_fraction_add_float(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
     a = get_atom_number(rewrite_rules['a'])
     b = get_atom_number(rewrite_rules['b'])
     c = get_atom_number(rewrite_rules['c'])
@@ -283,7 +318,7 @@ collapse_fraction_add_float = (
 )
 
 
-def _canonicalize(pattern_narr, narr, rewrite_rules, output_tempalate):
+def _canonicalize(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
     sign, Type = narr[0]
     if Type in expression.commutative_operators():
         new_narr, is_applied = expression.canonicalize(narr)
@@ -349,6 +384,8 @@ canonicalize = (
 
 
 if __name__ == '__main__':
+    #a = calc_add
+    a = fraction_addition
     #a = canonicalize
-    a = calc_add
     a.test()
+    pass

@@ -14,6 +14,7 @@ class Axiom:
         self.rules = {}
         self.dp = {}
         self.narrs = {}
+        self.signs = {}
         self.recursive_apply = recursive_apply
         self.allow_complication = allow_complication
         self._name = name
@@ -24,9 +25,9 @@ class Axiom:
         dest = dest if isinstance(dest, list) else [dest]
 
         for dest_pattern in dest:
-            A, B = self._preprocess(src, dest_pattern)
+            A, B, C = self._preprocess(src, dest_pattern)
 
-            for (a, b) in zip(A, B):
+            for (a, b, signs) in zip(A, B, C):
                 if a not in self.rules:
                     self.rules[a] = b
                 elif isinstance(self.rules[a], list):
@@ -35,6 +36,7 @@ class Axiom:
                     self.rules[a] = [self.rules[a], b]
 
                 self.dp[a] = dynamic_procedure
+                self.signs[a] = signs
 
                 # cache some results for speedup
                 self.narrs[a] = expression.tex2narr(a)
@@ -245,8 +247,9 @@ class Axiom:
                 dest = self.rules[origin]
                 dest_narr = [self.narrs[d] for d in dest] if isinstance(dest, list) else self.narrs[dest]
                 call = self.dp[origin]
+                signs = self.signs[origin]
                 if call is not None: # dynamical axiom
-                    rewritten_narr, is_applied = call(pattern_narr, narr, rewrite_rules[0], dest_narr)
+                    rewritten_narr, is_applied = call(pattern_narr, signs, narr, rewrite_rules[0], dest_narr)
                 else:
                     # apply rewrite rules to destination expression. E.g., (a)^{2} - (b)^{2}
                     dest_narr = self.narrs[dest]
@@ -262,7 +265,7 @@ class Axiom:
     def _preprocess(a, b):
         n_var_sign = a.count('#')
         var_sign = []
-        A, B = [], []
+        A, B, C = [], [], []
 
         for _ in range(n_var_sign):
             var_sign.append([+1, -1])
@@ -286,11 +289,12 @@ class Axiom:
                 copy_b = re.sub(r'#([0-9])', b_replace, copy_b)
             A.append(copy_a)
             B.append(copy_b)
+            C.append(signs)
 
         if len(A) == 0 or len(B) == 0:
-            return [a], [b]
+            return [a], [b], []
         else:
-            return A, B
+            return A, B, C
 
 
     @staticmethod

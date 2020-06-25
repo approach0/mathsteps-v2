@@ -207,14 +207,7 @@ def common_axioms(extract_var_only=True):
         .add_test('\\frac{-18}{\\frac{9 \\times (1 - \\frac{3}{4})}{4}}')
     )
 
-    axioms.append(
-        Axiom(name='分式 加法/减法', allow_complication=True)
-        .add_rule('#\\frac{a}{c} #\\frac{b}{c}', '\\frac{#1 a #2 b}{c}')
-        .add_rule('#\\frac{a}{b} #\\frac{c}{d}', '\\frac{#1 ad #2 cb}{bd}')
-
-        .add_test('\\frac{4}{3} - \\frac{1}{3}', ['\\frac{4 - 1}{3}', '\\frac{-1 + 4}{3}'])
-        .add_test('-\\frac{1}{-2} - \\frac{-2}{3}')
-    )
+    axioms.append(dynamic_axioms.fraction_addition)
 
     axioms.append(
         Axiom(name='分母为一的分式化简')
