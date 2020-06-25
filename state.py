@@ -1,4 +1,5 @@
 import math
+import rich
 import expression
 
 def right_padding_zeros(num):
@@ -149,7 +150,7 @@ def value_v1(narr, debug=False):
     return -accum
 
 
-def collect_stats(narr, stats, level, grandRoot):
+def collect_stats(narr, stats, level, grandRoot, first_op):
     root = narr[0]
     children = narr[1:]
     sign, token = root
@@ -158,8 +159,8 @@ def collect_stats(narr, stats, level, grandRoot):
         stats['neg'] += 1
 
     if token in expression.terminal_tokens():
-        if stats['max_level'] < level:
-            stats['max_level'] = level
+        if grandRoot and grandRoot[1] == 'eq' and not first_op:
+            stats['right_side_of_eq'] += 1
 
         if token == 'NUMBER':
             num = children[0]
@@ -170,6 +171,9 @@ def collect_stats(narr, stats, level, grandRoot):
 
             if num.is_integer():
                 if abs(num) == 1 or abs(num) == 0:
+                    if abs(num) == 0 and stats['right_side_of_eq'] > 0:
+                        stats['right_side_of_eq'] -= 1
+
                     stats['NUMBER_one_zero'] += 1
                 else:
                     stats['NUMBER_other_ints'] += 1
@@ -179,109 +183,145 @@ def collect_stats(narr, stats, level, grandRoot):
             else:
                 stats['NUMBER_decimal'] += 1
         else:
-            stats['VAR_cnt'] += 1
+            #print(level, children)
+            if level > stats['VAR_max_level']:
+                stats['VAR_max_level'] = level
+            stats['VAR_cnt'] += level + 1
 
         return
 
     for i, c in enumerate(children):
-        if token in ['frac', 'ifrac']:
-            collect_stats(c, stats, level + 3, root)
+        first_op = True if i == 0 else False
+
+        if token == 'ifrac' and i == 2:
+            collect_stats(c, stats, level + 4, root, first_op)
+        elif token == 'frac' and i == 1:
+            collect_stats(c, stats, level + 4, root, first_op)
         else:
-            collect_stats(c, stats, level + 1, root)
+            collect_stats(c, stats, level + 1, root, first_op)
 
 
 def value_v2(narr, level=0, debug=False):
     stats = {
+        'right_side_of_eq': 0,
         'neg': 0,
-        'max_level': 0,
         'NUMBER_sum': 0,
         'NUMBER_in_sqrt': 0,
         'NUMBER_one_zero': 0,
         'NUMBER_other_ints': 0,
         'NUMBER_pad_zeros': 0,
         'NUMBER_decimal': 0,
+        'VAR_max_level': 0,
         'VAR_cnt': 0
     }
 
-    collect_stats(narr, stats, 0, None)
+    collect_stats(narr, stats, 0, None, False)
 
-    tex = expression.narr2tex(narr)
-    parentheses_cnt = tex.count('(')
+    #tex = expression.narr2tex(narr)
+    #parentheses_cnt = tex.count('(')
 
     complexity = [
-        stats['max_level'],
-        #1.0 * parentheses_cnt,
+        15. * stats['right_side_of_eq'],
         1.0 * math.log(1 + math.log(1 + stats['NUMBER_sum'])),
         5.0 * math.log(1 + stats['NUMBER_in_sqrt']),
-        1.0 * math.log(1
+        1.0 * (0
             + 0.2 * stats['NUMBER_one_zero']
             + 1.0 * stats['NUMBER_other_ints']
             + 1.0 * stats['neg']
             + 3.0 + stats['NUMBER_decimal']
-            - 0.1 * stats['NUMBER_pad_zeros'],
-        ),
-        1.5 * math.log(1
+            - 0.1 * stats['NUMBER_pad_zeros']
             + 3.0 * stats['VAR_cnt']
-        )
+        ),
+        (2.0 * stats['VAR_max_level']) ** 2
     ]
 
     if debug:
-        print('parentheses_cnt:', parentheses_cnt)
         print(stats)
         print(complexity)
 
     return -sum(complexity)
 
 
+g_test_last_val = -float('inf')
 def test(tex, state_value):
     """
     包装测试函数
     """
     import expression
+    global g_test_last_val
+
     narr = expression.tex2narr(tex)
+    value = state_value(narr, debug=True)
+
     print('[expression]', tex)
-    print(state_value(narr, debug=True))
+    print(value)
+    if value > g_test_last_val:
+        rich.print('[green][[pass]][/]')
+    else:
+        rich.print('[red][[failed]][/]')
     print()
+
+    g_test_last_val = value
+
+
+def test_done():
+    global g_test_last_val
+    g_test_last_val = -float('inf')
 
 
 if __name__ == '__main__':
     #print(right_padding_zeros(-100))
     #print(right_padding_zeros(0))
 
-    #test('0 + 0 + 0', value_v2)
-    #test('0', value_v2)
+    vf = value_v2
 
-    #test('10 \cdot x + 15 = 15', value_v2)
-    #test('10 \cdot x + 15 -15 = 0', value_v2)
+    test('0 + 0 + 0', vf)
+    test('0', vf)
+    test_done()
 
-    #test('100 \\times 25', value_v2)
-    #test('2500', value_v2)
+    test('10 \cdot x + 15 = 15', vf)
+    test('10 \cdot x + 15 -15 = 0', vf)
+    test_done()
 
-    #test('2(x+y)+1+2', value_v2)
-    #test('2x+2y+3+4', value_v2)
+    test('100 \\times 25', vf)
+    test('2500', vf)
+    test_done()
 
-    #test('-3', value_v2)
-    #test('3', value_v2)
+    test('2(x+y)+1+2', vf)
+    test('2x+2y+3+4', vf)
+    test_done()
 
-    #test('10 + 2', value_v2)
-    #test('7 + 5', value_v2)
+    test('-3', vf)
+    test('3', vf)
+    test_done()
 
-    #test('0 + 3', value_v2)
-    #test('6 - 3', value_v2)
+    test('7 + 5', vf)
+    test('10 + 2', vf)
+    test_done()
 
-    #test('3 \\sqrt{3}', value_v2)
-    #test('\\sqrt{27}', value_v2)
+    test('6 - 3', vf)
+    test('0 + 3', vf)
+    test_done()
 
-    #test('81 \\sqrt{9}', value_v2)
-    #test('\\sqrt{59049}', value_v2)
+    test('\\sqrt{27}', vf)
+    test('3 \\sqrt{3}', vf)
+    test_done()
 
-    #test('-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0', value_v2)
-    #test('x \\times 50 + (x + y) \\times (-629 - x^{2} \\times 2 + y^{2}) + x^{2} \\times 0.391 + x \\times 0.391 \\times y = 0', value_v2)
-    #test('x \\times 50 + x^{2} \\times 0.391 + x \\times 0.391 \\times y + 2 \\times x^{2} \\times x + 2 \\times x^{2} \\times y - 629 \\times x - 629 \\times y + y^{2} \\times x + y^{2} \\times y = 0', value_v2)
+    test('\\sqrt{59049}', vf)
+    test('81 \\sqrt{9}', vf)
+    test_done()
 
-    #test('\\frac{1}{2}', value_v2)
-    #test('4 - 3 \\frac{1}{2}', value_v2)
+    test('-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0', vf)
+    test('50 \\times x + (x + y) \\times (-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2}) = (x + y) \\times 0', vf)
+    test('x \\times 50 + (x + y) \\times (-629 - x^{2} \\times 2 + y^{2}) + x^{2} \\times 0.391 + x \\times 0.391 \\times y = 0', vf)
+    test('x \\times 50 + x^{2} \\times 0.391 + x \\times 0.391 \\times y + 2 \\times x^{2} \\times x + 2 \\times x^{2} \\times y - 629 \\times x - 629 \\times y + y^{2} \\times x + y^{2} \\times y = 0', vf)
+    test_done()
 
-    test('-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + \\frac{50 \\times x}{x + y} = 0', value_v2)
-    test('50 \\times x + (x + y) \\times (-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2}) = (x + y) \\times 0', value_v2)
-    test('50 \\times x + (x + y) \\times x \\times 0.391 + (-629 - x^{2} \\times 2 + y^{2}) \\times x - y \\times 629 + y \\times x^{2} \\times 2 + y \\times y^{2} = 0', value_v2)
+    test('4 - 3 \\frac{1}{2}', vf)
+    test('-\\frac{1}{2}', vf)
+    test_done()
+
+    test('-13 \\times \\frac{2}{3} - 0.34 \\times \\frac{2}{7} - \\frac{1}{3} \\times 13 - \\frac{5}{7} \\times 0.34', vf)
+    test('(-\\frac{2}{7}-\\frac{5}{7}) \\times 0.34 + (-\\frac{2}{3} - \\frac{1}{3}) \\times 13', vf)
+    test('(-1) \\times 0.34 + (-\\frac{2}{3} - \\frac{1}{3}) \\times 13', vf)
+    test_done()
