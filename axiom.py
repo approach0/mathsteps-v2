@@ -292,7 +292,7 @@ class Axiom:
             C.append(signs)
 
         if len(A) == 0 or len(B) == 0:
-            return [a], [b], []
+            return [a], [b], [()]
         else:
             return A, B, C
 
@@ -385,7 +385,7 @@ class Axiom:
             if depth + 1 > max_times:
                 break
 
-            narrs = self._level_apply(narr)
+            narrs = self._level_apply(narr, debug=debug)
 
             # keep adding next level or dead ends to candidates
             if len(narrs) > 0:
@@ -446,26 +446,10 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='合并同类项', recursive_apply=True)
-        .add_rule('X + X', '2X')
-        .add_rule('- X - X', '-2X')
-        .add_rule('#X # kX', '(#1 1 #2 k) X')
-        .add_rule('#X # Xk', '(#1 1 #2 k) X')
-        .add_rule('#X *{1} # X *{2}', '(#1 *{1} #2 *{2}) X')
+        Axiom(name='乘法分配率', allow_complication=True, recursive_apply=True)
+        .add_rule('-(x + *{1})', '-x - *{1}')
 
-        .add_test('2 + 2', '2 + 2')
-        .add_test('x^{2} + x^{2}', '2 \\times x^{2}')
-        .add_test('x + 2x + 3x', [
-            '(1 + 2 + 3) \\times x',
-            '(3 + 2 + 1) \\times x',
-            '(1 + 3 + 2) \\times x',
-            '(2 + 1 + 3) \\times x',
-            '(3 + 1 + 2) \\times x'
-        ])
-        .add_test('2 - 3 \cdot 2', '2 - 3 \\times 2')
+        .add_test('-(3 - 2)')
     )
 
-    a.test()
-    a.test(
-        'x \\times 50 + x^{2} + y \\times x + x^{2} \\times 0.609 + x \\times 0.609 \\times y + x^{2} \\times 2 \\times x + x^{2} \\times 2 \\times y - 629 \\times x - 629 \\times y + y^{2} \\times x + y^{2} \\times y = 0'
-    )
+    a.test(debug=True)
