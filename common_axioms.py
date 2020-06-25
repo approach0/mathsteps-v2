@@ -191,6 +191,15 @@ def common_axioms(extract_var_only=True):
     )
 
     axioms.append(
+        Axiom(name='负号提出括号', recursive_apply=True)
+        .add_rule('x + *{1}', '-(-x - *{1})')
+
+        .add_test('-3-\\frac{4}{17}')
+        .add_test('(-3-\\frac{4}{17}) x')
+        .add_test('(-3-\\frac{4}{17}) x + y')
+    )
+
+    axioms.append(
         Axiom(name='嵌套分式的化简')
         .add_rule('#\\frac{#\\frac{x}{y}}{#\\frac{x}{y}}', '#0 1')
         .add_rule('#\\frac{#\\frac{x}{y}}{#\\frac{a}{b}}', '#0 \\frac{bx}{ay}')
@@ -262,6 +271,15 @@ def common_axioms(extract_var_only=True):
         .add_test('2(a + 3(b + c))')
     )
 
+    axioms.append(
+        Axiom(name='负号乘进括号', allow_complication=True, recursive_apply=True)
+        .add_rule('-(x + *{1})', '-x - *{1}')
+        .add_rule('-(x + *{1}) *{2} ', '(-x - *{1}) *{2}')
+
+        .add_test('-(3 - 2)', ['-3 + 2', '2 - 3'])
+        .add_test('-(3 - 2)x', '(-3 + 2) \\times x')
+    )
+
     axioms.append(dynamic_axioms.fraction_int_addition)
 
     axioms.append(
@@ -290,7 +308,7 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() == '整数加分式的转换':
+        if axiom.name() in ['负号乘进括号', '负号提出括号']:
             #import cProfile
             #cProfile.run('axiom.test(debug=False)')
             axiom.test(debug=False)

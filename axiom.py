@@ -64,9 +64,10 @@ class Axiom:
             print(expr)
             narr = expression.tex2narr(expr) if isinstance(test, str) else test
             possible_applied_narrs = self.apply(narr, debug=debug)
-            possible_applied_texs = [expression.narr2tex(_) for _ in possible_applied_narrs]
+            render_texs = [expr]
 
-            for applied_tex in possible_applied_texs:
+            for applied_narr in possible_applied_narrs:
+                applied_tex = expression.narr2tex(applied_narr)
                 print('[result]', applied_tex, end=" ")
                 if expect is not None:
                     if applied_tex in expect:
@@ -76,8 +77,11 @@ class Axiom:
                 else:
                     print()
 
+                render_texs.append(applied_tex)
+                #print(applied_narr)
+
             if render:
-                render_math.render_equations([expr] + possible_applied_texs)
+                render_math.render_equations(render_texs)
 
 
     def __str__(self):
@@ -446,10 +450,8 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='乘法分配率', allow_complication=True, recursive_apply=True)
-        .add_rule('-(x + *{1})', '-x - *{1}')
-
-        .add_test('-(3 - 2)')
+        Axiom(name='负号提出括号', recursive_apply=True)
+        .add_rule('x + *{1}', '-(-x - *{1})')
     )
 
-    a.test(debug=True)
+    a.test('(-3-\\frac{4}{17}) x + y', debug=True)

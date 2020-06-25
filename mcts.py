@@ -335,7 +335,7 @@ def evaluate(
 
 def evaluate_parallel(
     node, all_axioms, steps, n_sample_times, sample_depth, visited, k=0,
-    n_worker=10, batch_sz=2, debug=False, nn_models=None, use_thread=False):
+    n_worker=5, batch_sz=2, debug=False, nn_models=None, use_thread=False):
     """
     采样函数（并行版本）：进行 n_sample_times 次采样
     """
@@ -571,7 +571,7 @@ if __name__ == '__main__':
         #"25 \cdot 48 + 103 \cdot 25 - 25 \cdot 51",
         #"-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
         "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
-        "(-7\\frac{4}{17} + 4) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2\\frac{2}{15})"
+        "(-3 - \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2 + \\frac{2}{15})"
     ]
 
     nn_models = None
@@ -588,7 +588,7 @@ if __name__ == '__main__':
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
-                nn_models=nn_models, force_single_thread=False)
+                nn_models=nn_models, force_single_thread=True)
 
         for j, (narr, axiom, axiom_idx) in enumerate(steps):
             val = state_value(narr)
