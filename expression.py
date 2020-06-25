@@ -214,7 +214,7 @@ def need_inner_fence(narr):
         return False
 
 
-def need_outter_fence(root, child_narr):
+def need_outter_fence(root, child_narr, rank=0):
     """
     子表达式 child_narr 在挂到 root 下时，须不须要包裹括号
     """
@@ -234,10 +234,14 @@ def need_outter_fence(root, child_narr):
             return True
         elif child_root[1] in ['frac', 'sup']:
             return False
+    elif child_root[0] == -1:
+        if root[1] == 'mul' and root[0] > 0 and rank == 1:
+            return False
+
     return True
 
 
-def narr2tex(narr, parentRoot=None):
+def narr2tex(narr, parentRoot=None, rank=0):
     """
     narr (nested array) 换成 TeX
     """
@@ -262,7 +266,7 @@ def narr2tex(narr, parentRoot=None):
         sep_op = ' + ' if token == 'add' else ' \\times '
         operands = narr[1:]
         for i, child in enumerate(operands):
-            to_append = narr2tex(child, parentRoot=root)
+            to_append = narr2tex(child, parentRoot=root, rank=i+1)
 
             if i == 0:
                 expr += to_append
@@ -272,8 +276,8 @@ def narr2tex(narr, parentRoot=None):
                 expr += sep_op + to_append
 
     elif token in binary_operators():
-        expr1 = narr2tex(narr[1], parentRoot=root)
-        expr2 = narr2tex(narr[2], parentRoot=root)
+        expr1 = narr2tex(narr[1], parentRoot=root, rank=1)
+        expr2 = narr2tex(narr[2], parentRoot=root, rank=2)
 
         expr = None
         if token == 'div':
@@ -288,13 +292,13 @@ def narr2tex(narr, parentRoot=None):
             raise Exception('unexpected token: ' + token)
 
     elif token == 'ifrac':
-        expr1 = narr2tex(narr[1], parentRoot=root)
-        expr2 = narr2tex(narr[2], parentRoot=root)
-        expr3 = narr2tex(narr[3], parentRoot=root)
+        expr1 = narr2tex(narr[1], parentRoot=root, rank=1)
+        expr2 = narr2tex(narr[2], parentRoot=root, rank=2)
+        expr3 = narr2tex(narr[3], parentRoot=root, rank=3)
         expr = expr1 + '\\frac{' + expr2 + '}{' + expr3 + '}'
 
     else:
-        expr = narr2tex(narr[1], parentRoot=root)
+        expr = narr2tex(narr[1], parentRoot=root, rank=1)
 
         if token == 'abs':
             expr = '\\left|' + expr + '\\right|'
@@ -306,7 +310,7 @@ def narr2tex(narr, parentRoot=None):
     if need_inner_fence(narr):
         expr = '(' + expr + ')'
     expr = sign + expr
-    if need_outter_fence(parentRoot, narr):
+    if need_outter_fence(parentRoot, narr, rank=rank):
         expr = '(' + expr + ')'
     return expr
 
@@ -400,7 +404,9 @@ if __name__ == '__main__':
         '& \\frac{y}{x}',
         'a-b-c+d-f',
         '-a(-2)(-3)4',
-        '3.2 \\frac{1}{2}'
+        '3.2 \\frac{1}{2}',
+        '-(-a)b',
+        '(-a)b',
     ]
 
     for expr in test_expressions[-1:]:
