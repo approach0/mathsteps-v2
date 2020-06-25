@@ -171,6 +171,7 @@ def rollout(father, node, all_axioms, n_times, visited,
     cnt = 0
     father_val = state_value(father)
     best_value = father_val
+    best_steps = cnt
 
     max_complexity_reward = 10
     complexity_reward = 0
@@ -187,6 +188,7 @@ def rollout(father, node, all_axioms, n_times, visited,
         expr_val = state_value(narr)
         if best_value < expr_val:
             best_value = expr_val
+            best_steps = cnt
 
         if debug:
             axiom_name = axiom.name()
@@ -220,7 +222,7 @@ def rollout(father, node, all_axioms, n_times, visited,
                 reward = step_reward + max_complexity_reward / max(1, complexity_reward)
                 if debug: print(f'[step reward] {reward}')
             else:
-                reward = best_value - father_val
+                reward = (best_value - father_val) / ((best_steps + 1) ** 2)
             break
 
         elif cnt >= n_times:
@@ -239,7 +241,7 @@ def rollout(father, node, all_axioms, n_times, visited,
                 if debug: print(f'[step reward] {step_reward}')
             else:
                 if best_value > father_val:
-                    reward = best_value - father_val
+                    reward = (best_value - father_val) / ((best_steps + 1) ** 2)
                 else:
                     reward = 0
             break
@@ -318,7 +320,7 @@ def evaluate(
         # normalize rewards
         def normalize(x):
             return x / (1 + abs(x))
-        scaled_reward = normalize(reward * 2)
+        scaled_reward = normalize(reward)
         if debug:
             print('\033[91m', end='')
             print(f'[reward] {reward:.2f}, scaled: {scaled_reward:.3f}')
@@ -568,8 +570,8 @@ if __name__ == '__main__':
         # some tests for extracting common factors
         #"25 \cdot 48 + 103 \cdot 25 - 25 \cdot 51",
         #"-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
-        "- 0.34 - 13 \\times \\frac{2}{3} - \\frac{1}{3} \\times 13"
-        #"- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
+        "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
+        "(-7\\frac{4}{17} + 4) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2\\frac{2}{15})"
     ]
 
     nn_models = None
@@ -586,7 +588,7 @@ if __name__ == '__main__':
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
-                nn_models=nn_models, force_single_thread=True)
+                nn_models=nn_models, force_single_thread=False)
 
         for j, (narr, axiom, axiom_idx) in enumerate(steps):
             val = state_value(narr)
