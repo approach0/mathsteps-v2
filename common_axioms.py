@@ -2,7 +2,7 @@ from axiom import Axiom
 import dynamic_axioms
 
 
-def common_axioms(extract_var_only=True):
+def common_axioms(full=False):
     """
     常用的规则集合（优先级已经按照数组元素的索引确定）
     """
@@ -157,16 +157,7 @@ def common_axioms(extract_var_only=True):
         .add_test('\\frac{x}{2} + a - b = z', 'x + 2 \\times (a - b) = 2 \\times z')
     )
 
-    if extract_var_only:
-        tmp_axiom = (
-            Axiom(name='合并同类项', recursive_apply=True, allow_complication=True)
-            .add_rule('X + X', '2X')
-            .add_rule('- X - X', '-2X')
-            .add_rule('#X # kX', '(#1 1 #2 k) X')
-            .add_rule('#X # Xk', '(#1 1 #2 k) X')
-            .add_rule('#X *{1} # X *{2}', '(#1 *{1} #2 *{2}) X')
-        )
-    else:
+    if full:
         tmp_axiom = (
             Axiom(name='合并同类项', recursive_apply=True, allow_complication=True)
             .add_rule('x + x', '2x')
@@ -174,6 +165,15 @@ def common_axioms(extract_var_only=True):
             .add_rule('#x # kx', '(#1 1 #2 k) x')
             .add_rule('#x # xk', '(#1 1 #2 k) x')
             .add_rule('#x *{1} # x *{2}', '(#1 *{1} #2 *{2}) x')
+        )
+    else:
+        tmp_axiom = (
+            Axiom(name='合并同类项', recursive_apply=True, allow_complication=True)
+            .add_rule('X + X', '2X')
+            .add_rule('- X - X', '-2X')
+            .add_rule('#X # kX', '(#1 1 #2 k) X')
+            .add_rule('#X # Xk', '(#1 1 #2 k) X')
+            .add_rule('#X *{1} # X *{2}', '(#1 *{1} #2 *{2}) X')
         )
 
     axioms.append(
@@ -190,14 +190,15 @@ def common_axioms(extract_var_only=True):
         .add_test('2 - 3 \cdot 2', '2 - 3 \\times 2')
     )
 
-    axioms.append(
-        Axiom(name='负号提出括号', recursive_apply=True)
-        .add_rule('x + *{1}', '-(-x - *{1})')
+    if full:
+        axioms.append(
+            Axiom(name='负号提出括号', recursive_apply=True)
+            .add_rule('x + *{1}', '-(-x - *{1})')
 
-        .add_test('-3-\\frac{4}{17}')
-        .add_test('(-3-\\frac{4}{17}) x')
-        .add_test('(-3-\\frac{4}{17}) x + y')
-    )
+            .add_test('-3-\\frac{4}{17}')
+            .add_test('(-3-\\frac{4}{17}) x')
+            .add_test('(-3-\\frac{4}{17}) x + y')
+        )
 
     axioms.append(
         Axiom(name='嵌套分式的化简')
@@ -271,14 +272,15 @@ def common_axioms(extract_var_only=True):
         .add_test('2(a + 3(b + c))')
     )
 
-    axioms.append(
-        Axiom(name='负号乘进括号', allow_complication=True, recursive_apply=True)
-        .add_rule('-(x + *{1})', '-x - *{1}')
-        .add_rule('-(x + *{1}) *{2} ', '(-x - *{1}) *{2}')
+    if full:
+        axioms.append(
+            Axiom(name='负号乘进括号', recursive_apply=True)
+            .add_rule('-(x + *{1})', '-x - *{1}')
+            .add_rule('-(x + *{1}) *{2} ', '(-x - *{1}) *{2}')
 
-        .add_test('-(3 - 2)', ['-3 + 2', '2 - 3'])
-        .add_test('-(3 - 2)x', '(-3 + 2) \\times x')
-    )
+            .add_test('-(3 - 2)', ['-3 + 2', '2 - 3'])
+            .add_test('-(3 - 2)x', '(-3 + 2) \\times x')
+        )
 
     axioms.append(dynamic_axioms.fraction_int_addition)
 

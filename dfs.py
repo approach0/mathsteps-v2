@@ -103,14 +103,12 @@ def test():
 
         # some tests for extracting common factors
         "25 \cdot 48 + 103 \cdot 25 - 25 \cdot 51",
-        "-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
-        "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
-        '(-3 - \\frac{4}{17}) \\times (14\\frac{13}{15}) + a'
+        "-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34"
     ]
 
 
-    if True:
-        all_axioms = common_axioms(extract_var_only=False)
+    if False:
+        all_axioms = common_axioms(full=True)
         narr = expression.tex2narr(testcases[-1])
         next_steps = possible_next_steps(narr, all_axioms, state.value_v2, debug=True)
         render_steps(next_steps)

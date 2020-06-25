@@ -554,7 +554,7 @@ def mcts(narr0, all_axioms, sample_depth=7, n_sample_times=200, n_maxsteps=100, 
 
 if __name__ == '__main__':
     from render_math import render_steps
-    axioms = common_axioms(extract_var_only=False)
+    axioms = common_axioms(full=True)
 
     testcases = [
         #'\\frac{12a}{3a + a + 20a} - \\frac{1}{4}',
