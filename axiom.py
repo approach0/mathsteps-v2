@@ -405,8 +405,7 @@ class Axiom:
                 Q = Q[-bfs_bandwith:]
 
         # take original expression if it doesn't get applied at this level
-        if len(candidates) == 0:
-            candidates += [(applied_times, narr0)]
+        candidates += [(applied_times, narr0)]
 
         #print(expression.narr2tex(narr0))
         #for d,n in candidates:
@@ -454,4 +453,4 @@ if __name__ == '__main__':
         .add_rule('x + *{1}', '-(-x - *{1})')
     )
 
-    a.test('(-3-\\frac{4}{17}) x + y', debug=True)
+    a.test('(-3-\\frac{4}{17}) x + y', debug=False)
