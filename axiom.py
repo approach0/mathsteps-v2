@@ -241,7 +241,7 @@ class Axiom:
             is_match, rewrite_rules = test_alpha_equiv(pattern_narr, narr, debug=False)
 
             if debug:
-                rich.print('[red]pattern vs. narr')
+                print()
                 if False:
                     print('pattern:', pattern_narr)
                     print('subject:', narr)
@@ -354,6 +354,7 @@ class Axiom:
             result_narrs.append(new_narr)
         return True
 
+
     def _level_apply(self, narr, debug=False):
         ret_narrs = []
         _, root_type = narr[0]
@@ -364,6 +365,8 @@ class Axiom:
 
         wildcards_index = get_wildcards_index(narr)
         no_permute = (wildcards_index != None) or root_type in expression.no_permute_tokens()
+
+        rich.print('\n[red]level apply[/red]', expression.narr2tex(narr))
 
         for construct_tree, brothers in self._children_permutation(narr, no_permute=no_permute):
             rewritten_narr, is_applied = self._exact_apply(construct_tree, debug=debug)

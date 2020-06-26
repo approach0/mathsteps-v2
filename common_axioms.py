@@ -192,12 +192,12 @@ def common_axioms(full=False):
 
     if full:
         axioms.append(
-            Axiom(name='负号提出括号', recursive_apply=True, strict_simplify=True)
+            Axiom(name='负号提出括号', strict_simplify=True)
             .add_rule('x + *{1}', '-(-x - *{1})')
 
-            .add_test('-3-\\frac{4}{17}')
-            .add_test('(-3-\\frac{4}{17}) x')
-            .add_test('(-3-\\frac{4}{17}) x + y')
+            #.add_test('-3-\\frac{4}{17}')
+            #.add_test('(-3-\\frac{4}{17}) x')
+            #.add_test('(-3-\\frac{4}{17}) x + y')
             .add_test("(a - b - c) x")
         )
 
@@ -314,6 +314,6 @@ if __name__ == '__main__':
         if axiom.name() in ['负号提出括号']:
             #import cProfile
             #cProfile.run('axiom.test(debug=False)')
-            axiom.test(debug=False)
+            axiom.test(debug=True)
 
     print(f'total {len(axioms)} axioms.')
