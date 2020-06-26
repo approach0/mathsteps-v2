@@ -81,7 +81,7 @@ def best_child_of(father, c_param=None, debug=False):
             print(f"[UCT={UCT:.4f}, q/n={q:.2f}/{n}={q/n:.3f}]", expression.narr2tex(narr))
         print('\n[choice index]', f"[[{argmax_idx}]]")
         print()
-    return children[argmax_idx], weights[argmax_idx]
+    return children[argmax_idx], weights[argmax_idx], argmax_idx
 
 
 def expand(father, step, prior=0):
@@ -111,13 +111,13 @@ def move_policy(father, steps, debug=False, prior_arr=None):
         step = steps[idx]
         prior = prior_arr[idx] * 100.0 if prior_arr is not None else 0
         if debug:
-            print('[expand] ', '(prior=%.5f)' % prior, end="")
+            print(f'[expand child#{idx}] ', '(prior=%.5f)' % prior, end="")
             rich.print('[yellow]' + step[1].name())
         return expand(father, step, prior=prior)
     else:
-        child, w = best_child_of(father, debug=False)
+        child, w, idx = best_child_of(father, debug=False)
         if debug:
-            print(f'[best child] w={w:.5f}', end=" ")
+            print(f'[best child#{idx}] w={w:.5f}', end=" ")
             rich.print('[yellow]' + child[4].name())
         return child
 
@@ -490,11 +490,18 @@ def mcts(narr0, all_axioms, sample_depth=7, n_sample_times=200, n_maxsteps=100, 
 
         if debug:
             rich.print(f'[magenta]Candidate steps: {len(steps)}[/]')
-            for n, a, ai in steps:
+            for i, (n, a, ai) in enumerate(steps):
                 val = state_value(n)
-                print(a.name(), ':', end=' ')
+                rich.print(f'[red]#{i}[/]', a.name(), ':', end=' ')
                 rich.print(f'val={val:.2f}', end=' ')
                 print(expression.narr2tex(n), end='\n\n')
+
+            #from axiom import Axiom
+            #render_steps([(narr, Axiom(), -1)] + steps, show_index=True)
+            #choices = input('Limit choices: ')
+            #choices = [i for i in map(lambda x: int(x), choices.split(','))]
+            #rich.print(choices)
+            #steps = [steps[i] for i in choices]
 
         if len(steps) == 0:
             if debug: print('[no more candidate steps]')
@@ -502,26 +509,20 @@ def mcts(narr0, all_axioms, sample_depth=7, n_sample_times=200, n_maxsteps=100, 
                 policy = 0
                 #policy_fine_tuning(nn_models, expr, policy, debug=debug, all_axioms=all_axioms)
             break
-        elif len(steps) == 1:
-            sample_times = 1
-            force_single_thread = True
-        else:
-            sample_times = n_sample_times
-            force_single_thread = False
 
         if manager and not force_single_thread:
             any_feasible = evaluate_parallel(
-                node, all_axioms, steps, sample_times, sample_depth, visited,
+                node, all_axioms, steps, n_sample_times, sample_depth, visited,
                 debug=debug, nn_models=nn_models, k=k
             )
         else:
             any_feasible = evaluate(
-                node, all_axioms, steps, sample_times, sample_depth, visited,
+                node, all_axioms, steps, n_sample_times, sample_depth, visited,
                 debug=debug, nn_models=nn_models, k=k, step_probs=step_probs
             )
 
         # selection
-        move_choice, w = best_child_of(node, c_param=.0, debug=debug)
+        move_choice, w, _ = best_child_of(node, c_param=.0, debug=debug)
         move_to_expr = expression.narr2tex(move_choice[2])
         if w == 0 or not any_feasible or move_to_expr in visited:
             print(f'[abort] w={w:.2f}, any_feasible={any_feasible}, ' +
@@ -577,26 +578,24 @@ if __name__ == '__main__':
         #"-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
 
         "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
-        " -(3 + \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2 + \\frac{2}{15})",
-        #"-(3 + \\frac{4}{17}) (14\\frac{13}{15}) - (3 + \\frac{4}{17}) (2 + \\frac{2}{15})",
-        #'(-2 - \\frac{2}{15} - 14\\frac{13}{15}) \\times (3 + \\frac{4}{17})'
+        "-(3 + \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2\\frac{2}{15})"
     ]
 
     nn_models = None
-    timer = Timer()
-
+    force_single_thread = True
     debug = True
 
+    timer = Timer()
     for i, expr in enumerate(testcases[-1:]):
     #for i, expr in enumerate(testcases[:]):
         narr = expression.tex2narr(expr)
 
-        n_sample_times = 10 if nn_models else 440
+        n_sample_times = 20 if nn_models or force_single_thread else 440
 
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
-                nn_models=nn_models, force_single_thread=False)
+                nn_models=nn_models, force_single_thread=force_single_thread)
 
         for j, (narr, axiom, axiom_idx) in enumerate(steps):
             val = state_value(narr)
