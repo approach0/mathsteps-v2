@@ -15,6 +15,7 @@ class Axiom:
         self.dp = {}
         self.narrs = {}
         self.signs = {}
+        self.wildcards_index = {}
         self.recursive_apply = recursive_apply
         self.allow_complication = allow_complication
         self.strict_simplify = strict_simplify
@@ -78,6 +79,7 @@ class Axiom:
                 # cache some results for speedup
                 self.narrs[a] = expression.tex2narr(a)
                 self.narrs[b] = expression.tex2narr(b)
+                self.wildcards_index[a] = get_wildcards_index(self.narrs[a])
         return self
 
 
@@ -366,9 +368,7 @@ class Axiom:
             # rewrite_rules:
             #    a -> -xy
             #    b -> -z
-            pattern_narr = self.narrs[pattern]
-
-            wildcards_index = get_wildcards_index(pattern_narr)
+            wildcards_index = self.wildcards_index[pattern]
             no_permute = (wildcards_index != None) or root_type in expression.no_permute_tokens()
 
             for construct_tree, brothers in self._children_permutation(narr, no_permute=no_permute):
