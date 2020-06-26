@@ -112,10 +112,12 @@ def test():
 
         #"(-3 - \\frac{4}{17}) (14\\frac{13}{15}) - (3\\frac{4}{17}) (2 + \\frac{2}{15})",
         "b + 3x^{2} +2b + 3b + x^{2}= 0"
+        "(3 + \\frac{4}{17}) (-14\\frac{13}{15} - \\frac{2}{15}) - 2 \times 3 - 2 \\times \\frac{4}{17}",
+        "(\\frac{-210 - 13}{15} - 2 - \\frac{2}{15}) (3 + \\frac{4}{17})"
     ]
 
 
-    if False:
+    if True:
         all_axioms = common_axioms(full=True)
         narr = expression.tex2narr(testcases[-1])
         next_steps = possible_next_steps(narr, all_axioms, state.value_v2, debug=True)

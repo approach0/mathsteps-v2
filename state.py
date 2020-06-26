@@ -227,7 +227,7 @@ def value_v2(narr, level=0, debug=False):
         1.0 * (0
             + 0.2 * stats['NUMBER_one_zero']
             + 1.0 * stats['NUMBER_other_ints']
-            + 1.0 * stats['neg']
+            + 0.1 * stats['neg']
             + 3.0 + stats['NUMBER_decimal']
             - 0.1 * stats['NUMBER_pad_zeros']
             + 3.0 * stats['VAR_cnt']

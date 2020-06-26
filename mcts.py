@@ -571,7 +571,8 @@ if __name__ == '__main__':
         #"25 \cdot 48 + 103 \cdot 25 - 25 \cdot 51",
         #"-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
         "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
-        "(-3 - \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2 + \\frac{2}{15})"
+        "(-3 - \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2 + \\frac{2}{15})",
+        "-(3 + \\frac{4}{17}) (14\\frac{13}{15}) - (3 + \\frac{4}{17}) (2 + \\frac{2}{15})"
     ]
 
     nn_models = None
@@ -588,7 +589,7 @@ if __name__ == '__main__':
         with timer:
             steps = mcts(narr, axioms,
                 debug=debug, n_sample_times=n_sample_times,
-                nn_models=nn_models, force_single_thread=True)
+                nn_models=nn_models, force_single_thread=False)
 
         for j, (narr, axiom, axiom_idx) in enumerate(steps):
             val = state_value(narr)

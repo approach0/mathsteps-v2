@@ -198,6 +198,7 @@ def common_axioms(full=False):
             .add_test('-3-\\frac{4}{17}')
             .add_test('(-3-\\frac{4}{17}) x')
             .add_test('(-3-\\frac{4}{17}) x + y')
+            .add_test("(a - b - c) x")
         )
 
     axioms.append(
@@ -306,11 +307,11 @@ def common_axioms(full=False):
 
 
 if __name__ == '__main__':
-    axioms = common_axioms()
+    axioms = common_axioms(full=True)
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() in ['负号乘进括号', '负号提出括号']:
+        if axiom.name() in ['负号提出括号']:
             #import cProfile
             #cProfile.run('axiom.test(debug=False)')
             axiom.test(debug=False)

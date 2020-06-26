@@ -61,12 +61,12 @@ class Axiom:
         tests = self.tests if tex is None else [(tex, None)]
         for test, expect in tests:
             expr = test if isinstance(test, str) else expression.narr2tex(test)
-            rich.print('[bold cyan][[test]][/]', end=" ")
-            print(expr)
             narr = expression.tex2narr(expr) if isinstance(test, str) else test
             possible_applied_narrs = self.apply(narr, debug=debug)
             render_texs = [expr]
 
+            rich.print('[bold cyan][[test]][/]', end=" ")
+            print(expr)
             for applied_narr in possible_applied_narrs:
                 applied_tex = expression.narr2tex(applied_narr)
                 print('[result]', applied_tex, end=" ")
@@ -439,7 +439,8 @@ class Axiom:
                                                     max_results=max_results):
                             return result_narrs
             if none_applied and depth > 0:
-                if not Axiom()._uniq_append(result_narrs, narr,
+                new_narr = deepcopy(narr)
+                if not Axiom()._uniq_append(result_narrs, new_narr,
                                             max_results=max_results):
                     return result_narrs
 
