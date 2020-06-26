@@ -339,7 +339,7 @@ def evaluate(
 
 def evaluate_parallel(
     node, all_axioms, steps, n_sample_times, sample_depth, visited, k=0,
-    n_worker=10, batch_sz=2, debug=False, nn_models=None, use_thread=False):
+    n_worker=11, batch_sz=2, debug=False, nn_models=None, use_thread=False):
     """
     采样函数（并行版本）：进行 n_sample_times 次采样
     """
@@ -482,6 +482,7 @@ def mcts(narr0, all_axioms, sample_depth=7, n_sample_times=200, n_maxsteps=100, 
             print(f'[current] step={len(moves)}, val={expr_val:.1f}:',
                 expression.narr2tex(narr), end='')
             print('\033[0m', end='\n')
+            expression.narr_prettyprint(narr)
 
         steps, step_probs = policy_steps(
             narr, all_axioms, k=k, debug=debug, nn_models=nn_models, trust_nn=False
@@ -576,7 +577,7 @@ if __name__ == '__main__':
         #"-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
 
         "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
-        #"(-3 - \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2 + \\frac{2}{15})",
+        " -(3 + \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2 + \\frac{2}{15})",
         #"-(3 + \\frac{4}{17}) (14\\frac{13}{15}) - (3 + \\frac{4}{17}) (2 + \\frac{2}{15})",
         #'(-2 - \\frac{2}{15} - 14\\frac{13}{15}) \\times (3 + \\frac{4}{17})'
     ]
@@ -590,7 +591,7 @@ if __name__ == '__main__':
     #for i, expr in enumerate(testcases[:]):
         narr = expression.tex2narr(expr)
 
-        n_sample_times = 10 if nn_models else 200
+        n_sample_times = 10 if nn_models else 440
 
         with timer:
             steps = mcts(narr, axioms,
