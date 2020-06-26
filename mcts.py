@@ -492,16 +492,17 @@ def mcts(narr0, all_axioms, sample_depth=7, n_sample_times=200, n_maxsteps=100, 
             rich.print(f'[magenta]Candidate steps: {len(steps)}[/]')
             for i, (n, a, ai) in enumerate(steps):
                 val = state_value(n)
-                rich.print(f'[red]#{i}[/]', a.name(), ':', end=' ')
+                rich.print(f'[red]#{i+1}[/]', a.name(), ':', end=' ')
                 rich.print(f'val={val:.2f}', end=' ')
                 print(expression.narr2tex(n), end='\n\n')
 
-            #from axiom import Axiom
-            #render_steps([(narr, Axiom(), -1)] + steps, show_index=True)
-            #choices = input('Limit choices: ')
-            #choices = [i for i in map(lambda x: int(x), choices.split(','))]
-            #rich.print(choices)
-            #steps = [steps[i] for i in choices]
+            if True:
+                from axiom import Axiom
+                render_steps([(narr, Axiom(), -1)] + steps, show_index=True)
+                choices = input('Limit choices: ')
+                choices = [i for i in map(lambda x: int(x), choices.split(','))]
+                rich.print(choices)
+                steps = [steps[i-1] for i in choices]
 
         if len(steps) == 0:
             if debug: print('[no more candidate steps]')
