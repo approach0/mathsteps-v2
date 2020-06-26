@@ -161,6 +161,10 @@ def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=Fa
         return steps, [0 for _ in steps]
 
 
+def reward_calc(best_value, father_val, best_steps):
+    return ((best_value - father_val) ** 3) / (2 + best_steps)
+
+
 def rollout(father, node, all_axioms, n_times, visited,
             debug=False, nn_models=None, k=3, lock=None):
     """
@@ -222,7 +226,7 @@ def rollout(father, node, all_axioms, n_times, visited,
                 reward = step_reward + max_complexity_reward / max(1, complexity_reward)
                 if debug: print(f'[step reward] {reward}')
             else:
-                reward = (best_value - father_val) / ((best_steps + 1) ** 2)
+                reward = reward_calc(best_value, father_val, best_steps)
             break
 
         elif cnt >= n_times:
@@ -241,7 +245,7 @@ def rollout(father, node, all_axioms, n_times, visited,
                 if debug: print(f'[step reward] {step_reward}')
             else:
                 if best_value > father_val:
-                    reward = (best_value - father_val) / ((best_steps + 1) ** 2)
+                    reward = reward_calc(best_value, father_val, best_steps)
                 else:
                     reward = 0
             break
@@ -335,7 +339,7 @@ def evaluate(
 
 def evaluate_parallel(
     node, all_axioms, steps, n_sample_times, sample_depth, visited, k=0,
-    n_worker=5, batch_sz=2, debug=False, nn_models=None, use_thread=False):
+    n_worker=10, batch_sz=2, debug=False, nn_models=None, use_thread=False):
     """
     采样函数（并行版本）：进行 n_sample_times 次采样
     """
@@ -484,11 +488,11 @@ def mcts(narr0, all_axioms, sample_depth=7, n_sample_times=200, n_maxsteps=100, 
         )
 
         if debug:
-            rich.print(f'[magenta]candidate steps={len(steps)}[/]')
+            rich.print(f'[magenta]Candidate steps: {len(steps)}[/]')
             for n, a, ai in steps:
                 val = state_value(n)
                 print(a.name(), ':', end=' ')
-                rich.print(f'val={val}', end=' ')
+                rich.print(f'val={val:.2f}', end=' ')
                 print(expression.narr2tex(n), end='\n\n')
 
         if len(steps) == 0:
@@ -570,9 +574,11 @@ if __name__ == '__main__':
         # some tests for extracting common factors
         #"25 \cdot 48 + 103 \cdot 25 - 25 \cdot 51",
         #"-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
+
         "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
-        "(-3 - \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2 + \\frac{2}{15})",
-        "-(3 + \\frac{4}{17}) (14\\frac{13}{15}) - (3 + \\frac{4}{17}) (2 + \\frac{2}{15})"
+        #"(-3 - \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2 + \\frac{2}{15})",
+        #"-(3 + \\frac{4}{17}) (14\\frac{13}{15}) - (3 + \\frac{4}{17}) (2 + \\frac{2}{15})",
+        #'(-2 - \\frac{2}{15} - 14\\frac{13}{15}) \\times (3 + \\frac{4}{17})'
     ]
 
     nn_models = None

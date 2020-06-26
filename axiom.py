@@ -393,7 +393,7 @@ class Axiom:
 
 
     def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=4,
-                         bfs_bandwith=20, max_results=20):
+                         bfs_bandwith=5, max_results=5):
         # safe guard
         if applied_times >= max_times:
             return [narr0]
