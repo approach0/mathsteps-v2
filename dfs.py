@@ -116,14 +116,6 @@ def test():
         "-(3 + \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3 + \\frac{4}{17}) \\times (2\\frac{2}{15})",
     ]
 
-
-    if True:
-        all_axioms = common_axioms(full=True)
-        narr = expression.tex2narr(testcases[-1])
-        next_steps = possible_next_steps(narr, all_axioms, state.value_v2, debug=True)
-        render_steps(next_steps)
-        quit()
-
     begin_from = 0
 
     n_steps = 0

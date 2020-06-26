@@ -234,9 +234,9 @@ def need_outter_fence(root, child_narr, rank=0):
             return True
         elif child_root[1] in ['frac', 'sup']:
             return False
-    elif child_root[0] == -1:
-        if root[1] == 'mul' and root[0] > 0 and rank == 1:
-            return False
+    #elif child_root[0] == -1:
+    #    if root[1] == 'mul' and root[0] > 0 and rank == 1:
+    #        return False
 
     return True
 
