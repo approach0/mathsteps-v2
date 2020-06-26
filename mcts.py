@@ -111,13 +111,14 @@ def move_policy(father, steps, debug=False, prior_arr=None):
         step = steps[idx]
         prior = prior_arr[idx] * 100.0 if prior_arr is not None else 0
         if debug:
-            print(f'[expand child#{idx}] ', '(prior=%.5f)' % prior, end="")
+            rich.print(f'[[expand [yellow]child#{idx}[/]]]', end=" ")
+            print('(prior=%.5f)' % prior, end=" ")
             rich.print('[yellow]' + step[1].name())
         return expand(father, step, prior=prior)
     else:
         child, w, idx = best_child_of(father, debug=False)
         if debug:
-            print(f'[best child#{idx}] w={w:.5f}', end=" ")
+            rich.print(f'[[best [yellow]child#{idx}[/]]]', end=" ")
             rich.print('[yellow]' + child[4].name())
         return child
 
@@ -296,7 +297,6 @@ def evaluate(
     采样函数（顺序执行版）：进行 n_sample_times 次采样
     """
     _, _, father, _, _, _, _ = node
-    any_feasible = False
     for i in range(n_sample_times):
         if lock: lock.acquire()
         child = move_policy(node, steps, debug=debug, prior_arr=step_probs)
@@ -318,9 +318,6 @@ def evaluate(
             nn_models=nn_models, k=k, lock=lock
         )
 
-        if reward != 0:
-            any_feasible = True
-
         # normalize rewards
         def normalize(x):
             return x / (1 + abs(x))
@@ -334,8 +331,6 @@ def evaluate(
         backprop(bottom_node, scaled_reward)
         if lock: lock.release()
 
-    return any_feasible
-
 
 def evaluate_parallel(
     node, all_axioms, steps, n_sample_times, sample_depth, visited, k=0,
@@ -345,7 +340,6 @@ def evaluate_parallel(
     """
     n_stages = n_sample_times // n_worker // batch_sz
     lock = manager.Lock() if manager else None
-    any_feasible = False
 
     for b in range(n_stages):
         #if debug:
@@ -371,13 +365,6 @@ def evaluate_parallel(
                         node, all_axioms, steps, batch_sz, sample_depth, visited,
                         debug=False, nn_models=nn_models, k=k, worker=i, lock=lock
                     )
-
-        for i in range(n_worker):
-            feasible = job[i].result()
-            if feasible:
-                any_feasible = True
-
-    return any_feasible
 
 
 #def policy_fine_tuning(nn_models, expr, policy, debug=False, all_axioms=[]):
@@ -512,12 +499,12 @@ def mcts(narr0, all_axioms, sample_depth=7, n_sample_times=200, n_maxsteps=100, 
             break
 
         if manager and not force_single_thread:
-            any_feasible = evaluate_parallel(
+            evaluate_parallel(
                 node, all_axioms, steps, n_sample_times, sample_depth, visited,
                 debug=debug, nn_models=nn_models, k=k
             )
         else:
-            any_feasible = evaluate(
+            evaluate(
                 node, all_axioms, steps, n_sample_times, sample_depth, visited,
                 debug=debug, nn_models=nn_models, k=k, step_probs=step_probs
             )
@@ -525,9 +512,8 @@ def mcts(narr0, all_axioms, sample_depth=7, n_sample_times=200, n_maxsteps=100, 
         # selection
         move_choice, w, _ = best_child_of(node, c_param=.0, debug=debug)
         move_to_expr = expression.narr2tex(move_choice[2])
-        if w == 0 or not any_feasible or move_to_expr in visited:
-            print(f'[abort] w={w:.2f}, any_feasible={any_feasible}, ' +
-                  f'visited: {move_to_expr in visited}')
+        if w == 0 or move_to_expr in visited:
+            print(f'[abort] best w={w:.2f}, visited: {move_to_expr in visited}')
             break
         else:
             if nn_models and training:
