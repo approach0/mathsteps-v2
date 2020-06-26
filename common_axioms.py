@@ -1,3 +1,4 @@
+import rich
 from axiom import Axiom
 import dynamic_axioms
 
@@ -195,9 +196,9 @@ def common_axioms(full=False):
             Axiom(name='负号提出括号', strict_simplify=True)
             .add_rule('x + *{1}', '-(-x - *{1})')
 
-            #.add_test('-3-\\frac{4}{17}')
-            #.add_test('(-3-\\frac{4}{17}) x')
-            #.add_test('(-3-\\frac{4}{17}) x + y')
+            .add_test('-3-\\frac{4}{17}')
+            .add_test('(-3-\\frac{4}{17}) x')
+            .add_test('(-3-\\frac{4}{17}) x + y')
             .add_test("(a - b - c) x")
         )
 
@@ -311,9 +312,10 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() in ['负号提出括号']:
+        if axiom.name() in ['负号提出括号', '负号乘进括号']:
             #import cProfile
             #cProfile.run('axiom.test(debug=False)')
-            axiom.test(debug=True)
+            rich.print(f'[red]{axiom.name()}[/]')
+            axiom.test(debug=False)
 
     print(f'total {len(axioms)} axioms.')

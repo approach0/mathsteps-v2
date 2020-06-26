@@ -22,6 +22,42 @@ class Axiom:
         self.tests = []
 
 
+    @staticmethod
+    def _preprocess(a, b):
+        n_var_sign = a.count('#')
+        var_sign = []
+        A, B, C = [], [], []
+
+        for _ in range(n_var_sign):
+            var_sign.append([+1, -1])
+
+        for signs in itertools.product(*var_sign):
+            if len(signs) == 0: break
+            copy_a = a
+            copy_b = b
+            reduce_sign = functools.reduce((lambda x, y: x * y), signs)
+            for i in range(n_var_sign):
+                sign_a = '+' if signs[i] > 0 else '-'
+                copy_a = copy_a.replace('#', sign_a, 1)
+
+                def b_replace(m):
+                    pound_num = m.group(1)
+                    if pound_num == '0':
+                        return '+' if reduce_sign > 0 else '-'
+                    else:
+                        extract_sign = signs[int(pound_num) - 1]
+                        return '+' if extract_sign > 0  else '-'
+                copy_b = re.sub(r'#([0-9])', b_replace, copy_b)
+            A.append(copy_a)
+            B.append(copy_b)
+            C.append(signs)
+
+        if len(A) == 0 or len(B) == 0:
+            return [a], [b], [()]
+        else:
+            return A, B, C
+
+
     def add_rule(self, src, dest, dynamic_procedure=None):
         dest = dest if isinstance(dest, list) else [dest]
 
@@ -227,84 +263,41 @@ class Axiom:
         return narr
 
 
-    def _exact_apply(self, narr, debug=False):
-        for origin in self.rules:
-            # Example:
-            # Axiom: (a+b)(a-b) => (a)^{2} - (b)^{2}
-            #          origin   =>  destination
-            # narr: (-xy - z)(-xy + z)
-            # rewrite_rules:
-            #    a -> -xy
-            #    b -> -z
-            pattern_narr = self.narrs[origin] # pattern
+    def _exact_apply(self, pattern, narr, debug=False):
+        # apply pattern transformation to nested array
+        pattern_narr = self.narrs[pattern]
+        is_match, rewrite_rules = test_alpha_equiv(pattern_narr, narr, debug=False)
 
-            is_match, rewrite_rules = test_alpha_equiv(pattern_narr, narr, debug=False)
+        if debug:
+            print()
+            if False:
+                print('pattern:', pattern_narr)
+                print('subject:', narr)
+            else:
+                print('pattern:', expression.narr2tex(pattern_narr))
+                print('subject:', expression.narr2tex(narr))
+            rich.print('match:', is_match)
 
+        if is_match:
             if debug:
-                print()
-                if False:
-                    print('pattern:', pattern_narr)
-                    print('subject:', narr)
-                else:
-                    print('pattern:', expression.narr2tex(pattern_narr))
-                    print('subject:', expression.narr2tex(narr))
-                rich.print('match:', is_match)
+                alpha_prettyprint(rewrite_rules[0])
 
-            if is_match:
-                if debug:
-                    alpha_prettyprint(rewrite_rules[0])
+            dest = self.rules[pattern]
+            dest_narr = [self.narrs[d] for d in dest] if isinstance(dest, list) else self.narrs[dest]
+            call = self.dp[pattern]
+            signs = self.signs[pattern]
+            if call is not None: # dynamical axiom
+                rewritten_narr, is_applied = call(pattern_narr, signs, narr, rewrite_rules[0], dest_narr)
+            else:
+                # apply rewrite rules to destination expression. E.g., (a)^{2} - (b)^{2}
+                dest_narr = self.narrs[dest]
+                rewritten_narr, is_applied = rewrite_by_alpha(dest_narr, rewrite_rules[0]), True
 
-                dest = self.rules[origin]
-                dest_narr = [self.narrs[d] for d in dest] if isinstance(dest, list) else self.narrs[dest]
-                call = self.dp[origin]
-                signs = self.signs[origin]
-                if call is not None: # dynamical axiom
-                    rewritten_narr, is_applied = call(pattern_narr, signs, narr, rewrite_rules[0], dest_narr)
-                else:
-                    # apply rewrite rules to destination expression. E.g., (a)^{2} - (b)^{2}
-                    dest_narr = self.narrs[dest]
-                    rewritten_narr, is_applied = rewrite_by_alpha(dest_narr, rewrite_rules[0]), True
-
-                # if rules with higher priority get applied, later rules are ignored
-                if is_applied:
-                    rewritten_narr = self._fraction_cancel(rewritten_narr) # post process
-                    return rewritten_narr, is_applied
+            # if rules with higher priority get applied, later rules are ignored
+            if is_applied:
+                rewritten_narr = self._fraction_cancel(rewritten_narr) # post process
+                return rewritten_narr, is_applied
         return narr, False
-
-    @staticmethod
-    def _preprocess(a, b):
-        n_var_sign = a.count('#')
-        var_sign = []
-        A, B, C = [], [], []
-
-        for _ in range(n_var_sign):
-            var_sign.append([+1, -1])
-
-        for signs in itertools.product(*var_sign):
-            if len(signs) == 0: break
-            copy_a = a
-            copy_b = b
-            reduce_sign = functools.reduce((lambda x, y: x * y), signs)
-            for i in range(n_var_sign):
-                sign_a = '+' if signs[i] > 0 else '-'
-                copy_a = copy_a.replace('#', sign_a, 1)
-
-                def b_replace(m):
-                    pound_num = m.group(1)
-                    if pound_num == '0':
-                        return '+' if reduce_sign > 0 else '-'
-                    else:
-                        extract_sign = signs[int(pound_num) - 1]
-                        return '+' if extract_sign > 0  else '-'
-                copy_b = re.sub(r'#([0-9])', b_replace, copy_b)
-            A.append(copy_a)
-            B.append(copy_b)
-            C.append(signs)
-
-        if len(A) == 0 or len(B) == 0:
-            return [a], [b], [()]
-        else:
-            return A, B, C
 
 
     @staticmethod
@@ -363,24 +356,34 @@ class Axiom:
         if root_type in expression.terminal_tokens():
             return ret_narrs
 
-        wildcards_index = get_wildcards_index(narr)
-        no_permute = (wildcards_index != None) or root_type in expression.no_permute_tokens()
+        if debug: rich.print('\n[red]level apply[/red]', expression.narr2tex(narr))
 
-        rich.print('\n[red]level apply[/red]', expression.narr2tex(narr))
+        for pattern in self.rules:
+            # Example:
+            # Axiom: (a+b)(a-b) => (a)^{2} - (b)^{2}
+            #          pattern   =>  destination
+            # narr: (-xy - z)(-xy + z)
+            # rewrite_rules:
+            #    a -> -xy
+            #    b -> -z
+            pattern_narr = self.narrs[pattern]
 
-        for construct_tree, brothers in self._children_permutation(narr, no_permute=no_permute):
-            rewritten_narr, is_applied = self._exact_apply(construct_tree, debug=debug)
-            if is_applied:
-                new_narr = [] # construct a new father
-                if len(brothers) > 0:
-                    # always positive new father, in case the negative
-                    # sign of father is also reduced, e.g. -abc => (ab)c
-                    positive_root = (+1, root_type)
-                    new_narr = [positive_root] + [rewritten_narr] + brothers
-                else:
-                    # the entire expression in this level gets reduced
-                    new_narr = rewritten_narr
-                Axiom()._uniq_append(ret_narrs, new_narr)
+            wildcards_index = get_wildcards_index(pattern_narr)
+            no_permute = (wildcards_index != None) or root_type in expression.no_permute_tokens()
+
+            for construct_tree, brothers in self._children_permutation(narr, no_permute=no_permute):
+                rewritten_narr, is_applied = self._exact_apply(pattern, construct_tree, debug=debug)
+                if is_applied:
+                    new_narr = [] # construct a new father
+                    if len(brothers) > 0:
+                        # always positive new father, in case the negative
+                        # sign of father is also reduced, e.g. -abc => (ab)c
+                        positive_root = (+1, root_type)
+                        new_narr = [positive_root] + [rewritten_narr] + brothers
+                    else:
+                        # the entire expression in this level gets reduced
+                        new_narr = rewritten_narr
+                    Axiom()._uniq_append(ret_narrs, new_narr)
         return ret_narrs
 
 
@@ -390,7 +393,7 @@ class Axiom:
         if applied_times >= max_times:
             return [narr0]
 
-        # apply at this level
+        # apply at this level for max_times
         Q = [(applied_times, narr0)]
         candidates = []
         while len(Q) > 0:
