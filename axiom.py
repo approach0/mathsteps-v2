@@ -384,6 +384,11 @@ class Axiom:
                         # the entire expression in this level gets reduced
                         new_narr = rewritten_narr
                     Axiom()._uniq_append(ret_narrs, new_narr)
+
+            # high-priority rules will override lower ones
+            if len(ret_narrs) > 0:
+                break
+
         return ret_narrs
 
 
