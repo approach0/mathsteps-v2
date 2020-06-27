@@ -39,8 +39,7 @@ def children_weights(father, c_param=1.4, debug=False):
     #    for c in children
     #]
     weights = [
-        c[0] + c_param * math.sqrt(2 * math.log(n) / c[1])
-        if c[1] != 0 else 0
+        c[0] + c_param * math.sqrt(2 * math.log(n) / (c[1] + 1))
         for c in children
     ]
     return weights
@@ -105,27 +104,31 @@ def expand(father, step, prior=0):
     return children[-1]
 
 
+def fully_expand(father, steps, prior_arr=None):
+    children = []
+    while True:
+        q, n, _, _, _, _, children = father
+        if len(children) < len(steps): # not fully expanded
+            idx = len(children)
+            step = steps[idx]
+            prior = prior_arr[idx] if prior_arr is not None else 0
+            expand(father, step, prior=prior)
+        else:
+            break
+
+
 def move_policy(father, steps, debug=False, prior_arr=None):
     """
     选择儿子就节点中下一个 roll-out 的起点
     未展开充分前进行展开操作，展开充分后通过 UCT 公式选择。
     """
-    q, n, _, _, _, _, children = father
-    if len(children) < len(steps): # not fully expanded
-        idx = len(children)
-        step = steps[idx]
-        prior = prior_arr[idx] * 100.0 if prior_arr is not None else 0
-        if debug:
-            rich.print(f'[[expand [yellow]child#{idx}[/]]]', end=" ")
-            print('(prior=%.5f)' % prior, end=" ")
-            rich.print('[yellow]' + step[1].name())
-        return expand(father, step, prior=prior), idx
-    else:
-        child, w, idx = best_child_of(father, debug=False)
-        if debug:
-            rich.print(f'[[best [yellow]child#{idx}[/]]]', end=" ")
-            rich.print('[yellow]' + child[4].name())
-        return child, idx
+    fully_expand(father, steps, prior_arr=prior_arr)
+    # now choose the best child
+    child, w, idx = best_child_of(father, debug=False)
+    if debug:
+        rich.print(f'[[best [yellow]child#{idx}[/]]]', end=" ")
+        rich.print('[yellow]' + child[4].name())
+    return child, idx
 
 
 def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=False):
@@ -269,16 +272,11 @@ def rollout(node, idx, all_axioms, n_times, visited,
             rollout_idx = random.randint(0, len(steps) - 1)
 
         if lock: lock.acquire()
+        fully_expand(node, steps)
+
         _, _, _, _, _, _, children = node
-        if rollout_idx < len(children):
-            #print(f'[exist depth={cnt}, idx={rollout_idx}]',
-            #    expression.narr2tex(children[rollout_idx][2]))
-            next_node = children[rollout_idx]
-        else:
-            rollout_idx = len(children)
-            #print(f'[expand depth={cnt}, idx={rollout_idx}]',
-            #    expression.narr2tex(steps[rollout_idx][0]))
-            next_node = expand(node, steps[rollout_idx])
+        next_node = children[rollout_idx]
+
         choices.append(rollout_idx)
         if lock: lock.release()
 
