@@ -20,6 +20,8 @@ manager = multiprocessing.Manager()
 
 import torch.nn.functional as F
 
+rollout_logfile = 'rollout.log'
+
 
 def argmax(l):
     """
@@ -33,11 +35,6 @@ def children_weights(father, c_param=1.4, debug=False):
     得到节点所有儿子的 UCT 权重
     """
     q, n, _, _, _, _, children = father
-    #weights = [
-    #    c[0] / c[1] + c_param * math.sqrt(2 * math.log(n) / c[1])
-    #    if c[1] != 0 else 0
-    #    for c in children
-    #]
     weights = [
         c[0] + c_param * math.sqrt(2 * math.log(n) / (c[1] + 1))
         for c in children
@@ -291,10 +288,9 @@ def rollout(node, idx, all_axioms, n_times, visited,
 
     if lock: lock.acquire()
     import json
-    with open('choices.log', 'a') as fh:
+    with open(rollout_logfile, 'a') as fh:
         fh.write(json.dumps(choices))
-        fh.write(json.dumps([best_value, best_steps, reward]))
-        fh.write(' ' + json.dumps(expr))
+        fh.write(json.dumps([best_steps, round(reward, 3)]))
         fh.write('\n')
     if lock: lock.release()
     return node, reward
@@ -306,7 +302,6 @@ def backprop(node, reward):
     """
     while node is not None:
         q, n, narr, father, axiom, axiom_idx, children = node
-        #node[0] += reward
         node[0] = max(reward, node[0])
         node[1] += 1
         node = father
@@ -589,6 +584,7 @@ if __name__ == '__main__':
     force_single_thread = False
 
     timer = Timer()
+    open(rollout_logfile, 'w')
     for i, expr in enumerate(testcases[-1:]):
     #for i, expr in enumerate(testcases[:]):
         narr = expression.tex2narr(expr)
