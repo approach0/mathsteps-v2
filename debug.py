@@ -48,7 +48,7 @@ if __name__ == '__main__':
             print(expression.narr2tex(narr))
             expression.narr_prettyprint(narr)
 
-            reward = reward_calc(values)
+            reward, _ = reward_calc(values)
             print('\033[91m', end='')
             print(f'origin value: {val0:.2f}, cur value: {value:.2f}, reward = {reward:.2f}')
             print('\033[0m')

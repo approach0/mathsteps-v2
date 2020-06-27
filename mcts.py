@@ -37,7 +37,7 @@ def children_weights(father, c_param=1.4, debug=False):
     """
     q, n, _, _, _, _, children = father
     weights = [
-        c[0] + c_param * math.sqrt(2 * math.log(n) / (c[1] + 1))
+        c[0] + c_param * math.sqrt(math.log(n) / (c[1] + 1))
         for c in children
     ]
     return weights
@@ -68,7 +68,7 @@ def best_child_of(father, c_param=None, debug=False):
     """
     根据 UCT 选择最好的儿子节点
     """
-    q, n, narr, _, _, _, children = father
+    q, N, narr, _, _, _, children = father
     if c_param is None:
         weights = children_weights(father, debug=debug)
     else:
@@ -76,11 +76,12 @@ def best_child_of(father, c_param=None, debug=False):
     argmax_idx = argmax(weights)
 
     if debug:
-        print(f"\nfather: [n={n}]", expression.narr2tex(narr))
+        print(f"\nfather", expression.narr2tex(narr))
         for i, ((q,n,narr,_,a,ai, _), UCT) in enumerate(zip(children, weights)):
             print()
             print( f"child [[{i}]] of axiom#{ai}", a.name())
-            print(f"[UCT={UCT:.4f}, q/n={q:.2f}/{n}={q/n:.3f}]", expression.narr2tex(narr))
+            print(f"[UCT={UCT:.4f}, q/n={q:.2f}/{n}, N={N}, c_param={c_param}]",
+                 expression.narr2tex(narr))
         print('\n[choice index]', f"[[{argmax_idx}]]")
         print()
     return children[argmax_idx], weights[argmax_idx], argmax_idx
@@ -197,9 +198,10 @@ def reward_calc(values, debug=False):
             }
             print(json.dumps(reward_factors, indent=2))
 
-        return norm_reward, argmax_idx
+        no_reward_len = len(values) - (argmax_idx + 1)
+        return norm_reward, no_reward_len
     else:
-        return 0, argmax_idx
+        return 0, 0
 
 
 def rollout(node, idx, all_axioms, n_times, visited,
@@ -214,7 +216,6 @@ def rollout(node, idx, all_axioms, n_times, visited,
     cnt = 0
 
     values  = [state_value(father[2])]
-    nodes   = [father]
     choices = [idx + 1]
 
     root_tex = expression.narr2tex(father[2])
@@ -230,7 +231,6 @@ def rollout(node, idx, all_axioms, n_times, visited,
         expr_val = state_value(narr)
 
         values.append(expr_val)
-        nodes.append(node)
 
         if debug:
             axiom_name = axiom.name()
@@ -241,9 +241,9 @@ def rollout(node, idx, all_axioms, n_times, visited,
         if expr in visited:
             if debug: rich.print(f'[[roll-out]] [red]visited![/]')
             if nn_models:
-                reward = -1000
+                reward, no_reward_len = -1000, 0
             else:
-                reward = 0
+                reward, no_reward_len = 0, 0
             break
 
         steps, step_probs = policy_steps(
@@ -254,9 +254,9 @@ def rollout(node, idx, all_axioms, n_times, visited,
             if debug: print('[roll-out reach leaf]')
 
             if nn_models:
-                reward, argmax_idx = reward_calc(values)
+                reward, no_reward_len = reward_calc(values)
             else:
-                reward, argmax_idx = reward_calc(values)
+                reward, no_reward_len = reward_calc(values)
             break
 
         elif cnt >= n_times:
@@ -272,9 +272,9 @@ def rollout(node, idx, all_axioms, n_times, visited,
 
                 #step_reward = 1000 / max(1, 1 - pred_val)
                 #reward = step_reward + 10 / max(1, path_complexity)
-                reward, argmax_idx = reward_calc(values)
+                reward, no_reward_len = reward_calc(values)
             else:
-                reward, argmax_idx = reward_calc(values)
+                reward, no_reward_len = reward_calc(values)
             break
 
         # randomly select index
@@ -307,18 +307,22 @@ def rollout(node, idx, all_axioms, n_times, visited,
         fh.write('\n')
     if lock: lock.release()
 
-    return nodes[argmax_idx], reward
+    return node, reward, no_reward_len
 
 
-def backprop(node, reward):
+def backprop(node, reward, no_reward_len):
     """
     反向传播：通过 reward 更新 roll-out 路径上所有节点的统计数据
     """
+    cnt = 0
     while node is not None:
         q, n, narr, father, axiom, axiom_idx, children = node
-        node[0] = max(reward, node[0])
+        if cnt >= no_reward_len:
+            node[0] = max(reward, node[0])
         node[1] += 1
+        #print(f'[backprop q/n={node[0]:.3f}/{node[1]}]', expression.narr2tex(narr))
         node = father
+        cnt += 1
 
 
 def evaluate(
@@ -343,7 +347,8 @@ def evaluate(
             #    print(expression.narr2tex(s))
             #    print()
 
-        bottom_node, reward = rollout(child, idx, all_axioms, sample_depth, visited,
+        bottom_node, reward, no_reward_len = rollout(
+            child, idx, all_axioms, sample_depth, visited,
             debug=debug, nn_models=nn_models, k=k, lock=lock
         )
 
@@ -353,7 +358,7 @@ def evaluate(
             print('\033[0m')
 
         if lock: lock.acquire()
-        backprop(bottom_node, reward)
+        backprop(bottom_node, reward, no_reward_len)
         if lock: lock.release()
 
 
@@ -508,7 +513,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
                 rich.print(f'val={val:.2f}', end=' ')
                 print(expression.narr2tex(n), end='\n\n')
 
-            if force_single_thread:
+            if False:
                 from axiom import Axiom
                 render_steps([(narr, Axiom(), -1)] + steps, show_index=True)
                 choices = input('Limit choices: ')
