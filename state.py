@@ -150,7 +150,7 @@ def value_v1(narr, debug=False):
     return -accum
 
 
-def collect_stats(narr, stats, level, grandRoot, first_op):
+def collect_stats(narr, stats, level, grandRoot, right_side_of_eq):
     root = narr[0]
     children = narr[1:]
     sign, token = root
@@ -159,13 +159,15 @@ def collect_stats(narr, stats, level, grandRoot, first_op):
         stats['neg'] += 1
 
     if token in expression.terminal_tokens():
-        if grandRoot and grandRoot[1] == 'eq' and not first_op:
+        if right_side_of_eq:
             stats['right_side_of_eq'] += 1
 
         if token == 'NUMBER':
             num = children[0]
 
+            stats['NUMBER_level_cnt'] += level + 1
             stats['NUMBER_sum'] += abs(num)
+
             if grandRoot and grandRoot[1] == 'sqrt':
                 stats['NUMBER_in_sqrt'] += abs(num)
 
@@ -186,25 +188,26 @@ def collect_stats(narr, stats, level, grandRoot, first_op):
             #print(level, children)
             if level > stats['VAR_max_level']:
                 stats['VAR_max_level'] = level
-            stats['VAR_cnt'] += level + 1
+            stats['VAR_level_cnt'] += level + 1
 
         return
 
     for i, c in enumerate(children):
-        first_op = True if i == 0 else False
+        right_side_of_eq = True if right_side_of_eq or root[1] == 'eq' and i > 0 else False
 
         if token == 'ifrac' and i == 2:
-            collect_stats(c, stats, level + 4, root, first_op)
+            collect_stats(c, stats, level + 4, root, right_side_of_eq)
         elif token == 'frac' and i == 1:
-            collect_stats(c, stats, level + 4, root, first_op)
+            collect_stats(c, stats, level + 4, root, right_side_of_eq)
         else:
-            collect_stats(c, stats, level + 1, root, first_op)
+            collect_stats(c, stats, level + 1, root, right_side_of_eq)
 
 
 def value_v2(narr, level=0, debug=False):
     stats = {
         'right_side_of_eq': 0,
         'neg': 0,
+        'NUMBER_level_cnt': 0,
         'NUMBER_sum': 0,
         'NUMBER_in_sqrt': 0,
         'NUMBER_one_zero': 0,
@@ -212,7 +215,7 @@ def value_v2(narr, level=0, debug=False):
         'NUMBER_pad_zeros': 0,
         'NUMBER_decimal': 0,
         'VAR_max_level': 0,
-        'VAR_cnt': 0
+        'VAR_level_cnt': 0
     }
 
     collect_stats(narr, stats, 0, None, False)
@@ -230,7 +233,8 @@ def value_v2(narr, level=0, debug=False):
             + 0.1 * stats['neg']
             + 3.0 + stats['NUMBER_decimal']
             - 0.1 * stats['NUMBER_pad_zeros']
-            + 3.0 * stats['VAR_cnt']
+            + 3.0 * stats['VAR_level_cnt']
+            + 1.0 * stats['NUMBER_level_cnt']
         ),
         (2.0 * stats['VAR_max_level']) ** 2
     ]
