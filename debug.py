@@ -32,9 +32,12 @@ if __name__ == '__main__':
         val0 = state_value(narr)
         steps = [(narr, Axiom(name='原式'), -1)]
         choices = [0]
+        values = [val0]
         while len(steps) > 0:
             narr = steps[-1][0]
             value = state_value(narr)
+            values.append(value)
+
             next_steps = possible_next_steps(narr, all_axioms, state_value, debug=False)
 
             if len(next_steps) == 0:
@@ -45,7 +48,7 @@ if __name__ == '__main__':
             print(expression.narr2tex(narr))
             expression.narr_prettyprint(narr)
 
-            reward = reward_calc(value, val0, len(steps) - 1)
+            reward = reward_calc(values)
             print('\033[91m', end='')
             print(f'origin value: {val0:.2f}, cur value: {value:.2f}, reward = {reward:.2f}')
             print('\033[0m')

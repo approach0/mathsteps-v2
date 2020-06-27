@@ -177,7 +177,7 @@ def reward_calc(values, debug=False):
         path_complexity = abs(sum(values[1: argmax_idx + 1]))
 
         value_reward = ((best_value - father_val) ** 2) / (argmax_idx + 1)
-        complexity_reward = 100 / max(1, path_complexity)
+        complexity_reward = 10 / max(1, path_complexity)
         reward = value_reward + complexity_reward
 
         def normalize(x):
@@ -214,11 +214,12 @@ def rollout(node, idx, all_axioms, n_times, visited,
     cnt = 0
     choices = [idx + 1]
     values = [state_value(father[2])]
+    root_tex = expression.narr2tex(father[2])
 
     if debug:
         print('[roll-out origin]', end=' ')
         rich.print(f'[blue]{values[0]:.2f}[/]', end=' ')
-        print(expression.narr2tex(father[2]))
+        print(root_tex)
 
     while True:
         q, n, narr, father, axiom, axiom_idx, children = node
@@ -296,7 +297,8 @@ def rollout(node, idx, all_axioms, n_times, visited,
     if lock: lock.acquire()
     with open(rollout_logfile, 'a') as fh:
         fh.write(json.dumps(choices))
-        fh.write(json.dumps([round(reward, 3)]))
+        fh.write(json.dumps([f'{reward:.3f}']))
+        fh.write(' ' + root_tex)
         fh.write('\n')
     if lock: lock.release()
 
@@ -583,7 +585,7 @@ if __name__ == '__main__':
         #"-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
 
         "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
-        #"(-3 - \\frac{4}{17}) (14\\frac{13}{15}) - (3\\frac{4}{17}) (2\\frac{2}{15})"
+        "(-3 - \\frac{4}{17}) (14\\frac{13}{15}) - (3\\frac{4}{17}) (2\\frac{2}{15})"
     ]
 
     nn_models = None
@@ -596,7 +598,7 @@ if __name__ == '__main__':
     #for i, expr in enumerate(testcases[:]):
         narr = expression.tex2narr(expr)
 
-        n_sample_times = 50 if nn_models or force_single_thread else 220
+        n_sample_times = 50 if nn_models or force_single_thread else 330
 
         with timer:
             steps = mcts(narr, axioms,
