@@ -171,7 +171,13 @@ def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=Fa
 
 
 def reward_calc(best_value, father_val, best_steps):
-    return ((best_value - father_val) ** 3) / (2 + best_steps)
+    reward = ((best_value - father_val) ** 2) / (2 + best_steps)
+    # normalize rewards
+    def normalize(x):
+        return x / (1 + abs(x))
+    norm_reward = normalize(reward / 100)
+    #print(reward, norm_reward)
+    return norm_reward
 
 
 def rollout(node, idx, all_axioms, n_times, visited,
@@ -191,7 +197,7 @@ def rollout(node, idx, all_axioms, n_times, visited,
     max_complexity_reward = 10
     complexity_reward = 0
 
-    choices = [idx]
+    choices = [idx + 1]
 
     if debug:
         print('[roll-out origin]', end=' ')
@@ -277,7 +283,7 @@ def rollout(node, idx, all_axioms, n_times, visited,
         _, _, _, _, _, _, children = node
         next_node = children[rollout_idx]
 
-        choices.append(rollout_idx)
+        choices.append(rollout_idx + 1)
         if lock: lock.release()
 
         node = next_node
@@ -288,6 +294,7 @@ def rollout(node, idx, all_axioms, n_times, visited,
     with open('choices.log', 'a') as fh:
         fh.write(json.dumps(choices))
         fh.write(json.dumps([best_value, best_steps, reward]))
+        fh.write(' ' + json.dumps(expr))
         fh.write('\n')
     if lock: lock.release()
     return node, reward
@@ -331,17 +338,13 @@ def evaluate(
             debug=debug, nn_models=nn_models, k=k, lock=lock
         )
 
-        # normalize rewards
-        def normalize(x):
-            return x / (1 + abs(x))
-        scaled_reward = normalize(reward)
         if debug:
             print('\033[91m', end='')
-            print(f'[reward] {reward:.2f}, scaled: {scaled_reward:.3f}')
+            print(f'[reward] {reward:.2f}')
             print('\033[0m')
 
         if lock: lock.acquire()
-        backprop(bottom_node, scaled_reward)
+        backprop(bottom_node, reward)
         if lock: lock.release()
 
 
@@ -451,7 +454,7 @@ def back_off_step(steps, debug=False):
     return steps
 
 
-def mcts(narr0, all_axioms, sample_depth=8, n_sample_times=200, n_maxsteps=100, k=3,
+def mcts(narr0, all_axioms, sample_depth=3, n_sample_times=200, n_maxsteps=100, k=3,
          debug=False, nn_models=None, training=False, force_single_thread=False):
     #       q  n   narr  father  axiom   axiomIdx  children
     root = [0, 1, narr0, None,  None,      -1,       []    ]
@@ -590,7 +593,7 @@ if __name__ == '__main__':
     #for i, expr in enumerate(testcases[:]):
         narr = expression.tex2narr(expr)
 
-        n_sample_times = 20 if nn_models or force_single_thread else 7040
+        n_sample_times = 50 if nn_models or force_single_thread else 440
 
         with timer:
             steps = mcts(narr, axioms,

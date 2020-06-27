@@ -1,6 +1,7 @@
 import expression
 import rich
 import state
+from mcts import reward_calc
 from dfs import possible_next_steps
 from axiom import Axiom
 from common_axioms import common_axioms
@@ -28,6 +29,7 @@ if __name__ == '__main__':
 
     try:
         narr = expression.tex2narr(testcase)
+        val0 = state_value(narr)
         steps = [(narr, Axiom(name='原式'), -1)]
         choices = [0]
         while len(steps) > 0:
@@ -42,6 +44,11 @@ if __name__ == '__main__':
             rich.print(f'[bold red]current[/] [blue]{value:.2f}[/]:', end=" ")
             print(expression.narr2tex(narr))
             expression.narr_prettyprint(narr)
+
+            reward = reward_calc(value, val0, len(steps) - 1)
+            print('\033[91m', end='')
+            print(f'origin value: {val0:.2f}, cur value: {value:.2f}, reward = {reward:.2f}')
+            print('\033[0m')
 
             while True:
                 print_steps(next_steps)
