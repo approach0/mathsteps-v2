@@ -10,12 +10,14 @@ import numpy as np
 
 class Axiom:
 
-    def __init__(self, recursive_apply=False, allow_complication=False, strict_simplify=False, name=None):
+    def __init__(self, name=None, recursive_apply=False, reduce_sign=True,
+        allow_complication=False, strict_simplify=False):
         self.rules = {}
         self.dp = {}
         self.narrs = {}
         self.signs = {}
         self.wildcards_index = {}
+        self.reduce_sign = reduce_sign
         self.recursive_apply = recursive_apply
         self.allow_complication = allow_complication
         self.strict_simplify = strict_simplify
@@ -352,7 +354,7 @@ class Axiom:
 
     def _level_apply(self, narr, debug=False):
         ret_narrs = []
-        _, root_type = narr[0]
+        root_sign, root_type = narr[0]
 
         # ignore terminal tokens (no operator)
         if root_type in expression.terminal_tokens():
@@ -376,10 +378,15 @@ class Axiom:
                 if is_applied:
                     new_narr = [] # construct a new father
                     if len(brothers) > 0:
-                        # always positive new father, in case the negative
-                        # sign of father is also reduced, e.g. -abc => (ab)c
-                        positive_root = (+1, root_type)
-                        new_narr = [positive_root] + [rewritten_narr] + brothers
+                        if self.reduce_sign:
+                            # always positive new father, in case the negative
+                            # sign of father is also reduced, e.g. -abc => (ab)c
+                            new_root = (+1, root_type)
+                        else:
+                            # in addition case, we will need to keep father sign,
+                            # e.g. -(1+2+3) => -(3+3)
+                            new_root = (root_sign, root_type)
+                        new_narr = [new_root] + [rewritten_narr] + brothers
                     else:
                         # the entire expression in this level gets reduced
                         new_narr = rewritten_narr

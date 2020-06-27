@@ -103,11 +103,12 @@ calc_add = (
     Axiom(name='加减法计算')
     .add_rule('#(a + b)', '#1 c', dynamic_procedure=_calc_add)
 
-    .add_test('-12 + 3', '-9')
-    .add_test('(-12 - 3 - 1)')
+    #.add_test('-12 + 3', '-9')
+    #.add_test('(-12 - 3 - 1)')
     .add_test('-(12 - 1)', '-11')
-    .add_test('0.25 - 3.25', '-3')
-    .add_test('(1 + 3) x + 3 y', '4 \\times x + 3 \\times y')
+    #.add_test('-(1 + 14 + 2)', ['-15 - 2', '-3 - 14', '-16 - 1'])
+    #.add_test('0.25 - 3.25', '-3')
+    #.add_test('(1 + 3) x + 3 y', '4 \\times x + 3 \\times y')
 )
 
 
@@ -407,8 +408,7 @@ canonicalize = (
 
 
 if __name__ == '__main__':
-    #a = calc_add
-    a = fraction_int_addition
+    a = calc_add
     #a = canonicalize
-    a.test()
+    a.test(debug=True)
     pass
