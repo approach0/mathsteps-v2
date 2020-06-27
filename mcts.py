@@ -3,6 +3,7 @@ import expression
 from common_axioms import common_axioms
 from copy import deepcopy
 from dfs import possible_next_steps
+import json
 import math
 import random
 import rich
@@ -128,7 +129,7 @@ def move_policy(father, steps, debug=False, prior_arr=None):
     return child, idx
 
 
-def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=False):
+def policy_steps(narr, all_axioms, k=4, debug=False, nn_models=None, trust_nn=False):
     """
     结合 policy 网络预测的 prior 生成 steps 以及其每一种可能的概率
     """
@@ -167,14 +168,38 @@ def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=Fa
         return steps, [0 for _ in steps]
 
 
-def reward_calc(best_value, father_val, best_steps):
-    reward = ((best_value - father_val) ** 2) / (2 + best_steps)
-    # normalize rewards
-    def normalize(x):
-        return x / (1 + abs(x))
-    norm_reward = normalize(reward / 100)
-    #print(reward, norm_reward)
-    return norm_reward
+def reward_calc(values, debug=False):
+    father_val = values[0]
+    argmax_idx = argmax(values)
+    best_value = values[argmax_idx]
+
+    if best_value > father_val:
+        path_complexity = abs(sum(values[1: argmax_idx + 1]))
+
+        value_reward = ((best_value - father_val) ** 2) / (argmax_idx + 1)
+        complexity_reward = 100 / max(1, path_complexity)
+        reward = value_reward + complexity_reward
+
+        def normalize(x):
+            return x / (1 + abs(x))
+        norm_reward = normalize(reward / 100)
+
+        if debug:
+            reward_factors = {
+                'father value': father_val,
+                'best value': best_value,
+                'at step': argmax_idx,
+                'value reward': value_reward,
+                'complexity reward': complexity_reward,
+                'total reward': reward,
+                'normalized reward': norm_reward,
+                'values': values
+            }
+            print(json.dumps(reward_factors, indent=2))
+
+        return norm_reward
+    else:
+        return 0
 
 
 def rollout(node, idx, all_axioms, n_times, visited,
@@ -187,27 +212,19 @@ def rollout(node, idx, all_axioms, n_times, visited,
     q, n, narr, father, axiom, axiom_idx, children = node
 
     cnt = 0
-    father_val = state_value(father[2])
-    best_value = father_val
-    best_steps = cnt
-
-    max_complexity_reward = 10
-    complexity_reward = 0
-
     choices = [idx + 1]
+    values = [state_value(father[2])]
 
     if debug:
         print('[roll-out origin]', end=' ')
-        rich.print(f'[blue]{father_val:.2f}[/]', end=' ')
+        rich.print(f'[blue]{values[0]:.2f}[/]', end=' ')
         print(expression.narr2tex(father[2]))
 
     while True:
         q, n, narr, father, axiom, axiom_idx, children = node
         expr = expression.narr2tex(narr)
         expr_val = state_value(narr)
-        if best_value < expr_val:
-            best_value = expr_val
-            best_steps = cnt
+        values.append(expr_val)
 
         if debug:
             axiom_name = axiom.name()
@@ -223,12 +240,6 @@ def rollout(node, idx, all_axioms, n_times, visited,
                 reward = 0
             break
 
-        # when no NN presents, we can only define value by complexity difference
-        if nn_models is None:
-            pass
-        else:
-            complexity_reward += -expr_val
-
         steps, step_probs = policy_steps(
             narr, all_axioms, k=k, debug=False, nn_models=nn_models, trust_nn=True
         )
@@ -237,11 +248,9 @@ def rollout(node, idx, all_axioms, n_times, visited,
             if debug: print('[roll-out reach leaf]')
 
             if nn_models:
-                step_reward = 1000
-                reward = step_reward + max_complexity_reward / max(1, complexity_reward)
-                if debug: print(f'[step reward] {reward}')
+                reward = reward_calc(values)
             else:
-                reward = reward_calc(best_value, father_val, best_steps)
+                reward = reward_calc(values)
             break
 
         elif cnt >= n_times:
@@ -255,14 +264,11 @@ def rollout(node, idx, all_axioms, n_times, visited,
 
                 if debug: print(f'[predict value]', pred_val)
 
-                step_reward = 1000 / max(1, 1 - pred_val)
-                reward = step_reward + max_complexity_reward / max(1, complexity_reward)
-                if debug: print(f'[step reward] {step_reward}')
+                #step_reward = 1000 / max(1, 1 - pred_val)
+                #reward = step_reward + 10 / max(1, path_complexity)
+                reward = reward_calc(values)
             else:
-                if best_value > father_val:
-                    reward = reward_calc(best_value, father_val, best_steps)
-                else:
-                    reward = 0
+                reward = reward_calc(values)
             break
 
         # randomly select index
@@ -274,25 +280,26 @@ def rollout(node, idx, all_axioms, n_times, visited,
         else:
             rollout_idx = random.randint(0, len(steps) - 1)
 
+        choices.append(rollout_idx + 1)
+
+        # dive to deeper node specified by index
         if lock: lock.acquire()
         fully_expand(node, steps)
-
         _, _, _, _, _, _, children = node
         next_node = children[rollout_idx]
-
-        choices.append(rollout_idx + 1)
         if lock: lock.release()
 
         node = next_node
         cnt += 1
 
+    # write to roll-out log
     if lock: lock.acquire()
-    import json
     with open(rollout_logfile, 'a') as fh:
         fh.write(json.dumps(choices))
-        fh.write(json.dumps([best_steps, round(reward, 3)]))
+        fh.write(json.dumps([round(reward, 3)]))
         fh.write('\n')
     if lock: lock.release()
+
     return node, reward
 
 
@@ -576,7 +583,7 @@ if __name__ == '__main__':
         #"-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
 
         "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
-        "(-3 - \\frac{4}{17}) (14\\frac{13}{15}) - (3\\frac{4}{17}) (2\\frac{2}{15})"
+        #"(-3 - \\frac{4}{17}) (14\\frac{13}{15}) - (3\\frac{4}{17}) (2\\frac{2}{15})"
     ]
 
     nn_models = None
@@ -589,7 +596,7 @@ if __name__ == '__main__':
     #for i, expr in enumerate(testcases[:]):
         narr = expression.tex2narr(expr)
 
-        n_sample_times = 50 if nn_models or force_single_thread else 440
+        n_sample_times = 50 if nn_models or force_single_thread else 220
 
         with timer:
             steps = mcts(narr, axioms,
