@@ -44,7 +44,7 @@ def children_weights(father, c_param=1.4, debug=False):
 
 
 def print_UCT(father, detailed=False):
-    q, n, _, _, _, _, children = father
+    q, n, f_narr, _, _, _, children = father
     children_visits = [c[1] for c in children]
     children_narrs = [c[2] for c in children]
     zip_arr = zip(children, children_weights(father, c_param=.0), children_visits, children_narrs)
@@ -57,6 +57,7 @@ def print_UCT(father, detailed=False):
     arr.sort(key=lambda x: x[1], reverse=True)
 
     if detailed:
+        print(expression.narr2tex(f_narr))
         for axiom_name, UCT, visits, narr in arr:
             rich.print('[green]UCT:[/]', end=" ")
             print(UCT, visits, axiom_name, expression.narr2tex(narr))
