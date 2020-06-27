@@ -197,9 +197,9 @@ def reward_calc(values, debug=False):
             }
             print(json.dumps(reward_factors, indent=2))
 
-        return norm_reward
+        return norm_reward, argmax_idx
     else:
-        return 0
+        return 0, argmax_idx
 
 
 def rollout(node, idx, all_axioms, n_times, visited,
@@ -212,8 +212,11 @@ def rollout(node, idx, all_axioms, n_times, visited,
     q, n, narr, father, axiom, axiom_idx, children = node
 
     cnt = 0
+
+    values  = [state_value(father[2])]
+    nodes   = [father]
     choices = [idx + 1]
-    values = [state_value(father[2])]
+
     root_tex = expression.narr2tex(father[2])
 
     if debug:
@@ -225,7 +228,9 @@ def rollout(node, idx, all_axioms, n_times, visited,
         q, n, narr, father, axiom, axiom_idx, children = node
         expr = expression.narr2tex(narr)
         expr_val = state_value(narr)
+
         values.append(expr_val)
+        nodes.append(node)
 
         if debug:
             axiom_name = axiom.name()
@@ -249,9 +254,9 @@ def rollout(node, idx, all_axioms, n_times, visited,
             if debug: print('[roll-out reach leaf]')
 
             if nn_models:
-                reward = reward_calc(values)
+                reward, argmax_idx = reward_calc(values)
             else:
-                reward = reward_calc(values)
+                reward, argmax_idx = reward_calc(values)
             break
 
         elif cnt >= n_times:
@@ -267,9 +272,9 @@ def rollout(node, idx, all_axioms, n_times, visited,
 
                 #step_reward = 1000 / max(1, 1 - pred_val)
                 #reward = step_reward + 10 / max(1, path_complexity)
-                reward = reward_calc(values)
+                reward, argmax_idx = reward_calc(values)
             else:
-                reward = reward_calc(values)
+                reward, argmax_idx = reward_calc(values)
             break
 
         # randomly select index
@@ -302,7 +307,7 @@ def rollout(node, idx, all_axioms, n_times, visited,
         fh.write('\n')
     if lock: lock.release()
 
-    return node, reward
+    return nodes[argmax_idx], reward
 
 
 def backprop(node, reward):
@@ -458,7 +463,7 @@ def back_off_step(steps, debug=False):
     return steps
 
 
-def mcts(narr0, all_axioms, sample_depth=3, n_sample_times=200, n_maxsteps=100, k=3,
+def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, k=3,
          debug=False, nn_models=None, training=False, force_single_thread=False):
     #       q  n   narr  father  axiom   axiomIdx  children
     root = [0, 1, narr0, None,  None,      -1,       []    ]
@@ -598,7 +603,7 @@ if __name__ == '__main__':
     #for i, expr in enumerate(testcases[:]):
         narr = expression.tex2narr(expr)
 
-        n_sample_times = 50 if nn_models or force_single_thread else 330
+        n_sample_times = 50 if nn_models or force_single_thread else 440
 
         with timer:
             steps = mcts(narr, axioms,
