@@ -33,8 +33,13 @@ def children_weights(father, c_param=1.4, debug=False):
     得到节点所有儿子的 UCT 权重
     """
     q, n, _, _, _, _, children = father
+    #weights = [
+    #    c[0] / c[1] + c_param * math.sqrt(2 * math.log(n) / c[1])
+    #    if c[1] != 0 else 0
+    #    for c in children
+    #]
     weights = [
-        c[0] / c[1] + c_param * math.sqrt(2 * math.log(n) / c[1])
+        c[0] + c_param * math.sqrt(2 * math.log(n) / c[1])
         if c[1] != 0 else 0
         for c in children
     ]
@@ -114,13 +119,13 @@ def move_policy(father, steps, debug=False, prior_arr=None):
             rich.print(f'[[expand [yellow]child#{idx}[/]]]', end=" ")
             print('(prior=%.5f)' % prior, end=" ")
             rich.print('[yellow]' + step[1].name())
-        return expand(father, step, prior=prior)
+        return expand(father, step, prior=prior), idx
     else:
         child, w, idx = best_child_of(father, debug=False)
         if debug:
             rich.print(f'[[best [yellow]child#{idx}[/]]]', end=" ")
             rich.print('[yellow]' + child[4].name())
-        return child
+        return child, idx
 
 
 def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=False):
@@ -166,26 +171,29 @@ def reward_calc(best_value, father_val, best_steps):
     return ((best_value - father_val) ** 3) / (2 + best_steps)
 
 
-def rollout(father, node, all_axioms, n_times, visited,
+def rollout(node, idx, all_axioms, n_times, visited,
             debug=False, nn_models=None, k=3, lock=None):
     """
     Monte-Carlo 树的 roll-out 操作
     nn_models 未指定时，完全随机进行深度为 n_times 的 roll-out.
     nn_models 指定时，通过神经网络指定 roll-out 选择节点的概率。
     """
+    q, n, narr, father, axiom, axiom_idx, children = node
+
     cnt = 0
-    father_val = state_value(father)
+    father_val = state_value(father[2])
     best_value = father_val
     best_steps = cnt
 
     max_complexity_reward = 10
     complexity_reward = 0
 
+    choices = [idx]
+
     if debug:
         print('[roll-out origin]', end=' ')
         rich.print(f'[blue]{father_val:.2f}[/]', end=' ')
-        print(expression.narr2tex(father))
-        #print('roll from', expression.narr2tex(node[2]))
+        print(expression.narr2tex(father[2]))
 
     while True:
         q, n, narr, father, axiom, axiom_idx, children = node
@@ -271,11 +279,19 @@ def rollout(father, node, all_axioms, n_times, visited,
             #print(f'[expand depth={cnt}, idx={rollout_idx}]',
             #    expression.narr2tex(steps[rollout_idx][0]))
             next_node = expand(node, steps[rollout_idx])
+        choices.append(rollout_idx)
         if lock: lock.release()
 
         node = next_node
         cnt += 1
 
+    if lock: lock.acquire()
+    import json
+    with open('choices.log', 'a') as fh:
+        fh.write(json.dumps(choices))
+        fh.write(json.dumps([best_value, best_steps, reward]))
+        fh.write('\n')
+    if lock: lock.release()
     return node, reward
 
 
@@ -285,7 +301,8 @@ def backprop(node, reward):
     """
     while node is not None:
         q, n, narr, father, axiom, axiom_idx, children = node
-        node[0] += reward
+        #node[0] += reward
+        node[0] = max(reward, node[0])
         node[1] += 1
         node = father
 
@@ -296,10 +313,9 @@ def evaluate(
     """
     采样函数（顺序执行版）：进行 n_sample_times 次采样
     """
-    _, _, father, _, _, _, _ = node
     for i in range(n_sample_times):
         if lock: lock.acquire()
-        child = move_policy(node, steps, debug=debug, prior_arr=step_probs)
+        child, idx = move_policy(node, steps, debug=debug, prior_arr=step_probs)
         if lock: lock.release()
 
         if debug:
@@ -313,9 +329,8 @@ def evaluate(
             #    print(expression.narr2tex(s))
             #    print()
 
-        bottom_node, reward = rollout(father, child,
-            all_axioms, sample_depth, visited, debug=debug,
-            nn_models=nn_models, k=k, lock=lock
+        bottom_node, reward = rollout(child, idx, all_axioms, sample_depth, visited,
+            debug=debug, nn_models=nn_models, k=k, lock=lock
         )
 
         # normalize rewards
@@ -438,7 +453,7 @@ def back_off_step(steps, debug=False):
     return steps
 
 
-def mcts(narr0, all_axioms, sample_depth=7, n_sample_times=200, n_maxsteps=100, k=3,
+def mcts(narr0, all_axioms, sample_depth=8, n_sample_times=200, n_maxsteps=100, k=3,
          debug=False, nn_models=None, training=False, force_single_thread=False):
     #       q  n   narr  father  axiom   axiomIdx  children
     root = [0, 1, narr0, None,  None,      -1,       []    ]
@@ -483,7 +498,7 @@ def mcts(narr0, all_axioms, sample_depth=7, n_sample_times=200, n_maxsteps=100, 
                 rich.print(f'val={val:.2f}', end=' ')
                 print(expression.narr2tex(n), end='\n\n')
 
-            if True:
+            if force_single_thread:
                 from axiom import Axiom
                 render_steps([(narr, Axiom(), -1)] + steps, show_index=True)
                 choices = input('Limit choices: ')
@@ -565,19 +580,19 @@ if __name__ == '__main__':
         #"-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
 
         "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
-        "-(3 + \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2\\frac{2}{15})"
+        "(-3 - \\frac{4}{17}) (14\\frac{13}{15}) - (3\\frac{4}{17}) (2\\frac{2}{15})"
     ]
 
     nn_models = None
-    force_single_thread = True
     debug = True
+    force_single_thread = False
 
     timer = Timer()
     for i, expr in enumerate(testcases[-1:]):
     #for i, expr in enumerate(testcases[:]):
         narr = expression.tex2narr(expr)
 
-        n_sample_times = 20 if nn_models or force_single_thread else 440
+        n_sample_times = 20 if nn_models or force_single_thread else 7040
 
         with timer:
             steps = mcts(narr, axioms,
@@ -588,7 +603,7 @@ if __name__ == '__main__':
             val = state_value(narr)
             expr = expression.narr2tex(narr)
             axiom_name = axiom.name() if axiom is not None else '原式'
-            rich.print(f'step{j} {axiom_name} [blue]val={val}[/]', expr)
+            rich.print(f'step{j} {axiom_name} [blue]val={val:.2f}[/]', expr)
 
         render_steps(steps)
         print(f'Test case: {i} / {len(testcases) - 1}')
