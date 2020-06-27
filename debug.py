@@ -43,12 +43,12 @@ if __name__ == '__main__':
             print(expression.narr2tex(narr))
             expression.narr_prettyprint(narr)
 
-            print_steps(next_steps)
-
             while True:
+                print_steps(next_steps)
                 render_steps(steps[-1:] + next_steps, show_index=True, output='./debug.html')
                 j = input('Enter choice (0 to print past steps): ')
                 if int(j) == 0:
+                    rich.print('Choices:', choices)
                     print_steps(steps)
                     render_steps(steps, output='./debug.html')
                     input('Enter to continue ...')
