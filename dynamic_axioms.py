@@ -284,11 +284,10 @@ def _fraction_int_addition(pattern_narr, signs, narr, rewrite_rules, output_temp
     return narr, False
 
 fraction_int_addition = (
-    Axiom(name='整数加分式的转换', allow_complication=True)
-    .add_rule('#a # \\frac{b}{c}', '\\frac{#1 ac #2 b}{c}', dynamic_procedure=_fraction_int_addition)
-    .add_rule('#(#a # \\frac{b}{c})', '#1\\frac{#2 ac #3 b}{c}', dynamic_procedure=_fraction_int_addition)
+    Axiom(name='整数加分式的转换', allow_complication=True, root_sign_reduce=False)
+    .add_rule('#(#a # \\frac{b}{c})', '\\frac{#2 ac #3 b}{c}', dynamic_procedure=_fraction_int_addition)
 
-    .add_test('-\\frac{1}{3} - \\frac{2}{3}')
+    .add_test('-(\\frac{1}{3} - \\frac{2}{3} + 2)')
     .add_test('- 1 - \\frac{-1}{2}', '\\frac{-2 + 1}{2}')
     .add_test('- \\frac{-1}{2} + 1', '\\frac{2 + 1}{2}')
     .add_test('\\left| -(5 + \\frac{1}{2})  \\right|', '\left|-\\frac{10 + 1}{2}\\right|')
@@ -408,7 +407,8 @@ canonicalize = (
 
 
 if __name__ == '__main__':
-    a = calc_add
+    #a = calc_add
+    a = fraction_int_addition
     #a = canonicalize
     a.test(debug=False)
     pass
