@@ -274,7 +274,7 @@ def common_axioms(full=False):
     )
 
     axioms.append(
-        Axiom(name='乘法分配率', allow_complication=True, recursive_apply=True)
+        Axiom(name='乘法分配率', allow_complication=True, recursive_apply=True, max_results=4)
         .add_rule('#a(x + *{1})', '#1 ax #1 a *{1}')
 
         .add_test('3(a + b + c) + 1', '1 + 3 \\times a + 3 \\times b + 3 \\times c')

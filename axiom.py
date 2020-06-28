@@ -10,7 +10,7 @@ import numpy as np
 
 class Axiom:
 
-    def __init__(self, name=None, recursive_apply=False, root_sign_reduce=True,
+    def __init__(self, name=None, recursive_apply=False, root_sign_reduce=True, max_results=10,
         allow_complication=False, strict_simplify=False):
         self.rules = {}
         self.dp = {}
@@ -23,6 +23,7 @@ class Axiom:
         self.strict_simplify = strict_simplify
         self._name = name
         self.tests = []
+        self.max_results = max_results
 
 
     @staticmethod
@@ -368,7 +369,7 @@ class Axiom:
         return True
 
 
-    def _level_apply(self, narr, max_results, debug=False):
+    def _level_apply(self, narr, debug=False):
         ret_narrs = []
         root_sign, root_type = narr[0]
 
@@ -402,12 +403,11 @@ class Axiom:
                         new_narr = rewritten_narr
                         if not self.root_sign_reduce and root_sign < 0:
                             new_narr = expression.Tree2NestedArr().negate(new_narr)
-                    Axiom()._uniq_append(ret_narrs, new_narr, max_results)
+                    Axiom()._uniq_append(ret_narrs, new_narr, self.max_results)
         return ret_narrs
 
 
-    def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=4,
-                         bfs_bandwith=5, max_results=10, level=0):
+    def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=4, bfs_bandwith=5, level=0):
         # safe guard
         if applied_times >= max_times:
             return [narr0]
@@ -420,7 +420,7 @@ class Axiom:
             if depth + 1 > max_times:
                 break
 
-            narrs = self._level_apply(narr, max_results, debug=debug)
+            narrs = self._level_apply(narr, debug=debug)
 
             # keep adding next level or dead ends to candidates
             if len(narrs) > 0:
@@ -472,11 +472,11 @@ class Axiom:
                             new_narr, _ = expression.canonicalize(new_narr)
 
                         # append result
-                        if not Axiom()._uniq_append(result_narrs, new_narr, max_results):
+                        if not Axiom()._uniq_append(result_narrs, new_narr, self.max_results):
                             return result_narrs
             if none_applied and depth > 0:
                 new_narr = deepcopy(narr)
-                if not Axiom()._uniq_append(result_narrs, new_narr, max_results):
+                if not Axiom()._uniq_append(result_narrs, new_narr, self.max_results):
                     return result_narrs
 
         #if level == 0:

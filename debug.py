@@ -17,7 +17,7 @@ def print_steps(steps):
 
 if __name__ == '__main__':
 
-    if True:
+    if False:
         all_axioms = [
             Axiom(name='负号提出括号', strict_simplify=False)
             .add_rule('+(x + *{1})', '-(-x - *{1})')
@@ -30,8 +30,7 @@ if __name__ == '__main__':
     state_value = state.value_v2
 
     testcase = (
-        #"- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})"
-        "(-3 - \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17})"
+        "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})"
     )
 
     try:
