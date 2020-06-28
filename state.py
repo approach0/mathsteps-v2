@@ -235,7 +235,7 @@ def value_v2(narr, level=0, debug=False):
             - 0.1 * stats['NUMBER_pad_zeros']
             + 3.0 * stats['VAR_level_cnt']
             + 1.0 * stats['NUMBER_level_cnt']
-            + 0.1 * stats['parentheses_cnt']
+            + 0.05 * stats['parentheses_cnt']
         ),
         (2.0 * stats['VAR_max_level']) ** 2
     ]

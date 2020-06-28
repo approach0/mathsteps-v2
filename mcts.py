@@ -1,6 +1,5 @@
 from state import value_v2 as state_value
 import expression
-from common_axioms import common_axioms
 from copy import deepcopy
 from dfs import possible_next_steps
 import json
@@ -578,6 +577,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
 
 if __name__ == '__main__':
     from render_math import render_steps
+    from common_axioms import common_axioms
     axioms = common_axioms(full=True)
 
     testcases = [

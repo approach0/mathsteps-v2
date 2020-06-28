@@ -5,7 +5,6 @@ import state
 import sys
 from axiom import Axiom
 from timer import Timer
-from common_axioms import common_axioms
 
 def possible_next_steps(narr, axioms, state_value,
                         debug=False, restrict_rules=None, fast_return=False):
@@ -151,6 +150,8 @@ def test():
 
 
 if __name__ == '__main__':
+    from common_axioms import common_axioms
+
     args = sys.argv[1:]
     if len(args) > 0:
         tex = args[0]

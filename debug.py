@@ -1,11 +1,11 @@
 import expression
 import rich
 import state
+from axiom import Axiom
 from mcts import reward_calc
 from dfs import possible_next_steps
-from axiom import Axiom
-from common_axioms import common_axioms
-
+from render_math import render_steps
+from test_cases import test_cases_x3_rational, test_cases_wiki131278697
 
 def print_steps(steps):
     for i, (narr, axiom, axiomIdx) in enumerate(steps):
@@ -16,16 +16,22 @@ def print_steps(steps):
 
 
 if __name__ == '__main__':
-    from render_math import render_steps
-    from test_cases import test_cases_x3_rational, test_cases_wiki131278697
 
-    all_axioms = common_axioms(full=True)
+    if True:
+        all_axioms = [
+            Axiom(name='负号提出括号', strict_simplify=False)
+            .add_rule('+(x + *{1})', '-(-x - *{1})')
+        ]
+
+    else:
+        from common_axioms import common_axioms
+        all_axioms = common_axioms(full=True)
+
     state_value = state.value_v2
 
     testcase = (
         #"- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})"
-        #"(-3 - \\frac{4}{17}) (14\\frac{13}{15}) - (3\\frac{4}{17}) (2\\frac{2}{15})"
-        "-a-a"
+        "(-3 - \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17})"
     )
 
     try:
