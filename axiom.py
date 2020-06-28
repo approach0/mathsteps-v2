@@ -314,7 +314,8 @@ class Axiom:
 
             # if rules with higher priority get applied, later rules are ignored
             if is_applied:
-                rewritten_narr = self._fraction_cancel(rewritten_narr) # post process
+                # post processes
+                rewritten_narr = self._fraction_cancel(rewritten_narr)
                 return rewritten_narr, is_applied
         return narr, False
 
@@ -465,6 +466,11 @@ class Axiom:
                         # substitute with sub-routine expression
                         new_narr = deepcopy(narr)
                         replace_or_pass_children(new_narr, i, applied_narr)
+
+                        # ensure "(-(a+b)) x" will become "- (a+b) x"
+                        if new_narr[0][1] == 'mul':
+                            new_narr, _ = expression.canonicalize(new_narr)
+
                         # append result
                         if not Axiom()._uniq_append(result_narrs, new_narr, max_results):
                             return result_narrs
