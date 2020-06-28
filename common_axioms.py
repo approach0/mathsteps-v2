@@ -165,7 +165,7 @@ def common_axioms(full=False):
 
     if full:
         tmp_axiom = (
-            Axiom(name='合并同类项', recursive_apply=True, allow_complication=True, root_sign_reduce=False)
+            Axiom(name='合并同类项', recursive_apply=True, allow_complication=True, root_sign_reduce=False, max_results=4)
             .add_rule('#(x + x)', '2x')
             .add_rule('#(-x - x)', '-2x')
             .add_rule('#(#x # kx)', '(#2 1 #3 k) x')
@@ -174,7 +174,7 @@ def common_axioms(full=False):
         )
     else:
         tmp_axiom = (
-            Axiom(name='合并同类项', recursive_apply=True, allow_complication=True, root_sign_reduce=False)
+            Axiom(name='合并同类项', recursive_apply=True, allow_complication=True, root_sign_reduce=False, max_results=4)
             .add_rule('#(X + X)', '2X')
             .add_rule('#(-X - X)', '-2X')
             .add_rule('#(#X # kX)', '(#2 1 #3 k) X')

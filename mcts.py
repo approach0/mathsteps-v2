@@ -580,23 +580,30 @@ if __name__ == '__main__':
     from common_axioms import common_axioms
     axioms = common_axioms(full=True)
 
-    testcases = [
-        #'\\frac{12a}{3a + a + 20a} - \\frac{1}{4}',
-        #'1 + \\frac{7}{3}',
-        #'4 -3 \\frac{1}{2}',
-        #'\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
-        #'\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
-        #'(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
-        #'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
-        #'1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0',
-        #'-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0',
+    testcases = []
+
+    testcases += [
+        '\\frac{12a}{3a + a + 20a} - \\frac{1}{4}',
+        '1 + \\frac{7}{3}',
+        '4 -3 \\frac{1}{2}',
+        '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
+        '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
+        '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
+        'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
+        '1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0',
+        '-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0',
 
         # some tests for extracting common factors
-        #"25 \cdot 48 + 103 \cdot 25 - 25 \cdot 51",
-        #"-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
+        "25 \cdot 48 + 103 \cdot 25 - 25 \cdot 51",
+        "-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
 
-        "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})"
+        "-x 0.391 - 629 - 2 x^{2} + y^{2} + \\frac{50x}{x+y} = 0",
+        "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
+        "-200.9 + 28 + 0.9 + (-8)"
     ]
+
+    tmp, _ = test_cases_wiki131278697()
+    testcases += tmp
 
     nn_models = None
     debug = True
