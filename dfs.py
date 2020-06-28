@@ -120,8 +120,8 @@ def test():
     n_steps = 0
     timer = Timer()
 
-    #for i, test in enumerate(testcases):
-    for i, test in enumerate(testcases[-1:]):
+    for i, test in enumerate(testcases):
+    #for i, test in enumerate(testcases[-1:]):
         if i < begin_from: continue
 
         test_narr = expression.tex2narr(test)
