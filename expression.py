@@ -347,12 +347,13 @@ def passchildren(sign, op_type, children):
 
             elif child_type == 'mul':
                 # reduce sign
-                sign *= child_sign
+                new_narr[0] = (sign * child_sign, op_type)
                 new_narr += child[1:]
 
             else:
                 raise Exception('unexpected type: ' + Type)
 
+            # this part will only cause change if child sign is negative
             if child_sign < 0:
                 any_change = True
         else:
