@@ -9,6 +9,7 @@ import rich
 import os
 import numpy as np
 from timer import Timer
+from render_math import render_steps
 
 #from nn_policy.train import BoW, RNN_model, tex2tokens, batch_tensors
 #from nn_policy.predict import NN_models
@@ -576,7 +577,6 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
 
 
 if __name__ == '__main__':
-    from render_math import render_steps
     from common_axioms import common_axioms
     axioms = common_axioms(full=True)
 
@@ -601,9 +601,6 @@ if __name__ == '__main__':
         "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
         "-200.9 + 28 + 0.9 + (-8)"
     ]
-
-    tmp, _ = test_cases_wiki131278697()
-    testcases += tmp
 
     nn_models = None
     debug = True

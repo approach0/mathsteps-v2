@@ -157,7 +157,11 @@ if __name__ == '__main__':
         tex = args[0]
         narr = expression.tex2narr(tex)
         all_axioms = common_axioms()
-        steps = dfs(narr, all_axioms, debug=False)
+        steps, err = dfs(narr, all_axioms, debug=False)
+
+        if err:
+            print(err, file=sys.stderr)
+            quit()
 
         steps = [
             {
