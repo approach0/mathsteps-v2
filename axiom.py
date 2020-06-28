@@ -40,17 +40,23 @@ class Axiom:
             copy_b = b
             reduce_sign = functools.reduce((lambda x, y: x * y), signs)
             for i in range(n_var_sign):
+                # replace sharps in a
                 sign_a = '+' if signs[i] > 0 else '-'
                 copy_a = copy_a.replace('#', sign_a, 1)
 
+                # replace sharps in b
                 def b_replace(m):
-                    pound_num = m.group(1)
+                    reverse_sign = m.group(1)
+                    t = -1 if reverse_sign == '~' else +1
+
+                    pound_num = m.group(2)
                     if pound_num == '0':
-                        return '+' if reduce_sign > 0 else '-'
+                        return '+' if (reduce_sign * t) > 0 else '-'
                     else:
                         extract_sign = signs[int(pound_num) - 1]
-                        return '+' if extract_sign > 0  else '-'
-                copy_b = re.sub(r'#([0-9])', b_replace, copy_b)
+                        return '+' if (extract_sign * t) > 0  else '-'
+                copy_b = re.sub(r'#(~?)([0-9])', b_replace, copy_b)
+
             A.append(copy_a)
             B.append(copy_b)
             C.append(signs)
@@ -407,7 +413,7 @@ class Axiom:
 
         # apply at this level for max_times
         Q = [(applied_times, narr0)]
-        candidates = []
+        candidates = [(applied_times, narr0)]
         while len(Q) > 0:
             depth, narr = Q.pop(0)
             if depth + 1 > max_times:
@@ -419,17 +425,10 @@ class Axiom:
             if len(narrs) > 0:
                 tmp = [(depth + 1, n) for n in narrs]
                 candidates += tmp
-
-                #if level == 0:
-                #    print(expression.narr2tex(narr))
-                #    for _, n in tmp:
-                #        print('->', expression.narr2tex(n))
-                #    print()
-            else:
-                #if level == 0:
-                #    print('=', expression.narr2tex(narr))
-
+            elif depth > applied_times:
                 candidates.append((depth, narr))
+                continue
+            else:
                 continue
 
             # update Q
@@ -437,11 +436,10 @@ class Axiom:
             if len(Q) > bfs_bandwith:
                 Q = Q[-bfs_bandwith:]
 
-        #if len(candidates) > 1 and True:
+        #if True:
         #    print(expression.narr2tex(narr0))
         #    for d,n in candidates:
         #        print(f'candidate: {d}/{max_times}:', expression.narr2tex(n))
-        #    print(len(candidates))
         #    print()
 
         # for recursive sub-expressions
@@ -491,12 +489,8 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='合并同类项', recursive_apply=True, allow_complication=True, root_sign_reduce=False)
-        .add_rule('#(X + X)', '2X')
-        .add_rule('#(- X - X)', '-2X')
-        .add_rule('#(#X # kX)', '(#2 1 #3 k) X')
-        .add_rule('#(#X # Xk)', '(#2 1 #3 k) X')
-        .add_rule('#(#X *{1} # X *{2})', '(#2 *{1} #3 *{2}) X')
+        Axiom(name='负号提出括号', strict_simplify=False)
+        .add_rule('#(x + *{1})', '#~1(-x - *{1})')
     )
 
-    #a.test('(-3-\\frac{4}{17}) x + y', debug=False)
+    a.test('(-3-\\frac{4}{17}) x + y', debug=False)
