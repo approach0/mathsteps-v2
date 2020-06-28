@@ -45,6 +45,8 @@ if __name__ == '__main__':
     n_sample_times = 110
     #n_sample_times = 440
 
+    open('fallback.log', 'w')
+
     for i, expr in enumerate(testcases[:]):
         narr = expression.tex2narr(expr)
 
@@ -52,6 +54,9 @@ if __name__ == '__main__':
         steps, err = dfs(narr, axioms, debug=True, maxsteps=150)
 
         if err:
+            with open('fallback.log', 'a') as fh:
+                fh.write(f'#{i}: ' + expr + '\n')
+
             steps = mcts(narr, axioms, debug=False, n_sample_times=n_sample_times,
                 nn_models=None, force_single_thread=False)
 
