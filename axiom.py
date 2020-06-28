@@ -10,14 +10,14 @@ import numpy as np
 
 class Axiom:
 
-    def __init__(self, name=None, recursive_apply=False, reduce_sign=True,
+    def __init__(self, name=None, recursive_apply=False, root_sign_reduce=True,
         allow_complication=False, strict_simplify=False):
         self.rules = {}
         self.dp = {}
         self.narrs = {}
         self.signs = {}
         self.wildcards_index = {}
-        self.reduce_sign = reduce_sign
+        self.root_sign_reduce = root_sign_reduce
         self.recursive_apply = recursive_apply
         self.allow_complication = allow_complication
         self.strict_simplify = strict_simplify
@@ -378,7 +378,7 @@ class Axiom:
                 if is_applied:
                     new_narr = [] # construct a new father
                     if len(brothers) > 0:
-                        if self.reduce_sign:
+                        if self.root_sign_reduce:
                             # always positive new father, in case the negative
                             # sign of father is also reduced, e.g. -abc => (ab)c
                             new_root = (+1, root_type)
@@ -390,6 +390,8 @@ class Axiom:
                     else:
                         # the entire expression in this level gets reduced
                         new_narr = rewritten_narr
+                        if not self.root_sign_reduce and root_sign < 0:
+                            new_narr = expression.Tree2NestedArr().negate(new_narr)
                     Axiom()._uniq_append(ret_narrs, new_narr)
 
             # high-priority rules will override lower ones
