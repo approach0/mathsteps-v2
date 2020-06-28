@@ -297,6 +297,8 @@ class Axiom:
                 dest_narr = self.narrs[dest]
                 rewritten_narr, is_applied = rewrite_by_alpha(dest_narr, rewrite_rules[0]), True
 
+            if debug: rich.print('applied:', is_applied)
+
             # if rules with higher priority get applied, later rules are ignored
             if is_applied:
                 rewritten_narr = self._fraction_cancel(rewritten_narr) # post process
@@ -352,7 +354,7 @@ class Axiom:
         return True
 
 
-    def _level_apply(self, narr, debug=False):
+    def _level_apply(self, pattern, narr, debug=False):
         ret_narrs = []
         root_sign, root_type = narr[0]
 
@@ -362,46 +364,34 @@ class Axiom:
 
         if debug: rich.print('\n[red]level apply[/red]', expression.narr2tex(narr))
 
-        for pattern in self.rules:
-            # Example:
-            # Axiom: (a+b)(a-b) => (a)^{2} - (b)^{2}
-            #          pattern   =>  destination
-            # narr: (-xy - z)(-xy + z)
-            # rewrite_rules:
-            #    a -> -xy
-            #    b -> -z
-            wildcards_index = self.wildcards_index[pattern]
-            no_permute = (wildcards_index != None) or root_type in expression.no_permute_tokens()
+        wildcards_index = self.wildcards_index[pattern]
+        no_permute = (wildcards_index != None) or root_type in expression.no_permute_tokens()
 
-            for construct_tree, brothers in self._children_permutation(narr, no_permute=no_permute):
-                rewritten_narr, is_applied = self._exact_apply(pattern, construct_tree, debug=debug)
-                if is_applied:
-                    new_narr = [] # construct a new father
-                    if len(brothers) > 0:
-                        if self.root_sign_reduce:
-                            # always positive new father, in case the negative
-                            # sign of father is also reduced, e.g. -abc => (ab)c
-                            new_root = (+1, root_type)
-                        else:
-                            # in addition case, we will need to keep father sign,
-                            # e.g. -(1+2+3) => -(3+3)
-                            new_root = (root_sign, root_type)
-                        new_narr = [new_root] + [rewritten_narr] + brothers
+        for construct_tree, brothers in self._children_permutation(narr, no_permute=no_permute):
+            rewritten_narr, is_applied = self._exact_apply(pattern, construct_tree, debug=debug)
+            if is_applied:
+                new_narr = [] # construct a new father
+                if len(brothers) > 0:
+                    if self.root_sign_reduce:
+                        # always positive new father, in case the negative
+                        # sign of father is also reduced, e.g. -abc => (ab)c
+                        new_root = (+1, root_type)
                     else:
-                        # the entire expression in this level gets reduced
-                        new_narr = rewritten_narr
-                        if not self.root_sign_reduce and root_sign < 0:
-                            new_narr = expression.Tree2NestedArr().negate(new_narr)
-                    Axiom()._uniq_append(ret_narrs, new_narr)
-
-            # high-priority rules will override lower ones
-            if len(ret_narrs) > 0:
-                break
+                        # in addition case, we will need to keep father sign,
+                        # e.g. -(1+2+3) => -(3+3)
+                        new_root = (root_sign, root_type)
+                    new_narr = [new_root] + [rewritten_narr] + brothers
+                else:
+                    # the entire expression in this level gets reduced
+                    new_narr = rewritten_narr
+                    if not self.root_sign_reduce and root_sign < 0:
+                        new_narr = expression.Tree2NestedArr().negate(new_narr)
+                Axiom()._uniq_append(ret_narrs, new_narr)
 
         return ret_narrs
 
 
-    def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=4,
+    def _recursive_apply(self, pattern, narr0, debug=False, applied_times=0, max_times=4,
                          bfs_bandwith=5, max_results=5):
         # safe guard
         if applied_times >= max_times:
@@ -415,7 +405,7 @@ class Axiom:
             if depth + 1 > max_times:
                 break
 
-            narrs = self._level_apply(narr, debug=debug)
+            narrs = self._level_apply(pattern, narr, debug=debug)
 
             # keep adding next level or dead ends to candidates
             if len(narrs) > 0:
@@ -446,7 +436,7 @@ class Axiom:
             if root_type not in expression.terminal_tokens():
                 children = narr[1:]
                 for i, child in enumerate(children):
-                    applied_narrs = self._recursive_apply(child, debug=debug,
+                    applied_narrs = self._recursive_apply(pattern, child, debug=debug,
                         applied_times=depth, max_times=max_times, bfs_bandwith=bfs_bandwith)
 
                     for applied_narr in applied_narrs:
@@ -468,10 +458,22 @@ class Axiom:
 
 
     def apply(self, narr, debug=False):
-        if self.recursive_apply:
-            return [n for n in self._recursive_apply(narr, debug=debug, bfs_bandwith=1)]
-        else:
-            return [n for n in self._recursive_apply(narr, debug=debug, max_times=1)]
+        for pattern in self.rules:
+            # Example:
+            # Axiom: (a+b)(a-b) => (a)^{2} - (b)^{2}
+            #          pattern   =>  destination
+            # narr: (-xy - z)(-xy + z)
+            # rewrite_rules:
+            #    a -> -xy
+            #    b -> -z
+            if self.recursive_apply:
+                narrs = self._recursive_apply(pattern, narr, debug=debug, bfs_bandwith=1)
+            else:
+                narrs = self._recursive_apply(pattern, narr, debug=debug, max_times=1)
+
+            # high-priority rules will override lower ones
+            if len(narrs) > 0:
+                return narrs
 
 
 if __name__ == '__main__':
