@@ -20,16 +20,21 @@ def common_axioms(full=False):
     )
 
     axioms.append(
-        Axiom(name='任何数加零还是它本身', recursive_apply=True)
-        .add_rule('0 + n', 'n')
-        .add_rule('n - 0', 'n')
+        Axiom(name='任何数加零还是它本身', recursive_apply=True, root_sign_reduce=False)
+        .add_rule('#(0 + n)', 'n')
+        .add_rule('#(n - 0)', 'n')
+
+        .add_test('0+3+2')
+        .add_test('-(0+3+2)')
     )
 
     axioms.append(
-        Axiom(name='一个数减去它本身是零')
-        .add_rule('n - n', '0')
-        .add_rule('a - \\frac{a}{1}', '0')
-        .add_rule('\\frac{a}{1} - a', '0')
+        Axiom(name='一个数减去它本身是零', root_sign_reduce=False)
+        .add_rule('#(n - n)', '0')
+        .add_rule('#(a - \\frac{a}{1})', '0')
+        .add_rule('#(\\frac{a}{1} - a)', '0')
+
+        .add_test('-(3 - 3 + 1)')
     )
 
     axioms.append(
@@ -160,35 +165,40 @@ def common_axioms(full=False):
 
     if full:
         tmp_axiom = (
-            Axiom(name='合并同类项', recursive_apply=True, allow_complication=True)
-            .add_rule('x + x', '2x')
-            .add_rule('- x - x', '-2x')
-            .add_rule('#x # kx', '(#1 1 #2 k) x')
-            .add_rule('#x # xk', '(#1 1 #2 k) x')
-            .add_rule('#x *{1} # x *{2}', '(#1 *{1} #2 *{2}) x')
+            Axiom(name='合并同类项', recursive_apply=True, allow_complication=True, root_sign_reduce=False)
+            .add_rule('#(x + x)', '2x')
+            .add_rule('#(- x - x)', '-2x')
+            .add_rule('#(#x # kx)', '(#2 1 #3 k) x')
+            .add_rule('#(#x # xk)', '(#2 1 #3 k) x')
+            .add_rule('#(#x *{1} # x *{2})', '(#2 *{1} #3 *{2}) x')
         )
     else:
         tmp_axiom = (
-            Axiom(name='合并同类项', recursive_apply=True, allow_complication=True)
-            .add_rule('X + X', '2X')
-            .add_rule('- X - X', '-2X')
-            .add_rule('#X # kX', '(#1 1 #2 k) X')
-            .add_rule('#X # Xk', '(#1 1 #2 k) X')
-            .add_rule('#X *{1} # X *{2}', '(#1 *{1} #2 *{2}) X')
+            Axiom(name='合并同类项', recursive_apply=True, allow_complication=True, root_sign_reduce=False)
+            .add_rule('#(X + X)', '2X')
+            .add_rule('#(- X - X)', '-2X')
+            .add_rule('#(#X # kX)', '(#2 1 #3 k) X')
+            .add_rule('#(#X # Xk)', '(#2 1 #3 k) X')
+            .add_rule('#(#X *{1} # X *{2})', '(#2 *{1} #3 *{2}) X')
         )
 
     axioms.append(
         tmp_axiom
-        .add_test('2 + 2')
-        .add_test('x^{2} + x^{2}', '2 \\times x^{2}')
-        .add_test('x + 2x + 3x', [
-            '(1 + 2 + 3) \\times x',
-            '(3 + 2 + 1) \\times x',
-            '(1 + 3 + 2) \\times x',
-            '(2 + 1 + 3) \\times x',
-            '(3 + 1 + 2) \\times x'
-        ])
-        .add_test('2 - 3 \cdot 2', '2 - 3 \\times 2')
+        #.add_test('2 + 2', '2 \\times 2')
+        #.add_test('x^{2} + x^{2}', '2 \\times x^{2}')
+        #.add_test('-(-x + 3x)')
+        #.add_test('-x + 3x - 1x')
+        .add_test('(-1-1)x')
+        #.add_test('-(-x + 3x - 1x)')
+        #.add_test('-((-1 + 3)x - 1x)')
+        #.add_test('x + 2x + 3x', [
+        #    '(1 + 2 + 3) \\times x',
+        #    '(3 + 2 + 1) \\times x',
+        #    '(1 + 3 + 2) \\times x',
+        #    '(2 + 1 + 3) \\times x',
+        #    '(3 + 1 + 2) \\times x'
+        #])
+        #.add_test('x - 3 \cdot x', '(1 - 3) \\times x')
     )
 
     if full:
@@ -312,7 +322,7 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() in ['负号提出括号', '负号乘进括号']:
+        if axiom.name() in ['合并同类项']:
             #import cProfile
             #cProfile.run('axiom.test(debug=False)')
             rich.print(f'[red]{axiom.name()}[/]')
