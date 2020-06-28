@@ -220,8 +220,8 @@ def value_v2(narr, level=0, debug=False):
 
     collect_stats(narr, stats, 0, None, False)
 
-    #tex = expression.narr2tex(narr)
-    #parentheses_cnt = tex.count('(')
+    tex = expression.narr2tex(narr)
+    stats['parentheses_cnt'] = tex.count('(')
 
     complexity = [
         15. * stats['right_side_of_eq'],
@@ -235,6 +235,7 @@ def value_v2(narr, level=0, debug=False):
             - 0.1 * stats['NUMBER_pad_zeros']
             + 3.0 * stats['VAR_level_cnt']
             + 1.0 * stats['NUMBER_level_cnt']
+            + 0.1 * stats['parentheses_cnt']
         ),
         (2.0 * stats['VAR_max_level']) ** 2
     ]
