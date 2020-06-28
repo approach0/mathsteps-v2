@@ -13,6 +13,7 @@ class Axiom:
     def __init__(self, name=None, recursive_apply=False, root_sign_reduce=True,
         allow_complication=False, strict_simplify=False):
         self.rules = {}
+        self.rule_grps = []
         self.dp = {}
         self.narrs = {}
         self.signs = {}
@@ -62,8 +63,9 @@ class Axiom:
 
 
     def add_rule(self, src, dest, dynamic_procedure=None):
-        dest = dest if isinstance(dest, list) else [dest]
+        self.rule_grps.append([])
 
+        dest = dest if isinstance(dest, list) else [dest]
         for dest_pattern in dest:
             A, B, C = self._preprocess(src, dest_pattern)
 
@@ -75,6 +77,7 @@ class Axiom:
                 else:
                     self.rules[a] = [self.rules[a], b]
 
+                self.rule_grps[-1].append(a)
                 self.dp[a] = dynamic_procedure
                 self.signs[a] = signs
 
@@ -82,6 +85,7 @@ class Axiom:
                 self.narrs[a] = expression.tex2narr(a)
                 self.narrs[b] = expression.tex2narr(b)
                 self.wildcards_index[a] = get_wildcards_index(self.narrs[a])
+
         return self
 
 
@@ -458,22 +462,34 @@ class Axiom:
 
 
     def apply(self, narr, debug=False):
-        for pattern in self.rules:
-            # Example:
-            # Axiom: (a+b)(a-b) => (a)^{2} - (b)^{2}
-            #          pattern   =>  destination
-            # narr: (-xy - z)(-xy + z)
-            # rewrite_rules:
-            #    a -> -xy
-            #    b -> -z
-            if self.recursive_apply:
-                narrs = self._recursive_apply(pattern, narr, debug=debug, bfs_bandwith=1)
-            else:
-                narrs = self._recursive_apply(pattern, narr, debug=debug, max_times=1)
+        result_narrs = []
+        result_texset = set()
+        for i, rule_grp in enumerate(self.rule_grps):
+            if debug: rich.print(f'[yellow][[rule group]] {i}[/]:', rule_grp)
+            for pattern in rule_grp:
+                # Example:
+                # Axiom: (a+b)(a-b) => (a)^{2} - (b)^{2}
+                #          pattern   =>  destination
+                # narr: (-xy - z)(-xy + z)
+                # rewrite_rules:
+                #    a -> -xy
+                #    b -> -z
+                if self.recursive_apply:
+                    narrs = self._recursive_apply(pattern, narr, debug=debug, bfs_bandwith=1)
+                else:
+                    narrs = self._recursive_apply(pattern, narr, debug=debug, max_times=1)
 
-            # high-priority rules will override lower ones
-            if len(narrs) > 0:
-                return narrs
+                for n in narrs:
+                    tex = expression.narr2tex(n)
+                    if tex not in result_texset:
+                        result_texset.add(tex)
+                        result_narrs += narrs
+
+            # high-priority rule group will override lower ones
+            if len(result_narrs) > 0:
+                break
+
+        return result_narrs
 
 
 if __name__ == '__main__':

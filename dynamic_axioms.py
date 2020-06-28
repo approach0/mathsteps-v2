@@ -244,8 +244,8 @@ def _fraction_addition_same_denom(pattern_narr, signs, narr, rewrite_rules, outp
 
     if a != None and b != None:
         if a.is_integer() and b.is_integer():
-            a = a * signs[0]
-            b = b * signs[1]
+            a = a * signs[1]
+            b = b * signs[2]
             z = a + b
             if c != None and c.is_integer() and c != 0:
                 if (z / c).is_integer():
@@ -258,13 +258,14 @@ def _fraction_addition_same_denom(pattern_narr, signs, narr, rewrite_rules, outp
     return narr, False
 
 fraction_addition = (
-    Axiom(name='分式 加法/减法', allow_complication=True)
-    .add_rule('#\\frac{a}{c} #\\frac{b}{c}', [
+    Axiom(name='分式 加法/减法', allow_complication=True, root_sign_reduce=False)
+    .add_rule('#(#\\frac{a}{c} #\\frac{b}{c})', [
         'z',
         '\\frac{z}{c}'
     ], dynamic_procedure=_fraction_addition_same_denom)
     .add_rule('#\\frac{a}{b} #\\frac{c}{d}', '\\frac{#1 ad #2 cb}{bd}')
 
+    .add_test('-(\\frac{4}{3} - \\frac{1}{3})', '-1')
     .add_test('\\frac{4}{3} - \\frac{1}{3}', '1')
     .add_test('-\\frac{1}{3} - \\frac{5}{3}', '-2')
     .add_test('-\\frac{1}{3} + \\frac{5}{3}', '\\frac{4}{3}')
@@ -333,10 +334,11 @@ def _collapse_fraction_add_float(pattern_narr, signs, narr, rewrite_rules, outpu
     return narr, False
 
 collapse_fraction_add_float = (
-    Axiom(name='分式加小数的化简')
-    .add_rule('#\\frac{a}{b} # c', '#1 x #2 c', dynamic_procedure=_collapse_fraction_add_float)
+    Axiom(name='分式加小数的化简', root_sign_reduce=False)
+    .add_rule('#(#\\frac{a}{b} # c)', '#2 x #3 c', dynamic_procedure=_collapse_fraction_add_float)
 
     .add_test('3.25 - \\frac{1}{4}', '-0.25 + 3.25')
+    .add_test('-(-3.25 + \\frac{1}{4})', '-(0.25 - 3.25)')
     .add_test('-3.25 + \\frac{1}{4}', '0.25 - 3.25')
 )
 
@@ -407,8 +409,10 @@ canonicalize = (
 
 
 if __name__ == '__main__':
-    #a = calc_add
+    a = calc_add
     a = fraction_int_addition
+    a = fraction_addition
+    a = collapse_fraction_add_float
     #a = canonicalize
     a.test(debug=False)
     pass
