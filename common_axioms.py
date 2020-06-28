@@ -167,7 +167,7 @@ def common_axioms(full=False):
         tmp_axiom = (
             Axiom(name='合并同类项', recursive_apply=True, allow_complication=True, root_sign_reduce=False)
             .add_rule('#(x + x)', '2x')
-            .add_rule('#(- x - x)', '-2x')
+            .add_rule('#(-x - x)', '-2x')
             .add_rule('#(#x # kx)', '(#2 1 #3 k) x')
             .add_rule('#(#x # xk)', '(#2 1 #3 k) x')
             .add_rule('#(#x *{1} # x *{2})', '(#2 *{1} #3 *{2}) x')
@@ -176,7 +176,7 @@ def common_axioms(full=False):
         tmp_axiom = (
             Axiom(name='合并同类项', recursive_apply=True, allow_complication=True, root_sign_reduce=False)
             .add_rule('#(X + X)', '2X')
-            .add_rule('#(- X - X)', '-2X')
+            .add_rule('#(-X - X)', '-2X')
             .add_rule('#(#X # kX)', '(#2 1 #3 k) X')
             .add_rule('#(#X # Xk)', '(#2 1 #3 k) X')
             .add_rule('#(#X *{1} # X *{2})', '(#2 *{1} #3 *{2}) X')
@@ -184,21 +184,15 @@ def common_axioms(full=False):
 
     axioms.append(
         tmp_axiom
-        #.add_test('2 + 2', '2 \\times 2')
-        #.add_test('x^{2} + x^{2}', '2 \\times x^{2}')
-        #.add_test('-(-x + 3x)')
-        #.add_test('-x + 3x - 1x')
+        .add_test('a + a', '2 \\times a')
+        .add_test('-a - a', '2 \\times (-a)')
+        .add_test('x^{2} + x^{2}', '2 \\times x^{2}')
+        .add_test('-(-x + 3x)')
+        .add_test('-x + 3x - 1x')
         .add_test('(-1-1)x')
-        #.add_test('-(-x + 3x - 1x)')
-        #.add_test('-((-1 + 3)x - 1x)')
-        #.add_test('x + 2x + 3x', [
-        #    '(1 + 2 + 3) \\times x',
-        #    '(3 + 2 + 1) \\times x',
-        #    '(1 + 3 + 2) \\times x',
-        #    '(2 + 1 + 3) \\times x',
-        #    '(3 + 1 + 2) \\times x'
-        #])
-        #.add_test('x - 3 \cdot x', '(1 - 3) \\times x')
+        .add_test('-(-x + 3x - 1x)')
+        .add_test('x + 2x + 3x')
+        .add_test('x - 3 \cdot x', '(1 - 3) \\times x')
     )
 
     if full:

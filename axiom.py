@@ -420,11 +420,15 @@ class Axiom:
                 tmp = [(depth + 1, n) for n in narrs]
                 candidates += tmp
 
-                print(expression.narr2tex(narr))
-                for _, n in tmp:
-                    print('=>', expression.narr2tex(n))
-                print()
+                #if level == 0:
+                #    print(expression.narr2tex(narr))
+                #    for _, n in tmp:
+                #        print('->', expression.narr2tex(n))
+                #    print()
             else:
+                #if level == 0:
+                #    print('=', expression.narr2tex(narr))
+
                 candidates.append((depth, narr))
                 continue
 
@@ -434,12 +438,11 @@ class Axiom:
                 Q = Q[-bfs_bandwith:]
 
         #if len(candidates) > 1 and True:
-        if False:
-            print(expression.narr2tex(narr0))
-            for d,n in candidates:
-                print(f'candidate: {d}/{max_times}:', expression.narr2tex(n))
-            print(len(candidates))
-            print()
+        #    print(expression.narr2tex(narr0))
+        #    for d,n in candidates:
+        #        print(f'candidate: {d}/{max_times}:', expression.narr2tex(n))
+        #    print(len(candidates))
+        #    print()
 
         # for recursive sub-expressions
         result_narrs = []
@@ -453,11 +456,11 @@ class Axiom:
                     applied_narrs = self._recursive_apply(child, debug=debug, level=level+1,
                         applied_times=depth, max_times=max_times, bfs_bandwith=bfs_bandwith)
 
-                    if len(applied_narrs) > 1:
-                        print(expression.narr2tex(child))
-                        for n in applied_narrs:
-                            print('->', expression.narr2tex(n))
-                        print()
+                    #if len(applied_narrs) > 1:
+                    #    print(expression.narr2tex(child))
+                    #    for n in applied_narrs:
+                    #        print('=>', expression.narr2tex(n))
+                    #    print()
 
                     for applied_narr in applied_narrs:
                         none_applied = False
@@ -472,9 +475,10 @@ class Axiom:
                 if not Axiom()._uniq_append(result_narrs, new_narr, max_results):
                     return result_narrs
 
-        for n in result_narrs:
-            print('>', expression.narr2tex(n))
-        print()
+        #if level == 0:
+        #    for n in result_narrs:
+        #        print(f'{level}>', expression.narr2tex(n))
+        #    print()
         return result_narrs
 
 
@@ -496,8 +500,3 @@ if __name__ == '__main__':
     )
 
     #a.test('(-3-\\frac{4}{17}) x + y', debug=False)
-
-    #narr = expression.tex2narr('(-1 - 1)x')
-    #applied_narrs = a._recursive_apply(narr, debug=True, applied_times=3, max_times=10, bfs_bandwith=10)
-    #for n in applied_narrs:
-    #    print('->', expression.narr2tex(n))
