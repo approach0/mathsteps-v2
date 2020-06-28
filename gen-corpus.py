@@ -27,7 +27,8 @@ def generate_corpus(test_case_id, data, steps, DIV=20):
 
 
 if __name__ == '__main__':
-    axioms = common_axioms(full=True)
+    basic_axioms = common_axioms(full=False)
+    all_axioms = common_axioms(full=True)
 
     # test cases to generate steps
     testcases = []
@@ -51,13 +52,13 @@ if __name__ == '__main__':
         narr = expression.tex2narr(expr)
 
         # use DFS or mcts (as fallback) to generate steps
-        steps, err = dfs(narr, axioms, debug=True, maxsteps=150)
+        steps, err = dfs(narr, basic_axioms, debug=True, maxsteps=150)
 
         if err:
             with open('fallback.log', 'a') as fh:
                 fh.write(f'#{i}: ' + expr + '\n')
 
-            steps = mcts(narr, axioms, debug=False, n_sample_times=n_sample_times,
+            steps = mcts(narr, all_axioms, debug=False, n_sample_times=n_sample_times,
                 nn_models=None, force_single_thread=False)
 
         # make data pair
