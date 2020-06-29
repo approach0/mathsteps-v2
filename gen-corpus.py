@@ -43,8 +43,8 @@ if __name__ == '__main__':
     tmp, _ = test_cases_wiki131278697()
     testcases += tmp
 
-    n_sample_times = 110
-    #n_sample_times = 440
+    #n_sample_times = 220
+    n_sample_times = 440
     always_use_MCTS = True
 
     open('fallback.log', 'w')
