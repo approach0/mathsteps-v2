@@ -81,10 +81,11 @@ def common_axioms(full=False):
     )
 
     axioms.append(
-        Axiom(name='以分数表示除法')
+        Axiom(name='以分数表示除法', allow_complication=True)
         .add_rule('# (#x) \\div (#y)', '#0 \\frac{x}{y}')
 
         .add_test('1 \\div 2x + 3')
+        .add_test("6 \div 3")
     )
 
     axioms.append(
@@ -320,7 +321,7 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() in ['负号提出括号']:
+        if axiom.name() in ['以分数表示除法']:
             #import cProfile
             #cProfile.run('axiom.test(debug=False)')
             rich.print(f'[red]{axiom.name()}[/]')

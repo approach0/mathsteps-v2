@@ -32,7 +32,8 @@ if __name__ == '__main__':
     testcase = (
         #"-x 0.391 - 629 - 2 x^{2} + y^{2} + \\frac{50x}{x+y} = 0"
         #"- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})"
-        "-200.9 + 28 + 0.9 + (-8)"
+        #"-200.9 + 28 + 0.9 + (-8)"
+        "6 \div 3"
     )
 
     try:
@@ -46,7 +47,7 @@ if __name__ == '__main__':
             value = state_value(narr)
             values.append(value)
 
-            next_steps = possible_next_steps(narr, all_axioms, state_value, debug=False)
+            next_steps = possible_next_steps(narr, all_axioms, state_value, debug=True)
 
             if len(next_steps) == 0:
                 break
