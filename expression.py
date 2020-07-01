@@ -7,10 +7,48 @@ lark = Lark.open('grammar.lark', rel_to=__file__, parser='lalr', debug=False)
 debug = False
 
 
+class NarrRoot():
+
+    def __init__(self, sign, Type, animation=None):
+        self.sign = sign
+        self.Type = Type
+        self.animation = animation
+
+    def get(self):
+        return self.sign, self.Type
+
+    def set(self, sign, Type):
+        self.sign = sign
+        self.Type = Type
+
+    def __repr__(self):
+        if self.animation is None:
+            return str((self.sign, self.Type))
+        else:
+            return str((self.sign, self.Type, self.animation))
+
+    def __getitem__(self, idx):
+        if idx == 0:
+            return self.sign
+        elif idx == 1:
+            return self.Type
+        elif idx == 2:
+            return self.animation
+        else:
+            raise ValueError('NarrRoot get index out of bound.')
+
+    def __setitem__(self, idx, value):
+        if idx == 0:
+            self.sign = value
+        elif idx == 1:
+            self.Type = value
+        elif idx == 2:
+            self.animation = value
+        else:
+            raise ValueError('NarrRoot set index out of bound.')
+
+
 class Tree2NestedArr(Transformer):
-    """
-    中间表示的转换类。把 Lark 的表示树转换成我们所期望的表示。
-    """
 
     @staticmethod
     def children(x):
@@ -33,23 +71,19 @@ class Tree2NestedArr(Transformer):
 
     @staticmethod
     def passchildren(x, op_type):
-        """
-        如果二叉树子树的 token 是 op_type 的话，将子树的孩子合并上来
-        """
         x = Tree2NestedArr().unwrap_null_reduce(x)
         x = [[(child[0])] + [_ for _ in Tree2NestedArr().children(child)] for child in x]
 
-        return passchildren(+1, op_type, x)[0]
+        return passchildren(NarrRoot(+1, op_type), x)[0]
 
     @staticmethod
     def negate(x):
         """
         符号变负号
         """
-        sign, Type = x[0]
+        sign, Type = x[0].get()
         sign = sign * (-1)
-        x[0] = sign, Type
-        if debug: print('negated', x)
+        x[0].set(sign, Type)
         return x
 
     def null_reduce(self, x):
@@ -71,7 +105,7 @@ class Tree2NestedArr(Transformer):
         """
         转换 a = b
         """
-        return [(+1, 'eq'), x[0], x[1]]
+        return [NarrRoot(+1, 'eq'), x[0], x[1]]
 
     def minus(self, x):
         """
@@ -94,57 +128,57 @@ class Tree2NestedArr(Transformer):
         """
         转换 a ÷ b
         """
-        return [(+1, 'div'), x[0], x[1]]
+        return [NarrRoot(+1, 'div'), x[0], x[1]]
 
     def frac(self, x):
         """
         转换 分数
         """
-        return [(+1, 'frac'), x[0], x[1]]
+        return [NarrRoot(+1, 'frac'), x[0], x[1]]
 
     def ifrac(self, x):
         """
         转换 带分数 (improper fraction)
         """
         if x[0] == '&':
-            num_narr = [(1, 'VAR'), 'v']
+            num_narr = [NarrRoot(1, 'VAR'), 'v']
         else:
             num = float(x[0])
             num_narr = self.number([x[0]])
             if not num.is_integer():
                 return self.mul([num_narr, self.frac([x[1], x[2]])])
 
-        return [(+1, 'ifrac'), num_narr, x[1], x[2]]
+        return [NarrRoot(+1, 'ifrac'), num_narr, x[1], x[2]]
 
     def sqrt(self, x):
         """
         转换 分数
         """
-        return [(+1, 'sqrt'), x[0]]
+        return [NarrRoot(+1, 'sqrt'), x[0]]
 
     def sup(self, x):
         """
         转换 指数
         """
-        return [(+1, 'sup'), x[0], x[1]]
+        return [NarrRoot(+1, 'sup'), x[0], x[1]]
 
     def number(self, n):
         """
         转换 常数
         """
-        return [(+1, n[0].type), float(n[0])]
+        return [NarrRoot(+1, n[0].type), float(n[0])]
 
     def var(self, x):
         """
         转换 变量、符号
         """
-        return [(+1, x[0].type), str(x[0])]
+        return [NarrRoot(+1, x[0].type), str(x[0])]
 
     def abs(self, x):
         """
         转换 绝对值
         """
-        return [(+1, 'abs'), x[0]]
+        return [NarrRoot(+1, 'abs'), x[0]]
 
     def grp(self, x):
         """
@@ -157,11 +191,11 @@ class Tree2NestedArr(Transformer):
         转换 括号
         """
         number = str(x[1])
-        return [(+1, 'WILDCARDS'), number]
+        return [NarrRoot(+1, 'WILDCARDS'), number]
 
     def animation(self, x):
         name = str(x[1])
-        #print('[animation]', name)
+        x[0][0].animation = name
         return x[0]
 
 
@@ -206,7 +240,7 @@ def need_inner_fence(narr):
     """
     表达式 narr 在符号和本身之间，须不须要包裹括号
     """
-    sign, Type = narr[0]
+    sign, Type = narr[0].get()
 
     if debug: print('inner fence?', narr)
 
@@ -251,7 +285,7 @@ def narr2tex(narr, parentRoot=None, rank=0):
     narr (nested array) 换成 TeX
     """
     root = narr[0]
-    sign, token = root
+    sign, token = root.get()
     sign = '' if sign > 0 else '-'
 
     if token in terminal_tokens():
@@ -326,8 +360,8 @@ def narr_prettyprint(narr, level=0):
     """
     root = narr[0]
     children = narr[1:]
+    sign, token = root.get()
 
-    sign, token = narr[0]
     if token in ['NUMBER', 'VAR', 'WILDCARDS']:
         print('    ' * level, narr)
         return
@@ -337,22 +371,23 @@ def narr_prettyprint(narr, level=0):
         narr_prettyprint(c, level + 1)
 
 
-def passchildren(sign, op_type, children):
-    new_narr = [(sign, op_type)]
+def passchildren(root, children):
+    sign, op_type = root.get()
+    new_narr = [root]
     any_change = False
     for child in children:
-        child_sign, child_type = child[0]
+        child_sign, child_type = child[0].get()
         if child_type == op_type:
             if child_type == 'add':
                 # distribute sign
                 for grand_child in child[1:]:
-                    grand_sign, grand_type = grand_child[0]
-                    grand_child[0] = (grand_sign * child_sign, grand_type)
+                    grand_sign, grand_type = grand_child[0].get()
+                    grand_child[0].set(grand_sign * child_sign, grand_type)
                     new_narr.append(grand_child)
 
             elif child_type == 'mul':
                 # reduce sign
-                new_narr[0] = (sign * child_sign, op_type)
+                new_narr[0].set(sign * child_sign, op_type)
                 new_narr += child[1:]
 
             else:
@@ -363,8 +398,8 @@ def passchildren(sign, op_type, children):
                 any_change = True
         else:
             if op_type == 'mul' and child_sign < 0:
-                child[0] = (+1, child_type)
-                new_narr[0] = (sign * -1, op_type)
+                child[0].set(+1, child_type)
+                new_narr[0].set(sign * -1, op_type)
                 any_change = True
 
             new_narr.append(child)
@@ -373,12 +408,12 @@ def passchildren(sign, op_type, children):
 
 
 def canonicalize(narr):
-    sign, Type = narr[0]
+    sign, Type = narr[0].get()
     if Type == 'add':
         # -(a + ...) becomes -a - ...
-        return passchildren(+1, Type, [narr])
+        return passchildren(NarrRoot(+1, Type), [narr])
     else:
-        return passchildren(sign, Type, narr[1:])
+        return passchildren(NarrRoot(sign, Type), narr[1:])
 
 
 if __name__ == '__main__':
@@ -416,7 +451,8 @@ if __name__ == '__main__':
         '`(a+b)`{remove}c'
     ]
 
-    for expr in test_expressions[-1:]:
+    #for expr in test_expressions[-1:]:
+    for expr in test_expressions[:]:
         rich.print('[bold yellow]original:[/]', end=' ')
         print(expr, end="\n\n")
         tree = None
