@@ -1,24 +1,11 @@
 import rich
 import random
-import transform
+import expression
 from lark import Token
-
-from transform import Tree2NestedArr
+from expression import NarrRoot
+from expression import Tree2NestedArr
 tr2narr = Tree2NestedArr()
 
-def random_wrap_parentheses(tok):
-    """
-    随机选择在 token 外面添加括号
-    """
-    choice = nonUniformChoice(
-        ['wrap', 'nah'],
-        [0.7, 0.3]
-    )
-
-    if choice == 'wrap':
-        return [('+', 'par_grp'), tok]
-    else:
-        return tok
 
 def random_tok(only_number=False, small_number=False):
     """
@@ -52,21 +39,13 @@ def random_tok(only_number=False, small_number=False):
         )
 
         num_tok = tr2narr.number([Token('NUMBER', sign * sym)])
-
-        if sign < 0:
-            return random_wrap_parentheses(num_tok)
-        else:
-            return num_tok
+        return num_tok
 
     else:
         num = random.uniform(-5, 5)
         num = round(num, 3)
         num_tok = tr2narr.number([Token('NUMBER', num)])
-
-        if num < 0:
-            return random_wrap_parentheses(num_tok)
-        else:
-            return num_tok
+        return num_tok
 
 
 def nonUniformChoice(population, weights):
@@ -89,10 +68,8 @@ def random_operator(commutative=False):
 
         (0.10, 2, tr2narr.frac),
 
-        (0.15, 1, tr2narr.par_grp),
         (0.25, 2, tr2narr.sup),
         (0.4, 2, tr2narr.minus),
-        (0.05, 1, tr2narr.sq_grp),
 
         (0.05, 2, tr2narr.div),
         (0.05, 1, tr2narr.abs)
@@ -147,7 +124,7 @@ def random_exp(complexity=2):
                 random_complexity = bounded_guassian_sample(3, 5)
                 tex, err = random_exp(complexity=random_complexity)
                 if err: break
-                t2 = transform.tex2narr(tex)
+                t2 = expression.tex2narr(tex)
 
             if always_t12 or random.choice(['12', '21']) == '12':
                 t1 = build_op([t1, t2])
@@ -157,15 +134,11 @@ def random_exp(complexity=2):
             t1 = build_op([t1])
 
         try:
-            tex = transform.narr2tex(t1)
-            transform.tex2narr(tex)
+            tex = expression.narr2tex(t1)
+            expression.tex2narr(tex)
         except Exception as err_msg:
             err = True
             #rich.print('[red]invalid random expression')
-            #print(tex, end='\n\n')
-            #transform.narr_prettyprint(t1)
-            #rich.print('[red]' + str(err_msg))
-            #print()
             break
 
     return tex, err
@@ -188,14 +161,13 @@ def random_polynomial_term():
         if sign < 0:
             t0 = tr2narr.null_reduce([])
             t1 = tr2narr.minus([t0, t1])
-            t1 = random_wrap_parentheses(t1)
 
         t2 = random_tok(only_number=True, small_number=True)
         t1 = build_op([t1, t2])
 
     try:
-        tex = transform.narr2tex(t1)
-        transform.tex2narr(tex)
+        tex = expression.narr2tex(t1)
+        expression.tex2narr(tex)
     except Exception as err_msg:
         err = True
 
@@ -227,7 +199,7 @@ def random_terms():
         else:
             any_err = False
 
-        t2 = transform.tex2narr(tex_t2)
+        t2 = expression.tex2narr(tex_t2)
         if random.choice(['12', '21']) == '12':
             t1 = build_op([t1, t2])
         else:
@@ -236,7 +208,7 @@ def random_terms():
     if len(t1) == 0:
         return '', True
     else:
-        tex = transform.narr2tex(t1)
+        tex = expression.narr2tex(t1)
         return tex, any_err
 
 
@@ -252,11 +224,11 @@ def random_equations():
         return '', True
 
     try:
-        t1 = transform.tex2narr(tex1)
-        t2 = transform.tex2narr(tex2)
+        t1 = expression.tex2narr(tex1)
+        t2 = expression.tex2narr(tex2)
         t1 = build_op([t1, t2])
-        tex = transform.narr2tex(t1)
-        transform.tex2narr(tex)
+        tex = expression.narr2tex(t1)
+        expression.tex2narr(tex)
     except Exception as err_msg:
         return '', True
 
@@ -264,10 +236,10 @@ def random_equations():
 
 
 if __name__ == '__main__':
-    for _ in range(16000):
-    #for _ in range(100):
+    #for _ in range(16000):
+    for _ in range(100):
+        expr, err = random_terms()
+        expr, err = random_polynomial_term()
         expr, err = random_equations()
-        #expr, err = random_terms()
-        #expr, err = random_polynomial_term()
         if err: continue
         print(expr, end='\n')
