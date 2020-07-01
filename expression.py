@@ -457,11 +457,12 @@ if __name__ == '__main__':
         '3.2 \\frac{1}{2}',
         '-(-a)b',
         '(-a)b',
-        '`(a+b)`{remove}c'
+        '`(a+b)`{remove}c',
+        '`5`{replaceAfter} + 1'
     ]
 
-    #for expr in test_expressions[-1:]:
-    for expr in test_expressions[:]:
+    for expr in test_expressions[-1:]:
+    #for expr in test_expressions[:]:
         rich.print('[bold yellow]original:[/]', end=' ')
         print(expr, end="\n\n")
         tree = None

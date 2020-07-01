@@ -32,7 +32,7 @@
 VAR: "a".."z" | "A".."Z"
 ASTERISK: "*"
 IFRAC_NUM: "&"
-STRING: /[a-z]+/
+STRING: /[a-zA-Z]+/
 
 %import common.NUMBER
 

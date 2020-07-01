@@ -96,7 +96,9 @@ def _calc_add(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
     if a != None and b != None:
         c = a + b
         rewrite_rules['c'] = gen_atom_number(c)
-        return rewrite_by_alpha(output_tempalate, rewrite_rules), True
+        new_narr = rewrite_by_alpha(output_tempalate, rewrite_rules)
+        new_narr[0].animation = 'replaceAfter'
+        return new_narr, True
 
     return narr, False
 

@@ -2,6 +2,7 @@ from lark import Lark, UnexpectedInput
 from lark import Transformer
 import rich
 import json
+import animation
 
 lark = Lark.open('grammar.lark', rel_to=__file__, parser='lalr', debug=False)
 
@@ -10,18 +11,18 @@ class Tree2MathJS(Transformer):
     @staticmethod
     def gen_object(x, op=None):
         if isinstance(x, float):
-            return {
+            obj = {
                 "mathjs": "ConstantNode",
                 "value": x
             }
         elif isinstance(x, str):
-            return {
+            obj = {
                 "mathjs": "SymbolNode",
                 "name": x
             }
         else:
             if op == 'add':
-                return {
+                obj = {
                     "mathjs": "OperatorNode",
                     "op": "+",
                     "fn": "add",
@@ -29,7 +30,7 @@ class Tree2MathJS(Transformer):
                     "args": [x[0], x[1]]
                 }
             elif op == 'unary_add':
-                return {
+                obj = {
                     "mathjs": "OperatorNode",
                     "fn": "unaryPlus",
                     "op": "+",
@@ -37,7 +38,7 @@ class Tree2MathJS(Transformer):
                     "args": [x[0]]
                 }
             elif op == 'minus':
-                return {
+                obj = {
                     "mathjs": "OperatorNode",
                     "op": "-",
                     "fn": "subtract",
@@ -45,7 +46,7 @@ class Tree2MathJS(Transformer):
                     "args": [x[0], x[1]]
                 }
             elif op == 'unary_minus':
-                return {
+                obj = {
                     "mathjs": "OperatorNode",
                     "fn": "unaryMinus",
                     "op": "-",
@@ -53,7 +54,7 @@ class Tree2MathJS(Transformer):
                     "args": [x[0]]
                 }
             elif op == 'eq':
-                return {
+                obj = {
                     "mathjs": "OperatorNode",
                     "op": "==",
                     "fn": "equal",
@@ -61,7 +62,7 @@ class Tree2MathJS(Transformer):
                     "args": [x[0], x[1]]
                 }
             elif op == 'mul':
-                return {
+                obj = {
                     "mathjs": "OperatorNode",
                     "op": "*",
                     "fn": "multiply",
@@ -69,7 +70,7 @@ class Tree2MathJS(Transformer):
                     "args": [x[0], x[1]]
                 }
             elif op == 'div':
-                return {
+                obj = {
                     "mathjs": "OperatorNode",
                     "op": "/",
                     "fn": "divide",
@@ -77,7 +78,7 @@ class Tree2MathJS(Transformer):
                     "args": [x[0], x[1]]
                 }
             elif op == 'sup':
-                return {
+                obj = {
                     "mathjs": "OperatorNode",
                     "op": "^",
                     "fn": "pow",
@@ -85,7 +86,7 @@ class Tree2MathJS(Transformer):
                     "args": [x[0], x[1]]
                 }
             elif op == 'sqrt':
-                return {
+                obj = {
                     "mathjs": "FunctionNode",
                     "fn": {
                         "mathjs": "SymbolNode",
@@ -94,7 +95,7 @@ class Tree2MathJS(Transformer):
                     "args": [x[0]]
                 }
             elif op == 'abs':
-                return {
+                obj = {
                     "mathjs": "FunctionNode",
                     "fn": {
                         "mathjs": "SymbolNode",
@@ -103,14 +104,16 @@ class Tree2MathJS(Transformer):
                     "args": [x[0]]
                }
             elif op == 'grp':
-                return {
+                obj = {
                   "mathjs": "ParenthesisNode",
                   "content": {
                     x[0]
                   }
                 }
             else:
-                return None
+                raise Exception('unexpected op: ' + op)
+
+        return obj
 
     def null_reduce(self, x):
         return None
@@ -166,8 +169,13 @@ class Tree2MathJS(Transformer):
         return y
 
     def grp(self, x):
-        y = self.gen_object(x, op='abs')
+        y = self.gen_object(x, op='grp')
         return y
+
+    def animation(self, x):
+        name = str(x[1])
+        x[0]['animation'] = animation.translate(name)
+        return x[0]
 
 
 def tex2mathjs(tex):

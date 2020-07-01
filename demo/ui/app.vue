@@ -44,7 +44,7 @@
     </mu-button>
   </mu-row>
 
-  <mu-row justify-content="start">
+  <mu-row justify-content="end">
     <mu-checkbox v-model="debug" label="Debug"></mu-checkbox>
   </mu-row>
 
@@ -235,6 +235,7 @@ export default {
         contentType:"application/json; charset=utf-8",
         dataType:"json",
         success: function(res){
+          console.log('[ajax]', res)
           if (res.ret == 'successful') {
             vm.steps = []
             vm.show_steps(res.steps)
