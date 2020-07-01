@@ -47,6 +47,13 @@ class NarrRoot():
         else:
             raise ValueError('NarrRoot set index out of bound.')
 
+    def __eq__(self, other):
+        return self.sign == other.sign and self.Type == other.Type
+
+    def copy(self):
+        sign, Type = self.get()
+        return NarrRoot(sign, Type)
+
 
 class Tree2NestedArr(Transformer):
 
@@ -262,7 +269,7 @@ def need_outter_fence(root, child_narr, rank=0):
     #debug = True
     if debug: print('outter fence?', root, '@@@', child_narr)
 
-    if root == None:
+    if root is None:
         return False
     elif root[1] in ['frac', 'ifrac', 'abs', 'sqrt', 'add', 'eq']:
         return False
@@ -375,7 +382,7 @@ def narr_prettyprint(narr, level=0):
 
 def passchildren(root, children):
     sign, op_type = root.get()
-    new_narr = [root]
+    new_narr = [root.copy()]
     any_change = False
     for child in children:
         child_sign, child_type = child[0].get()
