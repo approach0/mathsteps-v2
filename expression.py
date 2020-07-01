@@ -159,6 +159,11 @@ class Tree2NestedArr(Transformer):
         number = str(x[1])
         return [(+1, 'WILDCARDS'), number]
 
+    def animation(self, x):
+        name = str(x[1])
+        #print('[animation]', name)
+        return x[0]
+
 
 def tex_parse(tex):
     """
@@ -408,6 +413,7 @@ if __name__ == '__main__':
         '3.2 \\frac{1}{2}',
         '-(-a)b',
         '(-a)b',
+        '`(a+b)`{remove}c'
     ]
 
     for expr in test_expressions[-1:]:
