@@ -25,6 +25,7 @@ class Tree2MathJS(Transformer):
                     "mathjs": "OperatorNode",
                     "op": "+",
                     "fn": "add",
+                    "implicit": False,
                     "args": [x[0], x[1]]
                 }
             elif op == 'unary_add':
@@ -32,6 +33,7 @@ class Tree2MathJS(Transformer):
                     "mathjs": "OperatorNode",
                     "fn": "unaryPlus",
                     "op": "+",
+                    "implicit": False,
                     "args": [x[0]]
                 }
             elif op == 'minus':
@@ -39,6 +41,7 @@ class Tree2MathJS(Transformer):
                     "mathjs": "OperatorNode",
                     "op": "-",
                     "fn": "subtract",
+                    "implicit": False,
                     "args": [x[0], x[1]]
                 }
             elif op == 'unary_minus':
@@ -46,6 +49,7 @@ class Tree2MathJS(Transformer):
                     "mathjs": "OperatorNode",
                     "fn": "unaryMinus",
                     "op": "-",
+                    "implicit": False,
                     "args": [x[0]]
                 }
             elif op == 'eq':
@@ -53,6 +57,7 @@ class Tree2MathJS(Transformer):
                     "mathjs": "OperatorNode",
                     "op": "==",
                     "fn": "equal",
+                    "implicit": False,
                     "args": [x[0], x[1]]
                 }
             elif op == 'mul':
@@ -60,6 +65,7 @@ class Tree2MathJS(Transformer):
                     "mathjs": "OperatorNode",
                     "op": "*",
                     "fn": "multiply",
+                    "implicit": False,
                     "args": [x[0], x[1]]
                 }
             elif op == 'div':
@@ -67,6 +73,7 @@ class Tree2MathJS(Transformer):
                     "mathjs": "OperatorNode",
                     "op": "/",
                     "fn": "divide",
+                    "implicit": False,
                     "args": [x[0], x[1]]
                 }
             elif op == 'sup':
@@ -74,7 +81,33 @@ class Tree2MathJS(Transformer):
                     "mathjs": "OperatorNode",
                     "op": "^",
                     "fn": "pow",
+                    "implicit": False,
                     "args": [x[0], x[1]]
+                }
+            elif op == 'sqrt':
+                return {
+                    "mathjs": "FunctionNode",
+                    "fn": {
+                        "mathjs": "SymbolNode",
+                        "name": "sqrt"
+                    },
+                    "args": [x[0]]
+                }
+            elif op == 'abs':
+                return {
+                    "mathjs": "FunctionNode",
+                    "fn": {
+                        "mathjs": "SymbolNode",
+                        "name": "abs"
+                    },
+                    "args": [x[0]]
+               }
+            elif op == 'grp':
+                return {
+                  "mathjs": "ParenthesisNode",
+                  "content": {
+                    x[0]
+                  }
                 }
             else:
                 return None
@@ -120,8 +153,20 @@ class Tree2MathJS(Transformer):
         y = self.gen_object(x, op='div')
         return y
 
+    def sqrt(self, x):
+        y = self.gen_object(x, op='sqrt')
+        return y
+
     def sup(self, x):
         y = self.gen_object(x, op='sup')
+        return y
+
+    def abs(self, x):
+        y = self.gen_object(x, op='abs')
+        return y
+
+    def grp(self, x):
+        y = self.gen_object(x, op='abs')
         return y
 
 
@@ -138,7 +183,10 @@ if __name__ == '__main__':
     #tex = '-1+2 = x'
     #tex = '3x + 1x + 2 \\times 3'
     #tex = '1 \div 2x + \\frac{1}{x}'
-    tex = 'a^{2}'
+    #tex = 'a^{2}'
+    #tex = '\\sqrt{2}'
+    #tex = '\\left| -2 \\right|'
+    tex = 'a+(1+0)'
 
     mathjs_obj = tex2mathjs(tex)
     json_str = mathjs2json(mathjs_obj, indent=2)
