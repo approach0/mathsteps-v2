@@ -23,9 +23,9 @@ class NarrRoot():
 
     def __repr__(self):
         if self.animation is None:
-            return str((self.sign, self.Type))
+            return f'<{self.sign}, {self.Type}>'
         else:
-            return str((self.sign, self.Type, self.animation))
+            return f'<{self.sign}, {self.Type}, {self.animation}>'
 
     def __getitem__(self, idx):
         if idx == 0:

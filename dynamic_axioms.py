@@ -1,4 +1,5 @@
 from axiom import Axiom
+from expression import NarrRoot
 import expression
 import rich
 from alpha_equiv import rewrite_by_alpha, alpha_prettyprint
@@ -344,7 +345,7 @@ collapse_fraction_add_float = (
 
 
 def _canonicalize(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
-    sign, Type = narr[0]
+    sign, Type = narr[0].get()
     if Type in expression.commutative_operators():
         new_narr, is_applied = expression.canonicalize(narr)
         return new_narr, is_applied
@@ -359,50 +360,50 @@ canonicalize = (
     .add_test('-ab')
 
     .add_test(
-        [(1, 'add'),
-            [(-1, 'NUMBER'), 30.0],
-            [(1, 'mul'),
-                [(1, 'NUMBER'), 10.0],
-                [(-1, 'frac'),
-                    [(1, 'NUMBER'), 1.0],
-                    [(1, 'NUMBER'), 3.0]
+        [NarrRoot(1, 'add'),
+            [NarrRoot(-1, 'NUMBER'), 30.0],
+            [NarrRoot(1, 'mul'),
+                [NarrRoot(1, 'NUMBER'), 10.0],
+                [NarrRoot(-1, 'frac'),
+                    [NarrRoot(1, 'NUMBER'), 1.0],
+                    [NarrRoot(1, 'NUMBER'), 3.0]
                 ]
             ]
         ]
     )
 
     .add_test(
-        [(1, 'add'),
-            [(-1, 'NUMBER'), 30.0],
-            [(-1, 'add'),
-                [(1, 'NUMBER'), 10.0],
-                [(-1, 'frac'),
-                    [(1, 'NUMBER'), 1.0],
-                    [(1, 'NUMBER'), 3.0]
+        [NarrRoot(1, 'add'),
+            [NarrRoot(-1, 'NUMBER'), 30.0],
+            [NarrRoot(-1, 'add'),
+                [NarrRoot(1, 'NUMBER'), 10.0],
+                [NarrRoot(-1, 'frac'),
+                    [NarrRoot(1, 'NUMBER'), 1.0],
+                    [NarrRoot(1, 'NUMBER'), 3.0]
                 ]
             ]
         ]
     )
 
     .add_test(
-        [(-1, 'add'),
-            [(-1, 'NUMBER'), 30.0],
-            [(1, 'NUMBER'), 1.0],
+        [NarrRoot(-1, 'add'),
+            [NarrRoot(-1, 'NUMBER'), 30.0],
+            [NarrRoot(1, 'NUMBER'), 1.0],
         ]
     )
 
     .add_test(
-        [(1, 'frac'),
-            [(1, 'add'),
-                [(1, 'mul'),
-                    [(1, 'NUMBER'), 30.0],
-                    [(-1, 'frac'),
-                        [(1, 'NUMBER'), 1.0], [(1, 'NUMBER'), 3.0]
+        [NarrRoot(1, 'frac'),
+            [NarrRoot(1, 'add'),
+                [NarrRoot(1, 'mul'),
+                    [NarrRoot(1, 'NUMBER'), 30.0],
+                    [NarrRoot(-1, 'frac'),
+                        [NarrRoot(1, 'NUMBER'), 1.0], [NarrRoot(1, 'NUMBER'), 3.0]
                     ]
                 ],
-                [(-1, 'NUMBER'), 90.0]
+                [NarrRoot(-1, 'NUMBER'), 90.0]
             ],
-            [(1, 'NUMBER'), 49.0]
+            [NarrRoot(1, 'NUMBER'), 49.0]
         ]
     )
 )

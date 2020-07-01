@@ -318,10 +318,11 @@ def common_axioms(full=False):
 
 if __name__ == '__main__':
     axioms = common_axioms(full=True)
-    for i, axiom in enumerate(axioms):
-        #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() in ['以分数表示除法']:
+    for i, axiom in enumerate(axioms):
+        print(f'#{i}', axiom, end="\n\n")
+
+        if True or axiom.name() in ['以分数表示除法']:
             #import cProfile
             #cProfile.run('axiom.test(debug=False)')
             rich.print(f'[red]{axiom.name()}[/]')

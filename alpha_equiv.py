@@ -158,7 +158,7 @@ def replace_or_pass_children(narr, i, substitute):
     sign, Type = root.get()
     if Type == substitute[0][1] and Type in ['add', 'mul']:
         del narr[1 + i]
-        new_narr, _ = expression.passchildren(sign, Type, [substitute])
+        new_narr, _ = expression.passchildren(NarrRoot(sign, Type), [substitute])
         narr[0] = new_narr[0]
         narr += new_narr[1:]
     else:

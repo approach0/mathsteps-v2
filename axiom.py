@@ -207,7 +207,7 @@ class Axiom:
     @staticmethod
     def _restore_weights(weights, narr):
         def gen_num(n):
-            return [(+1 if n >= 0 else -1, 'NUMBER'), float(abs(n))]
+            return [NarrRoot(+1 if n >= 0 else -1, 'NUMBER'), float(abs(n))]
         children = narr[1:] if narr[0][1] == 'add' else [narr]
         for i, c in enumerate(children):
             sign, Type = c[0].get()
