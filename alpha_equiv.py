@@ -1,23 +1,14 @@
 import rich
 import expression
+from expression import NarrRoot
 from copy import deepcopy
 
 
-def operator_identical(root1, root2, same_sign=True):
-    if same_sign:
-        return root1 == root2
-    else:
-        return root1[1] == root2[1]
-
-
-def narr_identical(narr1, narr2, same_sign=True):
-    """
-    递归比较两个表达式 (nested arrary) 是否相等（按照顺序匹配，不考虑交换）
-    """
+def narr_identical(narr1, narr2):
     root1, root2 = narr1[0], narr2[0]
     children1, children2 = narr1[1:], narr2[1:]
 
-    if not operator_identical(root1, root2):
+    if root1.Type != root2.Type:
         return False
     elif len(children1) != len(children2):
         return False
@@ -27,7 +18,7 @@ def narr_identical(narr1, narr2, same_sign=True):
         if isinstance(c1, float) or isinstance(c1, str):
             is_identical = (c1 == c2)
         else:
-            is_identical = narr_identical(c1, c2, same_sign=same_sign)
+            is_identical = narr_identical(c1, c2)
 
         if not is_identical:
             return False
@@ -35,11 +26,8 @@ def narr_identical(narr1, narr2, same_sign=True):
 
 
 def apply_sign(narr, apply_product):
-    """
-    表达式变号，从加号变成减号或者减号改成加号。加法会让每一项变号。
-    """
     root = narr[0]
-    old_sign, Type = root[0], root[1]
+    old_sign, Type = root.get()
     if Type == 'add':
         # make narr positive
         narr[:], _ = expression.canonicalize(narr)
@@ -47,7 +35,7 @@ def apply_sign(narr, apply_product):
         for i, c in enumerate(narr[1:]):
             apply_sign(c, apply_product)
     else:
-        narr[0] = (old_sign * apply_product, Type)
+        narr[0].set(old_sign * apply_product, Type)
 
 
 def children_wildcards_permutation(narr):
@@ -70,7 +58,7 @@ def alpha_universe_add_constraint(alpha_universe, name, narr):
 
 
 def get_wildcards_index(narr):
-    root_sign, root_type = narr[0]
+    root_sign, root_type = narr[0].get()
     if root_type not in expression.terminal_tokens():
         children_tokens = [c[0][1] for c in narr[1:]]
     else:
@@ -119,7 +107,7 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
             return alpha_universe_add_constraint(alpha_universe, name1, narr2)
 
     wildcards_index = get_wildcards_index(narr1)
-    if not operator_identical(root1, root2):
+    if root1.Type != root2.Type:
         return False, []
     elif len(narr1[1:]) != len(narr2[1:]) and wildcards_index is None:
         return False, []
@@ -137,7 +125,7 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
 
             if c1[0][1] == 'WILDCARDS':
                 # wildcards match
-                c2 = [(+1, type2)] + perm_children[i:]
+                c2 = [NarrRoot(+1, type2)] + perm_children[i:]
                 # unwrap matched group if necessary
                 if len(c2[1:]) == 1:
                     c2 = c2[1]
@@ -167,7 +155,7 @@ def replace_or_pass_children(narr, i, substitute):
     如果表达式有相同的 root 操作符，且满足交换律，则把两个表达式合并。
     """
     root = narr[0]
-    sign, Type = root
+    sign, Type = root.get()
     if Type == substitute[0][1] and Type in ['add', 'mul']:
         del narr[1 + i]
         new_narr, _ = expression.passchildren(sign, Type, [substitute])
@@ -184,7 +172,7 @@ def rewrite_by_alpha(narr, alpha):
     按照重写规则 alpha 进行变量替换，重写表达式 narr
     """
     root = narr[0]
-    sign, Type = root
+    sign, Type = root.get()
     children = narr[1:]
 
     if Type in ['VAR', 'WILDCARDS']:
@@ -196,7 +184,7 @@ def rewrite_by_alpha(narr, alpha):
     elif Type == 'NUMBER':
         return deepcopy(narr)
 
-    new_narr = [root]
+    new_narr = [root.copy()]
     for i, c in enumerate(narr[1:]):
         substitute = rewrite_by_alpha(c, alpha)
 
@@ -252,6 +240,9 @@ if __name__ == '__main__':
     is_equiv, rewrite_rules = test_alpha_equiv(narr1, narr2, debug=False)
     if is_equiv:
         rich.print('[bold green]Is alpha-equivalent')
-        alpha_prettyprint(rewrite_rules[0])
+        alpha = rewrite_rules[0]
+        alpha_prettyprint(alpha)
+        rewritten_narr = rewrite_by_alpha(narr1, alpha)
+        rich.print('[[rewritten]]', expression.narr2tex(rewritten_narr))
     else:
         rich.print('[bold red]Not alpha-equivalent')
