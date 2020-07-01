@@ -44,6 +44,10 @@
     </mu-button>
   </mu-row>
 
+  <mu-row justify-content="start">
+    <mu-checkbox v-model="debug" label="Debug"></mu-checkbox>
+  </mu-row>
+
   <h3 v-if="preview.length > 0">预览</h3>
   <div id="preview" class="latex" v-html="preview" v-if="preview.length > 0"></div>
 
@@ -51,34 +55,43 @@
     <mu-icon left value="warning"></mu-icon> {{error_msg}}
   </mu-alert>
 
-  <mu-row v-for="(step, i) in steps" :key="i + step.latex" class="step" align-items="center">
+  <div v-for="(step, i) in steps" :key="i + step.latex">
 
-    <mu-col span="1" class="mu-transition-row">
-      <mu-slide-left-transition>
-        <div class="mu-transition-box" v-show="step.show">
-          {{ i == 0 ? `原式` : `第 ${i} 步`}}
-        </div>
-      </mu-slide-left-transition>
-    </mu-col>
+    <mu-row class="step" align-items="center">
+      <mu-col span="1" class="mu-transition-row">
+        <mu-slide-left-transition>
+          <div class="mu-transition-box" v-show="step.show">
+            {{ i == 0 ? `原式` : `第 ${i} 步`}}
+          </div>
+        </mu-slide-left-transition>
+      </mu-col>
 
-    <mu-col span="9" class="mu-transition-row">
-      <mu-slide-left-transition>
-        <div class="mu-transition-box latex" v-show="step.show" v-html="step.html">
-        </div>
-      </mu-slide-left-transition>
-    </mu-col>
+      <mu-col span="9" class="mu-transition-row">
+        <mu-slide-left-transition>
+          <div class="mu-transition-box latex" v-show="step.show" v-html="step.html">
+          </div>
+        </mu-slide-left-transition>
+      </mu-col>
 
-    <mu-col span="2" class="mu-transition-row" fill>
-      <mu-slide-left-transition>
-        <div class="mu-transition-box" v-show="step.show">
-          {{ i == 0 ? '' : step.info}}
-        </div>
-      </mu-slide-left-transition>
-    </mu-col>
+      <mu-col span="2" class="mu-transition-row" fill>
+        <mu-slide-left-transition>
+          <div class="mu-transition-box" v-show="step.show">
+            {{ i == 0 ? '' : step.info}}
+          </div>
+        </mu-slide-left-transition>
+      </mu-col>
+    </mu-row>
+
+    <div v-if="debug">
+      <pre>{{step.animate_tex}}</pre>
+    </div>
+    <div v-if="debug">
+        <pre>{{step.animate_json}}</pre>
+    </div>
 
     <mu-divider v-show="step.show"></mu-divider>
 
-  </mu-row>
+  </div>
 </mu-container>
 </template>
 
@@ -89,6 +102,7 @@ const random_list = require('./random-list')
 export default {
   data () {
     return {
+      debug: false,
       equations: [],
       input: '',
       preview: '',
@@ -161,10 +175,13 @@ export default {
     append_step(step) {
       let tex = step.tex
       let html = this.render(tex)
+      let animate_json = JSON.stringify(JSON.parse(step.animate_json), null, 2)
       this.steps.push(
         {
           show: false,
           latex: tex,
+          animate_tex: step.animate_tex,
+          animate_json: animate_json,
           info: step.axiom,
           html: html
         }

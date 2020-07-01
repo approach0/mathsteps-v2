@@ -152,6 +152,7 @@ def test():
 
 if __name__ == '__main__':
     from common_axioms import common_axioms
+    import mathjs
 
     args = sys.argv[1:]
     if len(args) > 0:
@@ -164,16 +165,21 @@ if __name__ == '__main__':
             print(err, file=sys.stderr)
             quit()
 
-        steps = [
-            {
-                'tex': expression.narr2tex(narr),
-                'axiom': a.name(),
-                'axiom_idx': ai
-            }
-        for narr, a, ai in steps]
+        ret_arr = []
+        for narr, axiom, axiom_idx in steps:
+            plain_tex = expression.narr2tex(narr)
+            animate_tex = expression.narr2tex(narr, tag=True)
+            animate_json = mathjs.tex2json(animate_tex)
+            ret_arr.append({
+                'tex': plain_tex,
+                'animate_tex': animate_tex,
+                'animate_json': animate_json,
+                'axiom': axiom.name(),
+                'axiom_idx': axiom_idx
+            })
 
         import json
-        print(json.dumps(steps))
+        print(json.dumps(ret_arr))
 
     else:
         #import cProfile
