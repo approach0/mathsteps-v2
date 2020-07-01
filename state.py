@@ -29,7 +29,7 @@ def token_stats(narr, stats={}, right_side_of_eq=False, inside_of_sqrt=False, le
     """
     root = narr[0]
     children = narr[1:]
-    sign, token = root
+    sign, token = root.get()
 
     #print(f'L{level}', expression.narr2tex(narr))
 
@@ -153,7 +153,7 @@ def value_v1(narr, debug=False):
 def collect_stats(narr, stats, level, grandRoot, right_side_of_eq):
     root = narr[0]
     children = narr[1:]
-    sign, token = root
+    sign, token = root.get()
 
     if sign < 0:
         stats['neg'] += 1
