@@ -113,6 +113,7 @@ def test():
         "b + 3x^{2} +2b + 3b + x^{2}= 0",
         "(3 + \\frac{4}{17}) (-14\\frac{13}{15} - \\frac{2}{15}) - 2 \times 3 - 2 \\times \\frac{4}{17}",
         "-(3 + \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3 + \\frac{4}{17}) \\times (2\\frac{2}{15})",
+        "6 \div 3"
     ]
 
     begin_from = 0

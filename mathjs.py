@@ -178,7 +178,24 @@ def mathjs2json(mathjs_obj, indent=None):
     return json.dumps(mathjs_obj, indent=indent)
 
 
+def steps2json(steps):
+    arr = []
+    for narr, axiom, _ in steps:
+        tex = expression.narr2tex(narr)
+        mathjs = tex2mathjs(tex)
+        json = mathjs2json(mathjs, indent=None)
+        arr.append({
+            'axiom': axiom.name(),
+            'step': json
+        })
+    return arr
+
+
 if __name__ == '__main__':
+    from common_axioms import common_axioms
+    from dfs import dfs
+    import expression
+
     #tex = '1 + 2 + a'
     #tex = '-1+2 = x'
     #tex = '3x + 1x + 2 \\times 3'
@@ -191,3 +208,12 @@ if __name__ == '__main__':
     mathjs_obj = tex2mathjs(tex)
     json_str = mathjs2json(mathjs_obj, indent=2)
     print(json_str)
+
+    narr = expression.tex2narr(tex)
+    axioms = common_axioms()
+    steps, err = dfs(narr, axioms, debug=False)
+    if err:
+        print(err)
+        quit()
+
+    print(steps2json(steps))
