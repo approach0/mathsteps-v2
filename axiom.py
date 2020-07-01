@@ -3,6 +3,7 @@ import re
 import itertools
 import functools
 import expression
+from expression import NarrRoot
 from copy import deepcopy
 from alpha_equiv import rewrite_by_alpha, test_alpha_equiv, alpha_prettyprint, replace_or_pass_children, get_wildcards_index
 import numpy as np
@@ -171,7 +172,7 @@ class Axiom:
 
     @staticmethod
     def _extract_weight(narr):
-        sign, Type = narr[0]
+        sign, Type = narr[0].get()
         if Type == 'mul':
             num = sign
             for c in narr[1:]:
@@ -184,7 +185,7 @@ class Axiom:
         elif Type == 'NUMBER':
             num = narr[1]
             if num.is_integer():
-                num_sign, _ = narr[0]
+                num_sign, _ = narr[0].get()
                 return num_sign * num
             else:
                 return None
@@ -194,8 +195,7 @@ class Axiom:
 
     @staticmethod
     def _extract_weights(narr):
-        _, Type = narr[0]
-        root = narr[0]
+        _, Type = narr[0].get()
         if Type == 'add':
             return [Axiom()._extract_weight(c) for c in narr[1:]]
         elif Type in ['mul', 'NUMBER']:
@@ -210,9 +210,9 @@ class Axiom:
             return [(+1 if n >= 0 else -1, 'NUMBER'), float(abs(n))]
         children = narr[1:] if narr[0][1] == 'add' else [narr]
         for i, c in enumerate(children):
-            sign, Type = c[0]
+            sign, Type = c[0].get()
             # turn to positive term
-            c[0] = (+1, Type)
+            c[0].set(+1, Type)
             if Type == 'NUMBER':
                 w = weights[i]
                 children[i] = gen_num(w)
@@ -222,7 +222,7 @@ class Axiom:
                 # insert weight if it is non-one value
                 w = weights[i]
                 if w != 1:
-                    children[i] = [c[0]] + [gen_num(w)] + c[1:]
+                    children[i] = [c[0].copy()] + [gen_num(w)] + c[1:]
                     c = children[i]
                 # trim the tree if it has zero or only one operand
                 if len(c) == 1:
@@ -237,7 +237,7 @@ class Axiom:
 
     @staticmethod
     def _fraction_cancel(narr, debug=False):
-        sign, Type = narr[0]
+        sign, Type = narr[0].get()
         if Type != 'frac':
             return narr
 
@@ -353,7 +353,7 @@ class Axiom:
             is_commutative = True if root[1] in expression.commutative_operators() else False
             # generate binary operations
             for (cl, cr), (i, j) in self._children_choose_two(children, is_commutative):
-                construct_tree = [root, cl, cr]
+                construct_tree = [root.copy(), cl, cr]
                 brothers = [c for k, c in enumerate(children) if k != i and k != j and j >= 0]
                 yield deepcopy(construct_tree), deepcopy(brothers)
 
@@ -371,7 +371,7 @@ class Axiom:
 
     def _level_apply(self, narr, debug=False):
         ret_narrs = []
-        root_sign, root_type = narr[0]
+        root_sign, root_type = narr[0].get()
 
         # ignore terminal tokens (no operator)
         if root_type in expression.terminal_tokens():
@@ -392,11 +392,11 @@ class Axiom:
                         if self.root_sign_reduce:
                             # always positive new father, in case the negative
                             # sign of father is also reduced, e.g. -abc => (ab)c
-                            new_root = (+1, root_type)
+                            new_root = NarrRoot(+1, root_type)
                         else:
                             # in addition case, we will need to keep father sign,
                             # e.g. -(1+2+3) => -(3+3)
-                            new_root = (root_sign, root_type)
+                            new_root = NarrRoot(root_sign, root_type)
                         new_narr = [new_root] + [rewritten_narr] + brothers
                     else:
                         # the entire expression in this level gets reduced
@@ -446,7 +446,7 @@ class Axiom:
         # for recursive sub-expressions
         result_narrs = []
         for depth, narr in candidates:
-            _, root_type = narr[0]
+            _, root_type = narr[0].get()
             none_applied = True
 
             if root_type not in expression.terminal_tokens():
