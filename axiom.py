@@ -495,8 +495,8 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='负号提出括号', strict_simplify=False)
-        .add_rule('#(x + *{1})', '#~1(-x - *{1})')
+        Axiom(name='一个数减去它本身是零', root_sign_reduce=False)
+        .add_rule('#(n - n)', '0')
     )
 
-    a.test('(-3-\\frac{4}{17}) x + y', debug=False)
+    a.test('1+1', debug=True)
