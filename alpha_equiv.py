@@ -8,7 +8,7 @@ def narr_identical(narr1, narr2):
     root1, root2 = narr1[0], narr2[0]
     children1, children2 = narr1[1:], narr2[1:]
 
-    if root1.Type != root2.Type:
+    if root1 != root2:
         return False
     elif len(children1) != len(children2):
         return False
@@ -107,7 +107,7 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
             return alpha_universe_add_constraint(alpha_universe, name1, narr2)
 
     wildcards_index = get_wildcards_index(narr1)
-    if root1.Type != root2.Type:
+    if root1 != root2:
         return False, []
     elif len(narr1[1:]) != len(narr2[1:]) and wildcards_index is None:
         return False, []
@@ -234,8 +234,11 @@ if __name__ == '__main__':
     #narr1 = expression.tex2narr('0 (-n)')
     #narr2 = expression.tex2narr('- 0 n')
 
-    narr1 = expression.tex2narr('-x \\times *{1} + x \\times *{2}')
-    narr2 = expression.tex2narr('-25 \\times 51 + 25 \\times 48')
+    #narr1 = expression.tex2narr('-x \\times *{1} + x \\times *{2}')
+    #narr2 = expression.tex2narr('-25 \\times 51 + 25 \\times 48')
+
+    narr1 = expression.tex2narr('n - n')
+    narr2 = expression.tex2narr('1 + 1')
 
     is_equiv, rewrite_rules = test_alpha_equiv(narr1, narr2, debug=False)
     if is_equiv:
