@@ -280,7 +280,7 @@ def need_outter_fence(root, child_narr, rank=0):
     return True
 
 
-def narr2tex(narr, parentRoot=None, rank=0):
+def narr2tex(narr, parentRoot=None, tag=False, rank=0):
     """
     narr (nested array) 换成 TeX
     """
@@ -305,7 +305,7 @@ def narr2tex(narr, parentRoot=None, rank=0):
         sep_op = ' + ' if token == 'add' else ' \\times '
         operands = narr[1:]
         for i, child in enumerate(operands):
-            to_append = narr2tex(child, parentRoot=root, rank=i+1)
+            to_append = narr2tex(child, parentRoot=root, tag=tag, rank=i+1)
 
             if i == 0:
                 expr += to_append
@@ -315,8 +315,8 @@ def narr2tex(narr, parentRoot=None, rank=0):
                 expr += sep_op + to_append
 
     elif token in binary_operators():
-        expr1 = narr2tex(narr[1], parentRoot=root, rank=1)
-        expr2 = narr2tex(narr[2], parentRoot=root, rank=2)
+        expr1 = narr2tex(narr[1], parentRoot=root, tag=tag, rank=1)
+        expr2 = narr2tex(narr[2], parentRoot=root, tag=tag, rank=2)
 
         expr = None
         if token == 'div':
@@ -331,13 +331,13 @@ def narr2tex(narr, parentRoot=None, rank=0):
             raise Exception('unexpected token: ' + token)
 
     elif token == 'ifrac':
-        expr1 = narr2tex(narr[1], parentRoot=root, rank=1)
-        expr2 = narr2tex(narr[2], parentRoot=root, rank=2)
-        expr3 = narr2tex(narr[3], parentRoot=root, rank=3)
+        expr1 = narr2tex(narr[1], parentRoot=root, tag=tag, rank=1)
+        expr2 = narr2tex(narr[2], parentRoot=root, tag=tag, rank=2)
+        expr3 = narr2tex(narr[3], parentRoot=root, tag=tag, rank=3)
         expr = expr1 + '\\frac{' + expr2 + '}{' + expr3 + '}'
 
     else:
-        expr = narr2tex(narr[1], parentRoot=root, rank=1)
+        expr = narr2tex(narr[1], parentRoot=root, tag=tag, rank=1)
 
         if token == 'abs':
             expr = '\\left|' + expr + '\\right|'
@@ -351,6 +351,8 @@ def narr2tex(narr, parentRoot=None, rank=0):
     expr = sign + expr
     if need_outter_fence(parentRoot, narr, rank=rank):
         expr = '(' + expr + ')'
+    if tag and root.animation:
+        expr = '`' + expr + '`{' + root.animation + '}'
     return expr
 
 
@@ -466,7 +468,7 @@ if __name__ == '__main__':
         narr = tree2narr(tree)
         print('[narr]', narr)
 
-        tex = narr2tex(narr)
+        tex = narr2tex(narr, tag=True)
         rich.print('[bold yellow]TeX:[/]', end=' ')
         print(tex)
 
