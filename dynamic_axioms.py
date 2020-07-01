@@ -26,9 +26,9 @@ def gen_atom_number(num):
         num = round(num, 3) # avoid infinity decimals
 
     if num >= .0:
-        return [(+1, 'NUMBER'), abs(num)]
+        return [NarrRoot(+1, 'NUMBER'), abs(num)]
     else:
-        return [(-1, 'NUMBER'), abs(num)]
+        return [NarrRoot(-1, 'NUMBER'), abs(num)]
 
 
 def factorizations(num):
