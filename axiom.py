@@ -15,6 +15,8 @@ class Axiom:
         allow_complication=False, strict_simplify=False):
         self.rules = {}
         self.dp = {}
+        self.animation = {}
+        self.animattion_mode = False
         self.narrs = {}
         self.signs = {}
         self.wildcards_idx = {}
@@ -69,10 +71,11 @@ class Axiom:
             return A, B, C
 
 
-    def add_rule(self, src, dest, dynamic_procedure=None):
-        dest = dest if isinstance(dest, list) else [dest]
-        for dest_pattern in dest:
-            A, B, C = self._preprocess(src, dest_pattern)
+    def add_rule(self, src, dest, dynamic_procedure=None, animation=None):
+        dests = dest if isinstance(dest, list) else [dest]
+
+        for i, dest_output in enumerate(dests):
+            A, B, C = self._preprocess(src, dest_output)
 
             for (a, b, signs) in zip(A, B, C):
                 if a not in self.rules:
@@ -80,7 +83,7 @@ class Axiom:
                 elif isinstance(self.rules[a], list):
                     self.rules[a].append(b)
                 else:
-                    self.rules[a] = [self.rules[a], b]
+                    raise Exception('unexpected rule type.')
 
                 self.dp[a] = dynamic_procedure
                 self.signs[a] = signs
@@ -89,6 +92,19 @@ class Axiom:
                 self.narrs[a] = expression.tex2narr(a)
                 self.narrs[b] = expression.tex2narr(b)
                 self.wildcards_idx[a] = get_wildcards_index(self.narrs[a])
+
+            if animation:
+                ani_output = animation[i] if isinstance(dest, list) else animation
+                A, B, _ = self._preprocess(src, ani_output)
+                for (a, b) in zip(A, B):
+                    if a not in self.animation:
+                        self.animation[a] = b
+                    elif isinstance(self.animation[a], list):
+                        self.animation[a].append(b)
+                    else:
+                        raise Exception('unexpected rule type.')
+
+                    self.narrs[b] = expression.tex2narr(b)
 
         return self
 
@@ -105,8 +121,8 @@ class Axiom:
 
     def test(self, tex=None, debug=False, render=True):
         import render_math
-        if len(self.tests) == 0: print('[no test case]')
         tests = self.tests if tex is None else [(tex, None)]
+        if len(tests) == 0: print('[no test case]')
         for test, expect in tests:
             expr = test if isinstance(test, str) else expression.narr2tex(test)
             narr = expression.tex2narr(expr) if isinstance(test, str) else test
@@ -160,6 +176,11 @@ class Axiom:
             if self.dp[k] is not None:
                 retstr += '\033[91m'
                 retstr += ' dynamic_rule'
+                retstr += '\033[0m'
+
+            if k in self.animation:
+                retstr += '\033[94m'
+                retstr += (' animation: %s' % self.animation[k])
                 retstr += '\033[0m'
 
             if i != len(self.rules) - 1: retstr += '\n'
@@ -300,24 +321,24 @@ class Axiom:
             if debug:
                 alpha_prettyprint(rewrite_rules[0])
 
-            dest = self.rules[pattern]
+            dest = self.animattion[pattern] if self.animattion_mode else self.rules[pattern]
             dest_narr = [self.narrs[d] for d in dest] if isinstance(dest, list) else self.narrs[dest]
+
             call = self.dp[pattern]
-            signs = self.signs[pattern]
             if call is not None: # dynamical axiom
+                signs = self.signs[pattern]
                 rewritten_narr, is_applied = call(pattern_narr, signs, narr, rewrite_rules[0], dest_narr)
             else:
-                # apply rewrite rules to destination expression. E.g., (a)^{2} - (b)^{2}
-                dest_narr = self.narrs[dest]
                 rewritten_narr, is_applied = rewrite_by_alpha(dest_narr, rewrite_rules[0]), True
 
             if debug: rich.print('applied:', is_applied)
 
-            # if rules with higher priority get applied, later rules are ignored
+            # if a rule with higher priority get applied, later ones are ignored
             if is_applied:
                 # post processes
                 rewritten_narr = self._fraction_cancel(rewritten_narr)
-                return rewritten_narr, is_applied
+                return rewritten_narr, True
+
         return narr, False
 
 
@@ -410,7 +431,7 @@ class Axiom:
     def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=4, bfs_bandwith=5, level=0):
         # safe guard
         if applied_times >= max_times:
-            return [narr0]
+            return []
 
         # apply at this level for max_times
         Q = [(applied_times, narr0)]
@@ -496,7 +517,8 @@ class Axiom:
 if __name__ == '__main__':
     a = (
         Axiom(name='一个数减去它本身是零', root_sign_reduce=False)
-        .add_rule('#(n - n)', '0')
+        .add_rule('#(0 + n)', 'n', animation='`0`{remove} + n')
+        .add_rule('#(n - 0)', 'n', animation='n - `0`{remove}')
     )
 
-    a.test('1+1', debug=True)
+    a.test('x + 0', debug=False)
