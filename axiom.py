@@ -444,6 +444,7 @@ class Axiom:
         while len(Q) > 0:
             depth, narr = Q.pop(0)
             if depth + 1 > max_times:
+                #rich.print('[red]maxtime[/]', depth)
                 break
 
             narrs = self._level_apply(narr, debug=debug)

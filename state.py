@@ -1,6 +1,7 @@
 import math
 import rich
 import expression
+from copy import deepcopy
 
 def right_padding_zeros(num):
     """
@@ -107,6 +108,9 @@ def value_v1(narr, debug=False):
     """
     计算 表达式的价值（等于各个符号频率的自定义加权和）
     """
+    narr = deepcopy(narr)
+    expression.trim_animations(narr)
+
     if isinstance(narr, str):
         return value(expression.tex2narr(narr))
 
@@ -204,6 +208,9 @@ def collect_stats(narr, stats, level, grandRoot, right_side_of_eq):
 
 
 def value_v2(narr, level=0, debug=False):
+    narr = deepcopy(narr)
+    expression.trim_animations(narr)
+
     stats = {
         'right_side_of_eq': 0,
         'neg': 0,

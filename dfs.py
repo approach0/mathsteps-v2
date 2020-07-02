@@ -121,7 +121,7 @@ def test():
         "(3 + \\frac{4}{17}) (-14\\frac{13}{15} - \\frac{2}{15}) - 2 \times 3 - 2 \\times \\frac{4}{17}",
         "-(3 + \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3 + \\frac{4}{17}) \\times (2\\frac{2}{15})",
 
-        "1 + 0 + 0"
+        "1 + 0 + 0 + 0 + 0"
     ]
 
     begin_from = 0
@@ -136,7 +136,7 @@ def test():
         test_narr = expression.tex2narr(test)
 
         with timer:
-            steps, err = dfs(test_narr, all_axioms, debug=True, maxsteps=0, animattion_mode=True)
+            steps, err = dfs(test_narr, all_axioms, debug=True, animattion_mode=True)
             if err:
                 print('DFS error:', err)
 
@@ -165,7 +165,7 @@ if __name__ == '__main__':
         tex = args[0]
         narr = expression.tex2narr(tex)
         all_axioms = common_axioms()
-        steps, err = dfs(narr, all_axioms, debug=False)
+        steps, err = dfs(narr, all_axioms, debug=False, animattion_mode=True)
 
         if err:
             print(err, file=sys.stderr)
