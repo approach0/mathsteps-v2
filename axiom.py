@@ -132,7 +132,7 @@ class Axiom:
             rich.print('[bold cyan][[test]][/]', end=" ")
             print(expr)
             for applied_narr in possible_applied_narrs:
-                applied_tex = expression.narr2tex(applied_narr)
+                applied_tex = expression.narr2tex(applied_narr, tag=True)
                 print('[result]', applied_tex, end=" ")
                 if expect is not None:
                     if applied_tex in expect:
@@ -321,7 +321,7 @@ class Axiom:
             if debug:
                 alpha_prettyprint(rewrite_rules[0])
 
-            dest = self.animattion[pattern] if self.animattion_mode else self.rules[pattern]
+            dest = self.animation[pattern] if self.animattion_mode else self.rules[pattern]
             dest_narr = [self.narrs[d] for d in dest] if isinstance(dest, list) else self.narrs[dest]
 
             call = self.dp[pattern]
@@ -521,4 +521,5 @@ if __name__ == '__main__':
         .add_rule('#(n - 0)', 'n', animation='n - `0`{remove}')
     )
 
+    #a.animattion_mode = True
     a.test('x + 0', debug=False)
