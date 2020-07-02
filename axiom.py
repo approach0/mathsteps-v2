@@ -5,7 +5,7 @@ import functools
 import expression
 from expression import NarrRoot
 from copy import deepcopy
-from alpha_equiv import rewrite_by_alpha, test_alpha_equiv, alpha_prettyprint, replace_or_pass_children, get_wildcards_index
+from alpha_equiv import rewrite_by_alpha, test_alpha_equiv, alpha_prettyprint
 import numpy as np
 
 
@@ -91,7 +91,7 @@ class Axiom:
                 # cache some results for speedup
                 self.narrs[a] = expression.tex2narr(a)
                 self.narrs[b] = expression.tex2narr(b)
-                self.wildcards_idx[a] = get_wildcards_index(self.narrs[a])
+                self.wildcards_idx[a] = expression.get_wildcards_index(self.narrs[a])
 
             if animation:
                 ani_output = animation[i] if isinstance(dest, list) else animation
@@ -119,7 +119,7 @@ class Axiom:
         return self
 
 
-    def test(self, tex=None, debug=False, render=True):
+    def test(self, tex=None, debug=False, render=True, printNarr=False):
         import render_math
         tests = self.tests if tex is None else [(tex, None)]
         if len(tests) == 0: print('[no test case]')
@@ -131,8 +131,9 @@ class Axiom:
 
             rich.print('[bold cyan][[test]][/]', end=" ")
             print(expr)
+
             for applied_narr in possible_applied_narrs:
-                applied_tex = expression.narr2tex(applied_narr, tag=True)
+                applied_tex = expression.narr2tex(applied_narr)
                 print('[result]', applied_tex, end=" ")
                 if expect is not None:
                     if applied_tex in expect:
@@ -143,7 +144,7 @@ class Axiom:
                     print()
 
                 render_texs.append(applied_tex)
-                #print(applied_narr)
+                if printNarr: expression.narr_prettyprint(applied_narr)
 
             if render:
                 render_math.render_equations(render_texs)
@@ -321,6 +322,10 @@ class Axiom:
             if debug:
                 alpha_prettyprint(rewrite_rules[0])
 
+            if self.animattion_mode and pattern not in self.animation:
+                #raise ValueError(self.name() + ' does not appear to support animation.')
+                return narr, False
+
             dest = self.animation[pattern] if self.animattion_mode else self.rules[pattern]
             dest_narr = [self.narrs[d] for d in dest] if isinstance(dest, list) else self.narrs[dest]
 
@@ -486,7 +491,7 @@ class Axiom:
                         none_applied = False
                         # substitute with sub-routine expression
                         new_narr = deepcopy(narr)
-                        replace_or_pass_children(new_narr, i, applied_narr)
+                        expression.replace_or_pass_children(new_narr, i, applied_narr)
 
                         # ensure "(-(a+b)) x" will become "- (a+b) x"
                         if new_narr[0][1] == 'mul':
@@ -517,9 +522,9 @@ class Axiom:
 if __name__ == '__main__':
     a = (
         Axiom(name='一个数减去它本身是零', root_sign_reduce=False)
-        .add_rule('#(0 + n)', 'n', animation='`0`{remove} + n')
-        .add_rule('#(n - 0)', 'n', animation='n - `0`{remove}')
+        .add_rule('#(0 + n)', 'n', animation='`0`[remove] + n')
+        .add_rule('#(n - 0)', 'n', animation='n - `0`[remove]')
     )
 
-    #a.animattion_mode = True
-    a.test('x + 0', debug=False)
+    a.animattion_mode = True
+    a.test('x + 0', debug=False, printNarr=True)

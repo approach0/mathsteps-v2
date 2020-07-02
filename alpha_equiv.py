@@ -57,19 +57,6 @@ def alpha_universe_add_constraint(alpha_universe, name, narr):
     return len(new_universe) > 0, new_universe
 
 
-def get_wildcards_index(narr):
-    root_sign, root_type = narr[0].get()
-    if root_type not in expression.terminal_tokens():
-        children_tokens = [c[0][1] for c in narr[1:]]
-    else:
-        children_tokens = [narr[0][1]]
-    try:
-        wildcards_index = children_tokens.index('WILDCARDS')
-    except ValueError:
-        wildcards_index = None
-    return wildcards_index
-
-
 def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
     root1, root2 = narr1[0], narr2[0]
     sign1, sign2 = root1[0], root2[0]
@@ -106,7 +93,7 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
         else:
             return alpha_universe_add_constraint(alpha_universe, name1, narr2)
 
-    wildcards_index = get_wildcards_index(narr1)
+    wildcards_index = expression.get_wildcards_index(narr1)
     if root1 != root2:
         return False, []
     elif len(narr1[1:]) != len(narr2[1:]) and wildcards_index is None:
@@ -149,24 +136,6 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
     return len(alpha_universe_new) > 0, alpha_universe_new
 
 
-def replace_or_pass_children(narr, i, substitute):
-    """
-    表达式 narr 的第 i 个子节点，用 substitute 替换。
-    如果表达式有相同的 root 操作符，且满足交换律，则把两个表达式合并。
-    """
-    root = narr[0]
-    sign, Type = root.get()
-    if Type == substitute[0][1] and Type in ['add', 'mul']:
-        del narr[1 + i]
-        new_narr, _ = expression.passchildren(NarrRoot(sign, Type), [substitute])
-        narr[0] = new_narr[0]
-        narr += new_narr[1:]
-    else:
-        # replacement at i
-        narr[1 + i] = substitute
-    return narr
-
-
 def rewrite_by_alpha(narr, alpha):
     """
     按照重写规则 alpha 进行变量替换，重写表达式 narr
@@ -194,7 +163,7 @@ def rewrite_by_alpha(narr, alpha):
         #print(new_narr, i)
         #print(substitute)
         #print()
-        replace_or_pass_children(new_narr, i, substitute)
+        expression.replace_or_pass_children(new_narr, i, substitute)
 
     return new_narr
 

@@ -21,8 +21,8 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='任何数加零还是它本身', recursive_apply=True, root_sign_reduce=False)
-        .add_rule('#(0 + n)', 'n')
-        .add_rule('#(n - 0)', 'n')
+        .add_rule('#(0 + n)', 'n', animation='`0`[remove] + n')
+        .add_rule('#(n - 0)', 'n', animation='n - `0`[remove]')
 
         .add_test('0+3+2')
         .add_test('-(0+3+2)')

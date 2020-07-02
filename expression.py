@@ -290,7 +290,7 @@ def need_outter_fence(root, child_narr, rank=0):
     return True
 
 
-def narr2tex(narr, parentRoot=None, tag=False, rank=0):
+def narr2tex(narr, parentRoot=None, tag=True, rank=0):
     """
     narr (nested array) 换成 TeX
     """
@@ -385,6 +385,19 @@ def narr_prettyprint(narr, level=0):
         narr_prettyprint(c, level + 1)
 
 
+def get_wildcards_index(narr):
+    root_sign, root_type = narr[0].get()
+    if root_type not in terminal_tokens():
+        children_tokens = [c[0][1] for c in narr[1:]]
+    else:
+        children_tokens = [narr[0][1]]
+    try:
+        wildcards_index = children_tokens.index('WILDCARDS')
+    except ValueError:
+        wildcards_index = None
+    return wildcards_index
+
+
 def passchildren(root, children):
     sign, op_type = root.get()
     new_narr = [root.copy()]
@@ -430,6 +443,55 @@ def canonicalize(narr):
         return passchildren(NarrRoot(sign, Type), narr[1:])
 
 
+def replace_or_pass_children(narr, i, substitute):
+    """
+    表达式 narr 的第 i 个子节点，用 substitute 替换。
+    如果表达式有相同的 root 操作符，且满足交换律，则把两个表达式合并。
+    """
+    root = narr[0]
+    sign, Type = root.get()
+    if Type == substitute[0][1] and Type in ['add', 'mul']:
+        new_narr, _ = passchildren(NarrRoot(sign, Type), [substitute])
+        narr[0] = new_narr[0]
+        del narr[1 + i]
+        narr[:] = narr[0: 1 + i] + new_narr[1:] + narr[i + 1:]
+    else:
+        narr[1 + i] = substitute
+    return narr
+
+
+def trim_animations(narr):
+    root = narr[0]
+    sign, token = root.get()
+    root.animation = None
+
+    if token in terminal_tokens():
+        return
+
+    children = narr[1:]
+    for i, child in enumerate(children):
+        child_root = child[0]
+        child_sign, child_token = child_root.get()
+
+        if child_token == 'REPLACE':
+            substitute = child[2]
+            replace_or_pass_children(narr, i, substitute)
+            child = substitute
+        elif child_root.animation in ['remove',  'moveBefore']:
+            narr[1 + i] = None
+            continue
+
+        trim_animations(child)
+
+    # prune None children and if necessary, pass the children of single
+    # commutative operands to its grand father.
+    narr[:] = [x for x in narr if x is not None]
+    if len(narr[1:]) == 0:
+        raise ValueError('trim_animations result in a childless node')
+    elif token in commutative_operators() and len(narr[1:]) == 1:
+        narr[:] = narr[1]
+
+
 if __name__ == '__main__':
     debug = True
     lark = Lark.open('grammar.lark', rel_to=__file__, parser='lalr', debug=debug)
@@ -462,11 +524,13 @@ if __name__ == '__main__':
         '3.2 \\frac{1}{2}',
         '-(-a)b',
         '(-a)b',
+        '`3`[replace]{1+2} + 3',
+        '`(-2)^{2}`[replace]{4} + 1',
         '`(a+b)`[remove]c',
-        '`(-2)^{2}`[replace]{4} + 1'
+        '`3`[remove]'
     ]
 
-    for expr in test_expressions[-2:]:
+    for expr in test_expressions[-3:]:
     #for expr in test_expressions[:]:
         rich.print('[bold yellow]original:[/]', end=' ')
         print(expr, end="\n\n")
@@ -479,9 +543,12 @@ if __name__ == '__main__':
             continue
 
         narr = tree2narr(tree)
-        print('[narr]', narr)
 
-        tex = narr2tex(narr, tag=True)
+        rich.print('[[origin narr]]', narr)
+        trim_animations(narr)
+        rich.print('[[trim narr]]', narr)
+
+        tex = narr2tex(narr)
         rich.print('[bold yellow]TeX:[/]', end=' ')
         print(tex)
 
