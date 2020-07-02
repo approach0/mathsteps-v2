@@ -83,7 +83,7 @@ class Axiom:
                 elif isinstance(self.rules[a], list):
                     self.rules[a].append(b)
                 else:
-                    raise Exception('unexpected rule type.')
+                    self.rules[a] = [self.rules[a], b]
 
                 self.dp[a] = dynamic_procedure
                 self.signs[a] = signs
@@ -102,7 +102,7 @@ class Axiom:
                     elif isinstance(self.animation[a], list):
                         self.animation[a].append(b)
                     else:
-                        raise Exception('unexpected rule type.')
+                        self.animation[a] = [self.animation[a], b]
 
                     self.narrs[b] = expression.tex2narr(b)
 

@@ -205,6 +205,9 @@ class Tree2NestedArr(Transformer):
         x[0][0].animation = name
         return x[0]
 
+    def animation_replace(self, x):
+        return [NarrRoot(+1, 'REPLACE'), x[0], x[1]]
+
 
 def tex_parse(tex):
     """
@@ -236,7 +239,7 @@ def commutative_operators():
 
 
 def binary_operators():
-    return ['div', 'frac', 'sup', 'eq']
+    return ['div', 'frac', 'sup', 'eq', 'REPLACE']
 
 
 def no_permute_tokens():
@@ -334,6 +337,8 @@ def narr2tex(narr, parentRoot=None, tag=False, rank=0):
             expr = expr1 + '^{' + expr2 + '}'
         elif token == 'eq':
             expr = expr1 + ' = ' + expr2
+        elif token == 'REPLACE':
+            expr = '`' + expr1 + '`[replace]{' + expr2 + '}'
         else:
             raise Exception('unexpected token: ' + token)
 
@@ -359,7 +364,7 @@ def narr2tex(narr, parentRoot=None, tag=False, rank=0):
     if need_outter_fence(parentRoot, narr, rank=rank):
         expr = '(' + expr + ')'
     if tag and root.animation:
-        expr = '`' + expr + '`{' + root.animation + '}'
+        expr = '`' + expr + '`[' + root.animation + ']'
     return expr
 
 
@@ -457,11 +462,11 @@ if __name__ == '__main__':
         '3.2 \\frac{1}{2}',
         '-(-a)b',
         '(-a)b',
-        '`(a+b)`{remove}c',
-        '`5`{replaceAfter} + 1'
+        '`(a+b)`[remove]c',
+        '`(-2)^{2}`[replace]{4} + 1'
     ]
 
-    for expr in test_expressions[-1:]:
+    for expr in test_expressions[-2:]:
     #for expr in test_expressions[:]:
         rich.print('[bold yellow]original:[/]', end=' ')
         print(expr, end="\n\n")

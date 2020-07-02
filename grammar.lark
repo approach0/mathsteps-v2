@@ -27,7 +27,8 @@
      | "(" sum ")"                        -> grp
      | "[" sum "]"                        -> grp
      | "\\left" "|" sum "\\right" "|"     -> abs
-     | "`" sum "`{" STRING "}"            -> animation
+     | "`" sum "`[" STRING "]"            -> animation
+     | "`" sum "`[replace]{" sum "}"      -> animation_replace
 
 VAR: "a".."z" | "A".."Z"
 ASTERISK: "*"

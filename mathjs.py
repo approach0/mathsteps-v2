@@ -2,14 +2,13 @@ from lark import Lark, UnexpectedInput
 from lark import Transformer
 import rich
 import json
-import animation
 
 lark = Lark.open('grammar.lark', rel_to=__file__, parser='lalr', debug=False)
 
 class Tree2MathJS(Transformer):
 
     @staticmethod
-    def gen_object(x, op=None):
+    def gen_object(x, op=None, animation_name=None):
         if isinstance(x, float):
             obj = {
                 "mathjs": "ConstantNode",
@@ -106,12 +105,51 @@ class Tree2MathJS(Transformer):
             elif op == 'grp':
                 obj = {
                   "mathjs": "ParenthesisNode",
-                  "content": {
-                    x[0]
-                  }
+                  "content": x[0]
+                }
+            elif op == 'add':
+                obj = x[0]
+                obj['变化'] = {
+                    '类型': 'ani-add',
+                    '范围': '全'
+                }
+            elif op == 'remove':
+                obj = x[0]
+                obj['变化'] = {
+                    '类型': 'ani-remove',
+                    '范围': '全'
+                }
+            elif op == 'moveBefore':
+                obj = x[0]
+                obj['变化'] = {
+                    '类型': 'ani-move-before',
+                    '范围': '全',
+                    '组': 'ani-pair-no-1'
+                }
+            elif op == 'moveAfter':
+                obj = x[0]
+                obj['变化'] = {
+                    '类型': 'ani-move-after',
+                    '范围': '全',
+                    '组': 'ani-pair-no-1'
+                }
+            elif op == 'REPLACE':
+                obj = x[0]
+                subst = x[1]
+                obj['变化'] = {
+                    '类型': 'ani-replaceBefore',
+                    '范围': '全',
+                    '组': 'ani-pair-no-1',
+                    '替换为': subst
+                }
+                subst['变化'] = {
+                    '类型': 'ani-replaceAfter',
+                    '范围': '全',
+                    '组': 'ani-pair-no-1'
                 }
             else:
                 raise Exception('unexpected op: ' + op)
+
 
         return obj
 
@@ -174,8 +212,12 @@ class Tree2MathJS(Transformer):
 
     def animation(self, x):
         name = str(x[1])
-        x[0]['animation'] = animation.translate(name)
-        return x[0]
+        y = self.gen_object(x, op=name)
+        return y
+
+    def animation_replace(self, x):
+        y = self.gen_object(x, op='REPLACE')
+        return y
 
 
 def tex2mathjs(tex):
@@ -183,7 +225,7 @@ def tex2mathjs(tex):
 
 
 def mathjs2json(mathjs_obj, indent=None):
-    return json.dumps(mathjs_obj, indent=indent)
+    return json.dumps(mathjs_obj, indent=indent, ensure_ascii=False)
 
 
 def tex2json(tex, indent=None):
@@ -197,15 +239,13 @@ if __name__ == '__main__':
     from dfs import dfs
     import expression
 
-    #tex = '1 + 2 + a'
-    #tex = '-1+2 = x'
-    #tex = '3x + 1x + 2 \\times 3'
-    #tex = '1 \div 2x + \\frac{1}{x}'
-    #tex = 'a^{2}'
-    #tex = '\\sqrt{2}'
-    #tex = '\\left| -2 \\right|'
-    tex = 'a+(1+0)'
+    test_expressions = [
+        '-(a+b)',
+        '`(a+b)`[remove]c',
+        '`(-2)^{2}`[replace]{4} + 1'
+    ]
 
-    mathjs_obj = tex2mathjs(tex)
-    json_str = mathjs2json(mathjs_obj, indent=2)
-    print(json_str)
+    for tex in test_expressions[-1:]:
+        mathjs_obj = tex2mathjs(tex)
+        json_str = mathjs2json(mathjs_obj, indent=2)
+        print(json_str)
