@@ -119,7 +119,7 @@ class Axiom:
         return self
 
 
-    def test(self, tex=None, debug=False, render=True, printNarr=False):
+    def test(self, tex=None, debug=False, render=True, printNarr=False, printTrim=False):
         import render_math
         tests = self.tests if tex is None else [(tex, None)]
         if len(tests) == 0: print('[no test case]')
@@ -144,7 +144,12 @@ class Axiom:
                     print()
 
                 render_texs.append(applied_tex)
-                if printNarr: expression.narr_prettyprint(applied_narr)
+                if printNarr:
+                    expression.narr_prettyprint(applied_narr)
+                if printTrim:
+                    rich.print("[red]trim[/]:")
+                    expression.trim_animations(applied_narr)
+                    expression.narr_prettyprint(applied_narr)
 
             if render:
                 render_math.render_equations(render_texs)
@@ -522,9 +527,13 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='带分式的展开', allow_complication=True)
-        .add_rule('# & \\frac{a}{b}', '#1 (v + \\frac{a}{b})', animation="#1 `v \\frac{a}{b}`[replace]{v + \\frac{a}{b}}")
+        Axiom(name='任何数乘以零还是零', recursive_apply=True)
+        .add_rule('# 0 \cdot *{1}', '0', animation='`#1 0 \cdot *{1}`[replace]{0}')
+        .add_rule('#\\frac{#0}{x}', '0', animation='`#1 \\frac{#2 0}{x}`[replace]{0}')
+
+        .add_test('0 a b')
     )
 
     a.animation_mode = True
-    a.test('2 \\frac{1}{2}', debug=False, printNarr=True)
+    #a.test('2 -3 \\frac{-2}{4}', debug=False, printNarr=True, printTrim=True)
+    a.test(debug=False, printNarr=True, printTrim=True)

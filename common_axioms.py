@@ -12,6 +12,23 @@ def common_axioms(full=False):
     axioms.append(dynamic_axioms.canonicalize)
 
     axioms.append(
+        Axiom(name='一个数减去它本身是零', root_sign_reduce=False)
+        .add_rule('#(n - n)', '0', animation='`#1(n - n)`[replace]{0}')
+        .add_rule('#(a - \\frac{a}{1})', '0', animation='`#1(a - \\frac{a}{1})`[replace]{0}')
+        .add_rule('#(\\frac{a}{1} - a)', '0', animation='`#1(\\frac{a}{1} - a)`[replace]{0}')
+
+        .add_test('-(3 - 3 + 1)')
+    )
+
+    axioms.append(
+        Axiom(name='任何数乘以零还是零', recursive_apply=True)
+        .add_rule('# 0 \cdot *{1}', '0', animation='`#1 0 \cdot *{1}`[replace]{0}')
+        .add_rule('#\\frac{#0}{x}', '0', animation='`#1 \\frac{#2 0}{x}`[replace]{0}')
+
+        .add_test('0 a b')
+    )
+
+    axioms.append(
         Axiom(name='带分式的展开', allow_complication=True)
         .add_rule('# & \\frac{a}{b}', '#1 (v + \\frac{a}{b})', animation="#1 `& \\frac{a}{b}`[replace]{v + \\frac{a}{b}}")
 
@@ -26,21 +43,6 @@ def common_axioms(full=False):
 
         .add_test('0+3+2')
         .add_test('-(0+3+2)')
-    )
-
-    axioms.append(
-        Axiom(name='一个数减去它本身是零', root_sign_reduce=False)
-        .add_rule('#(n - n)', '0')
-        .add_rule('#(a - \\frac{a}{1})', '0')
-        .add_rule('#(\\frac{a}{1} - a)', '0')
-
-        .add_test('-(3 - 3 + 1)')
-    )
-
-    axioms.append(
-        Axiom(name='任何数乘以零还是零', recursive_apply=True)
-        .add_rule('# 0 \cdot *{1}', '0')
-        .add_rule('#\\frac{#0}{x}', '0')
     )
 
     axioms.append(
