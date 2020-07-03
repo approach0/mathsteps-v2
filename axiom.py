@@ -533,13 +533,13 @@ class Axiom:
 if __name__ == '__main__':
     a = (
         Axiom(name='test', recursive_apply=True)
-        .add_rule('2x', 'x + x', animation='`2x`[remove] + `x`[add] + `x`[add]')
+        .add_rule('# x \\div (# \\frac{y}{z})', '#0 \\frac{xz}{y}',
+        animation='#0 `x`[moveBefore,3] \\div \\frac{`y`[moveBefore,1] `z`[moveAfter,2] `x`[moveAfter,3]}{`z`[moveBefore,2] `y`[moveAfter,1]}')
 
-        .add_test('1 + 2b')
-        #.add_test('\\frac{2}{3} \div \\frac{4}{5}')
+        .add_test('2 \div \\frac{4}{5}')
     )
 
     a.animation_mode = True
 
     #a.test('2 -3 \\frac{-2}{4}', debug=False, printNarr=True, printTrim=True)
-    a.test(debug=True, printNarr=True, printTrim=False)
+    a.test(debug=True, printNarr=True, printTrim=True)

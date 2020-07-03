@@ -81,7 +81,8 @@ def common_axioms(full=False):
         Axiom(name='除以一个数等于乘上它的倒数', allow_complication=True)
         .add_rule('# (#\\frac{w}{x}) \\div (# \\frac{y}{z})', '#0 \\frac{wz}{xy}',
         animation='#0 (\\frac{w`z`[moveAfter,1]}{x`y`[moveAfter,2]}) \\div (\\frac{`y`[moveBefore,2]}{`z`[moveBefore,1]})')
-        .add_rule('# x \\div (# \\frac{y}{z})', '#0 \\frac{xz}{y}')
+        .add_rule('# x \\div (# \\frac{y}{z})', '#0 \\frac{xz}{y}',
+        animation='#0 `x`[moveBefore,3] \\div \\frac{`y`[moveBefore,1] `z`[moveAfter,2] `x`[moveAfter,3]}{`z`[moveBefore,2] `y`[moveAfter,1]}')
 
         .add_test('- 3 \\div (-\\frac{1}{2})', '-\\frac{3 \\times 2}{1}')
         .add_test('\\frac{2}{3} \div \\frac{4}{5}')

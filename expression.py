@@ -1,5 +1,6 @@
 from lark import Lark, UnexpectedInput
 from lark import Transformer
+from copy import deepcopy
 import rich
 
 
@@ -529,7 +530,14 @@ def trim_animations(narr, top_root=True):
         if token in commutative_operators():
             narr[:] = narr[1]
         elif token in binary_operators():
-            raise ValueError('trim_animations: binary operator has single child.')
+            narr[:] = narr[1]
+        else:
+            raise ValueError(f'trim_animations: unhandled operator {token} has single child.')
+
+def trim_animations_copy(narr):
+    narr = deepcopy(narr)
+    trim_animations(narr)
+    return narr
 
 
 if __name__ == '__main__':
