@@ -47,7 +47,7 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='一乘以任何数还是它本身', recursive_apply=True)
-        .add_rule('# 1 \\times *{1}', '#1 *{1}')
+        .add_rule('# 1 \\times *{1}', '#1 *{1}', animation='#1 `1`[remove] *{1}')
 
         .add_test('1 \cdot 4', '4')
         .add_test('-4 \\times 1', '-4')

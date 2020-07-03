@@ -246,6 +246,23 @@ def tex2json(tex, indent=None):
     return json
 
 
+def mathjs_fixhole(mathjs_obj):
+    Type = mathjs_obj['mathjs']
+    print(Type)
+
+    if Type == 'SymbolNode':
+        return
+    elif Type == 'ConstantNode':
+        return
+    elif Type == 'ParenthesisNode':
+        children = [mathjs_obj['content']]
+    else:
+        children = mathjs_obj['args']
+
+    for child in children:
+        mathjs_fixhole(child)
+
+
 if __name__ == '__main__':
     from common_axioms import common_axioms
     from dfs import dfs
@@ -253,11 +270,13 @@ if __name__ == '__main__':
 
     test_expressions = [
         '-(a+b)',
+        '`(-2)^{2}`[replace]{4} + 1',
         '`(a+b)`[remove]c',
-        '`(-2)^{2}`[replace]{4} + 1'
     ]
 
     for tex in test_expressions[-1:]:
         mathjs_obj = tex2mathjs(tex)
-        json_str = mathjs2json(mathjs_obj, indent=2)
-        print(json_str)
+        mathjs_fixhole(mathjs_obj)
+
+        #json_str = mathjs2json(mathjs_obj, indent=2)
+        #print(json_str)
