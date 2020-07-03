@@ -517,14 +517,19 @@ def trim_animations(narr, top_root=True):
             continue
 
         trim_animations(child, top_root=False)
+        if len(child) == 0:
+            narr[1 + i] = None
 
     # prune None children and if necessary, pass the children of single
     # commutative operands to its grand father.
     narr[:] = [x for x in narr if x is not None]
     if len(narr[1:]) == 0:
-        raise ValueError('trim_animations result in a childless node')
-    elif token in commutative_operators() and len(narr[1:]) == 1:
-        narr[:] = narr[1]
+        narr[:] = []
+    elif len(narr[1:]) == 1:
+        if token in commutative_operators():
+            narr[:] = narr[1]
+        elif token in binary_operators():
+            raise ValueError('trim_animations: binary operator has single child.')
 
 
 if __name__ == '__main__':
