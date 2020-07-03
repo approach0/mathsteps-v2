@@ -329,11 +329,12 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() in ['一的平方还是一']:
+        #if axiom.name() in ['一的平方还是一']:
+        if len(axiom.animation) > 0:
             #import cProfile
             #cProfile.run('axiom.test(debug=False)')
             rich.print(f'[red]{axiom.name()}[/]')
             axiom.animation_mode = True
-            axiom.test(debug=False, printNarr=True, printTrim=True)
+            axiom.test(debug=False, printNarr=False, printTrim=False)
 
     print(f'total {len(axioms)} axioms.')

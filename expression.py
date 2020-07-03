@@ -271,7 +271,9 @@ def need_inner_fence(narr):
 
     if debug: print('inner fence?', narr)
 
-    if sign < 0 and len(narr) > 2: # non-unary
+    if Type == 'REPLACE':
+        return False
+    elif sign < 0 and len(narr) > 2: # non-unary
         if Type in ['mul', 'frac', 'sup', 'ifrac']:
             return False
         else:
@@ -385,7 +387,7 @@ def narr2tex(narr, parentRoot=None, tag=True, rank=0):
     if need_outter_fence(parentRoot, narr, rank=rank):
         expr = '(' + expr + ')'
     if tag and root.animation:
-        if root.animation is None:
+        if root.animatGrp is None:
             expr = '`' + expr + '`[' + root.animation + ']'
         else:
             expr = '`' + expr + '`[' + root.animation + ',' + str(root.animatGrp) + ']'
@@ -565,6 +567,7 @@ if __name__ == '__main__':
         '(\sqrt{2})^{2}',
         'a -`2`[moveAfter,2] = `2`[moveBefore,2] + `0`[add]',
         '1+`(-a)^{2}`[add]',
+        '- `1^{2}`[replace]{1}',
     ]
 
     for expr in test_expressions[-1:]:
