@@ -3,6 +3,7 @@ import rich
 import axiom
 import state
 import sys
+import mathjs
 from copy import deepcopy
 from axiom import Axiom
 from timer import Timer
@@ -163,7 +164,6 @@ def test():
 
 if __name__ == '__main__':
     from common_axioms import common_axioms
-    import mathjs
 
     args = sys.argv[1:]
     if len(args) > 0:
@@ -190,7 +190,7 @@ if __name__ == '__main__':
             })
 
         import json
-        print(json.dumps(ret_arr))
+        print(json.dumps(ret_arr, ensure_ascii=False))
 
     else:
         #import cProfile

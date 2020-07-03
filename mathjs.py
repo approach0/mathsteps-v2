@@ -1,5 +1,6 @@
 from lark import Lark, UnexpectedInput
 from lark import Transformer
+from copy import deepcopy
 import rich
 import json
 
@@ -241,26 +242,41 @@ def mathjs2json(mathjs_obj, indent=None):
 
 
 def tex2json(tex, indent=None):
-    mathjs = tex2mathjs(tex)
-    json = mathjs2json(mathjs, indent=indent)
+    mathjs_obj = tex2mathjs(tex)
+    mathjs_fixhole(mathjs_obj)
+    json = mathjs2json(mathjs_obj, indent=indent)
     return json
 
 
-def mathjs_fixhole(mathjs_obj):
-    Type = mathjs_obj['mathjs']
-    print(Type)
+def mathjs_hole_types():
+    return [
+        'ani-add',
+        'ani-remove',
+        'ani-move-before',
+        'ani-move-after'
+    ]
+
+
+def mathjs_fixhole(obj, father_obj=None, rank=0):
+    Type = obj['mathjs']
+
+    if '变化' in obj:
+        ani_type = obj['变化']['类型']
+        if ani_type in mathjs_hole_types():
+            father_obj['变化'] = deepcopy(obj['变化'])
+            father_obj['变化']['范围'] = '左' if rank == 0 else '右'
 
     if Type == 'SymbolNode':
         return
     elif Type == 'ConstantNode':
         return
     elif Type == 'ParenthesisNode':
-        children = [mathjs_obj['content']]
+        children = [obj['content']]
     else:
-        children = mathjs_obj['args']
+        children = obj['args']
 
-    for child in children:
-        mathjs_fixhole(child)
+    for i, child in enumerate(children):
+        mathjs_fixhole(child, father_obj=obj, rank=i)
 
 
 if __name__ == '__main__':
@@ -277,6 +293,5 @@ if __name__ == '__main__':
     for tex in test_expressions[-1:]:
         mathjs_obj = tex2mathjs(tex)
         mathjs_fixhole(mathjs_obj)
-
-        #json_str = mathjs2json(mathjs_obj, indent=2)
-        #print(json_str)
+        json_str = mathjs2json(mathjs_obj, indent=2)
+        print(json_str)
