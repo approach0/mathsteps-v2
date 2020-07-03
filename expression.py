@@ -527,10 +527,9 @@ def trim_animations(narr, top_root=True):
     if len(narr[1:]) == 0:
         narr[:] = []
     elif len(narr[1:]) == 1:
-        if token in commutative_operators():
+        if token in (commutative_operators() + binary_operators()):
             narr[:] = narr[1]
-        elif token in binary_operators():
-            narr[:] = narr[1]
+            narr[0][0] *= sign
         else:
             raise ValueError(f'trim_animations: unhandled operator {token} has single child.')
 
