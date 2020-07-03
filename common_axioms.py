@@ -57,12 +57,15 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='根号的平方是其本身')
-        .add_rule('#(#\\sqrt{x})^{2}', '#1 x')
+        .add_rule('#(#\\sqrt{x})^{2}', '#1 x', animation='#1 `(#2\\sqrt{x})^{2}`[replace]{x}')
     )
 
     axioms.append(
         Axiom(name='一的平方还是一')
-        .add_rule('#(# 1)^{2}', '#1 1')
+        .add_rule('#(# 1)^{2}', '#1 1', animation='#1 `(#2 1)^{2}`[replace]{1}')
+
+        .add_test('-1^{2}')
+        .add_test('(-1)^{2}')
     )
 
     axioms.append(
@@ -322,12 +325,13 @@ if __name__ == '__main__':
     axioms = common_axioms(full=True)
 
     for i, axiom in enumerate(axioms):
-        print(f'#{i}', axiom, end="\n\n")
+        #print(f'#{i}', axiom, end="\n\n")
 
-        if True or axiom.name() in ['以分数表示除法']:
+        if axiom.name() in ['一的平方还是一']:
             #import cProfile
             #cProfile.run('axiom.test(debug=False)')
             rich.print(f'[red]{axiom.name()}[/]')
-            axiom.test(debug=False)
+            axiom.animation_mode = True
+            axiom.test(debug=False, printNarr=True, printTrim=True)
 
     print(f'total {len(axioms)} axioms.')
