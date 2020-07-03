@@ -16,7 +16,7 @@ class Axiom:
         self.rules = {}
         self.dp = {}
         self.animation = {}
-        self.animattion_mode = False
+        self.animation_mode = False
         self.narrs = {}
         self.signs = {}
         self.wildcards_idx = {}
@@ -322,11 +322,11 @@ class Axiom:
             if debug:
                 alpha_prettyprint(rewrite_rules[0])
 
-            if self.animattion_mode and pattern not in self.animation:
+            if self.animation_mode and pattern not in self.animation:
                 #raise ValueError(self.name() + ' does not appear to support animation.')
                 return narr, False
 
-            dest = self.animation[pattern] if self.animattion_mode else self.rules[pattern]
+            dest = self.animation[pattern] if self.animation_mode else self.rules[pattern]
             dest_narr = [self.narrs[d] for d in dest] if isinstance(dest, list) else self.narrs[dest]
 
             call = self.dp[pattern]
@@ -514,7 +514,7 @@ class Axiom:
 
 
     def apply(self, narr, debug=False):
-        if self.recursive_apply:
+        if self.recursive_apply and not self.animation_mode:
             return self._recursive_apply(narr, debug=debug, bfs_bandwith=1)
         else:
             return self._recursive_apply(narr, debug=debug, max_times=1)
@@ -522,10 +522,9 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='一个数减去它本身是零', root_sign_reduce=False)
-        .add_rule('#(0 + n)', 'n', animation='`0`[remove] + n')
-        .add_rule('#(n - 0)', 'n', animation='n - `0`[remove]')
+        Axiom(name='带分式的展开', allow_complication=True)
+        .add_rule('# & \\frac{a}{b}', '#1 (v + \\frac{a}{b})', animation="#1 `v \\frac{a}{b}`[replace]{v + \\frac{a}{b}}")
     )
 
-    a.animattion_mode = True
-    a.test('x + 0', debug=False, printNarr=True)
+    a.animation_mode = True
+    a.test('2 \\frac{1}{2}', debug=False, printNarr=True)

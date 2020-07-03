@@ -7,7 +7,7 @@ from copy import deepcopy
 from axiom import Axiom
 from timer import Timer
 
-def possible_next_steps(narr, axioms, state_value, animattion_mode=False,
+def possible_next_steps(narr, axioms, state_value, animation_mode=False,
                         debug=False, restrict_rules=None, fast_return=False):
     return_steps = []
     if debug:
@@ -17,7 +17,7 @@ def possible_next_steps(narr, axioms, state_value, animattion_mode=False,
         print(tex)
 
     for axiom_idx, axiom in enumerate(axioms):
-        axiom.animattion_mode = animattion_mode
+        axiom.animation_mode = animation_mode
         possible_applied_narrs = axiom.apply(narr)
         #print(axiom.name(), len(possible_applied_narrs))
 
@@ -62,7 +62,7 @@ def possible_next_steps(narr, axioms, state_value, animattion_mode=False,
     return return_steps
 
 
-def dfs(narr, axioms, debug=False, maxsteps=150, animattion_mode=False):
+def dfs(narr, axioms, debug=False, maxsteps=150, animation_mode=False):
     any_err = None
     try:
         next_steps = [(narr, Axiom(name='原式'), -1)]
@@ -72,12 +72,13 @@ def dfs(narr, axioms, debug=False, maxsteps=150, animattion_mode=False):
             narr, axiom, axiom_idx = next_steps[0]
 
             output_narr = deepcopy(narr)
-            if animattion_mode:
+            if animation_mode:
                 expression.trim_animations(narr)
+                if debug: print('[trim]', expression.narr2tex(narr))
 
             return_steps.append((output_narr, axiom, axiom_idx))
             next_steps = possible_next_steps(narr, axioms, state.value_v1,
-                animattion_mode=animattion_mode, fast_return=True, debug=debug)
+                animation_mode=animation_mode, fast_return=True, debug=debug)
             if cnt > maxsteps:
                 any_err = "maximum steps reached."
                 break
@@ -121,7 +122,9 @@ def test():
         "(3 + \\frac{4}{17}) (-14\\frac{13}{15} - \\frac{2}{15}) - 2 \times 3 - 2 \\times \\frac{4}{17}",
         "-(3 + \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3 + \\frac{4}{17}) \\times (2\\frac{2}{15})",
 
-        "1 + 0 + 0 + 0 + 0"
+        # some animation testcases
+        "1 + 0 + 0 + 0 + 0",
+        '-3 \\frac{-2}{4}'
     ]
 
     begin_from = 0
@@ -136,14 +139,16 @@ def test():
         test_narr = expression.tex2narr(test)
 
         with timer:
-            steps, err = dfs(test_narr, all_axioms, debug=True, animattion_mode=True)
+            steps, err = dfs(test_narr, all_axioms, debug=True, animation_mode=True)
             if err:
                 print('DFS error:', err)
 
         for narr, a, ai in steps:
             rich.print(f'[red]{a.name()}')
-            print('\t', expression.narr2tex(narr))
-            #print(narr, end='\n\n')
+            tex = expression.narr2tex(narr)
+            print('\t', tex)
+            animation_json = mathjs.tex2json(tex)
+            print('\t', animation_json)
 
         render_steps(steps)
 
@@ -165,7 +170,7 @@ if __name__ == '__main__':
         tex = args[0]
         narr = expression.tex2narr(tex)
         all_axioms = common_axioms()
-        steps, err = dfs(narr, all_axioms, debug=False, animattion_mode=True)
+        steps, err = dfs(narr, all_axioms, debug=False, animation_mode=True)
 
         if err:
             print(err, file=sys.stderr)

@@ -76,6 +76,14 @@ class Tree2MathJS(Transformer):
                     "implicit": False,
                     "args": [x[0], x[1]]
                 }
+            elif op == 'ifrac':
+                obj = {
+                    "mathjs": "OperatorNode",
+                    "op": "ifrac",
+                    "fn": "ifrac",
+                    "implicit": False,
+                    "args": [x[0], x[1], x[2]]
+                }
             elif op == 'sup':
                 obj = {
                     "mathjs": "OperatorNode",
@@ -192,6 +200,10 @@ class Tree2MathJS(Transformer):
 
     def frac(self, x):
         y = self.gen_object(x, op='div')
+        return y
+
+    def ifrac(self, x):
+        y = self.gen_object(x, op='ifrac')
         return y
 
     def sqrt(self, x):

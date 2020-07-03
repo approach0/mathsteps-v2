@@ -13,7 +13,7 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='带分式的展开', allow_complication=True)
-        .add_rule('# & \\frac{a}{b}', '#1 (v + \\frac{a}{b})')
+        .add_rule('# & \\frac{a}{b}', '#1 (v + \\frac{a}{b})', animation="#1 `& \\frac{a}{b}`[replace]{v + \\frac{a}{b}}")
 
         .add_test('-3 \\frac{-2}{4}', '-(3 + \\frac{-2}{4})')
         .add_test('-3 \\frac{1}{2}', '-(3 + \\frac{1}{2})')
