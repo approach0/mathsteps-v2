@@ -465,7 +465,7 @@ def trim_animations(narr, top_root=True):
     sign, token = root.get()
 
     if top_root and token == 'REPLACE':
-        pseudo_narr = [NarrRoot(+1, 'add'), narr]
+        pseudo_narr = [NarrRoot(sign, 'add'), narr]
         trim_animations(pseudo_narr)
         narr[:] = pseudo_narr
         return
@@ -482,6 +482,7 @@ def trim_animations(narr, top_root=True):
 
         if child_token == 'REPLACE':
             substitute = child[2]
+            substitute[0].sign *= child_sign
             replace_or_pass_children(narr, i, substitute)
             child = substitute
         elif child_root.animation in ['remove',  'moveBefore']:
