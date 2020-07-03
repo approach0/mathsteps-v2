@@ -460,9 +460,16 @@ def replace_or_pass_children(narr, i, substitute):
     return narr
 
 
-def trim_animations(narr):
+def trim_animations(narr, top_root=True):
     root = narr[0]
     sign, token = root.get()
+
+    if top_root and token == 'REPLACE':
+        pseudo_narr = [NarrRoot(+1, 'add'), narr]
+        trim_animations(pseudo_narr)
+        narr[:] = pseudo_narr
+        return
+
     root.animation = None
 
     if token in terminal_tokens():
@@ -481,7 +488,7 @@ def trim_animations(narr):
             narr[1 + i] = None
             continue
 
-        trim_animations(child)
+        trim_animations(child, top_root=False)
 
     # prune None children and if necessary, pass the children of single
     # commutative operands to its grand father.
@@ -525,12 +532,13 @@ if __name__ == '__main__':
         '-(-a)b',
         '(-a)b',
         '`3`[replace]{1+2} + 3',
-        '`(-2)^{2}`[replace]{4} + 1',
         '`(a+b)`[remove]c',
-        '`3`[remove]'
+        '`3`[remove]',
+        '-(`(3\\frac{-2}{4})`[replace]{(3 + 2)})',
+        '`(-2)^{2}`[replace]{4} + 1',
     ]
 
-    for expr in test_expressions[-3:]:
+    for expr in test_expressions[-2:]:
     #for expr in test_expressions[:]:
         rich.print('[bold yellow]original:[/]', end=' ')
         print(expr, end="\n\n")
