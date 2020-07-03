@@ -83,7 +83,7 @@
     </mu-row>
 
     <div v-if="debug">
-      <pre>{{step.animate_tex}}</pre>
+      <pre style="display:inline-block; font-weight: 800">{{step.animate_tex}}</pre>
     </div>
     <div v-if="debug">
         <pre>{{step.animate_json}}</pre>
