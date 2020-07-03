@@ -276,6 +276,8 @@ def need_outter_fence(root, child_narr, rank=0):
         return False
     elif root[1] in ['frac', 'ifrac', 'abs', 'sqrt', 'add', 'eq']:
         return False
+    elif root[1] == 'sup' and child_root[1] == 'sqrt':
+        return True
     elif child_root[0] == +1:
         if len(child_narr) <= 2: # unary
             return False
@@ -283,6 +285,8 @@ def need_outter_fence(root, child_narr, rank=0):
             return True
         elif child_root[1] in ['frac', 'sup']:
             return False
+        return True
+
     #elif child_root[0] == -1:
     #    if root[1] == 'mul' and root[0] > 0 and rank == 1:
     #        return False
@@ -537,9 +541,10 @@ if __name__ == '__main__':
         '`3`[remove]',
         '-(`(3\\frac{-2}{4})`[replace]{(3 + 2)})',
         '`(-2)^{2}`[replace]{4} + 1',
+        '(\sqrt{2})^{2}'
     ]
 
-    for expr in test_expressions[-2:]:
+    for expr in test_expressions[-1:]:
     #for expr in test_expressions[:]:
         rich.print('[bold yellow]original:[/]', end=' ')
         print(expr, end="\n\n")
