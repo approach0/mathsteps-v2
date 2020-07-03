@@ -131,10 +131,13 @@ class Axiom:
 
             rich.print('[bold cyan][[test]][/]', end=" ")
             print(expr)
+            #if printNarr:
+            #    expression.narr_prettyprint(narr)
 
             for applied_narr in possible_applied_narrs:
                 applied_tex = expression.narr2tex(applied_narr)
-                print('[result]', applied_tex, end=" ")
+                rich.print('[bold cyan][[result]][/]', end=" ")
+                print(applied_tex, end=" ")
                 if expect is not None:
                     if applied_tex in expect:
                         rich.print('[bold green]pass[/]')
@@ -341,7 +344,9 @@ class Axiom:
             else:
                 rewritten_narr, is_applied = rewrite_by_alpha(dest_narr, rewrite_rules[0]), True
 
-            if debug: rich.print('applied:', is_applied)
+            if debug:
+                rich.print('applied:', is_applied, end=': ')
+                print(rewritten_narr)
 
             # if a rule with higher priority get applied, later ones are ignored
             if is_applied:
@@ -527,13 +532,14 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='任何数乘以零还是零', recursive_apply=True)
-        .add_rule('# 0 \cdot *{1}', '0', animation='`#1 0 \cdot *{1}`[replace]{0}')
-        .add_rule('#\\frac{#0}{x}', '0', animation='`#1 \\frac{#2 0}{x}`[replace]{0}')
+        Axiom(name='test', recursive_apply=True)
+        .add_rule('2x', 'x + x', animation='`2x`[remove] + `x`[add] + `x`[add]')
 
-        .add_test('0 a b')
+        .add_test('1 + 2b')
+        #.add_test('\\frac{2}{3} \div \\frac{4}{5}')
     )
 
     a.animation_mode = True
+
     #a.test('2 -3 \\frac{-2}{4}', debug=False, printNarr=True, printTrim=True)
-    a.test(debug=False, printNarr=True, printTrim=True)
+    a.test(debug=True, printNarr=True, printTrim=False)

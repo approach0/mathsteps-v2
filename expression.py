@@ -37,6 +37,8 @@ class NarrRoot():
             return self.Type
         elif idx == 2:
             return self.animation
+        elif idx == 3:
+            return self.animatGrp
         else:
             raise ValueError('NarrRoot get index out of bound.')
 
@@ -47,6 +49,8 @@ class NarrRoot():
             self.Type = value
         elif idx == 2:
             self.animation = value
+        elif idx == 3:
+            self.animatGrp = value
         else:
             raise ValueError('NarrRoot set index out of bound.')
 
@@ -55,7 +59,10 @@ class NarrRoot():
 
     def copy(self):
         sign, Type = self.get()
-        return NarrRoot(sign, Type)
+        new_root = NarrRoot(sign, Type)
+        new_root.animation = self.animation
+        new_root.animatGrp = self.animatGrp
+        return new_root
 
 
 class Tree2NestedArr(Transformer):
@@ -378,7 +385,7 @@ def narr2tex(narr, parentRoot=None, tag=True, rank=0):
     if need_outter_fence(parentRoot, narr, rank=rank):
         expr = '(' + expr + ')'
     if tag and root.animation:
-        if root.animatGrp is None:
+        if root.animation is None:
             expr = '`' + expr + '`[' + root.animation + ']'
         else:
             expr = '`' + expr + '`[' + root.animation + ',' + str(root.animatGrp) + ']'
@@ -466,9 +473,9 @@ def replace_or_pass_children(narr, i, substitute):
     如果表达式有相同的 root 操作符，且满足交换律，则把两个表达式合并。
     """
     root = narr[0]
-    sign, Type = root.get()
+    _, Type = root.get()
     if Type == substitute[0][1] and Type in ['add', 'mul']:
-        new_narr, _ = passchildren(NarrRoot(sign, Type), [substitute])
+        new_narr, _ = passchildren(root.copy(), [substitute])
         narr[0] = new_narr[0]
         del narr[1 + i]
         narr[:] = narr[0: 1 + i] + new_narr[1:] + narr[i + 1:]
@@ -556,7 +563,8 @@ if __name__ == '__main__':
         '-(`(3\\frac{-2}{4})`[replace]{(3 + 2)})',
         '`(-2)^{2}`[replace]{4} + 1',
         '(\sqrt{2})^{2}',
-        'a -`2`[moveAfter,2] = `2`[moveBefore,2] + `0`[add]'
+        'a -`2`[moveAfter,2] = `2`[moveBefore,2] + `0`[add]',
+        '1+`(-a)^{2}`[add]',
     ]
 
     for expr in test_expressions[-1:]:

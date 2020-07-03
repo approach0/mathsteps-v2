@@ -74,8 +74,14 @@ def dfs(narr, axioms, debug=False, maxsteps=150, animation_mode=False):
 
             output_narr = deepcopy(narr)
             if animation_mode:
+                if debug:
+                    rich.print('[light]before trim[/]')
+                    expression.narr_prettyprint(narr)
                 expression.trim_animations(narr)
-                if debug: print('[trim]', expression.narr2tex(narr))
+                if debug:
+                    rich.print('[light]after trim[/]')
+                    expression.narr_prettyprint(narr)
+                    print('[tex]', expression.narr2tex(narr))
 
             return_steps.append((output_narr, axiom, axiom_idx))
             next_steps = possible_next_steps(narr, axioms, state.value_v1,
@@ -125,7 +131,8 @@ def test():
 
         # some animation testcases
         "1 + 0 + 0 + 0 + 0",
-        '-3 \\frac{-2}{4}'
+        '-3 \\frac{-2}{4}',
+        '\\frac{2}{3} \div \\frac{4}{5}',
     ]
 
     begin_from = 0

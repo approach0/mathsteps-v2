@@ -147,7 +147,11 @@ def rewrite_by_alpha(narr, alpha):
     if Type in ['VAR', 'WILDCARDS']:
         name = children[0] if Type == 'VAR' else "*" + children[0]
         subst = deepcopy(alpha[name])
+
+        subst[0].animation = root.animation
+        subst[0].animatGrp = root.animatGrp
         apply_sign(subst, sign)
+
         return subst
 
     elif Type == 'NUMBER':
