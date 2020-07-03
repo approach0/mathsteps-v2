@@ -512,7 +512,7 @@ def trim_animations(narr, top_root=True):
             substitute = child[2]
             substitute[0].sign *= child_sign
             replace_or_pass_children(narr, i, substitute)
-            child = substitute
+            child = substitute # for further trim
         elif child_root.animation in ['remove',  'moveBefore']:
             narr[1 + i] = None
             continue

@@ -90,7 +90,7 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='以分数表示除法', allow_complication=True)
-        .add_rule('# (#x) \\div (#y)', '#0 \\frac{x}{y}')
+        .add_rule('# (#x) \\div (#y)', '#0 \\frac{x}{y}', animation="`#1(#2 x) \\div (#3 y)`[replace]{#0 \\frac{x}{y}}")
 
         .add_test('1 \\div 2x + 3')
         .add_test("6 \div 3")
