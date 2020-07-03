@@ -70,7 +70,7 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='负数的平方是其相反数的平方')
-        .add_rule('#(-a)^{2}', '#1 a^{2}')
+        .add_rule('#(-a)^{2}', '#1 a^{2}', animation='#1 `(-a)^{2}`[replace]{a^{2}}')
 
         .add_test('(-3)^{2} - (6 \div (-\\frac{2}{3})^{2}) -  (-2)^{2}')
         .add_test('(6 \div (-\\frac{2}{3})^{2})')
@@ -79,7 +79,8 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='除以一个数等于乘上它的倒数', allow_complication=True)
-        .add_rule('# (#\\frac{w}{x}) \\div (# \\frac{y}{z})', '#0 \\frac{wz}{xy}')
+        .add_rule('# (#\\frac{w}{x}) \\div (# \\frac{y}{z})', '#0 \\frac{wz}{xy}',
+        animation='#0 (\\frac{w`z`[moveAfter,1]}{x`y`[moveAfter,2]}) \\div `(\\frac{`y`[moveBefore,2]}{`z`[moveBefore,1]})')
         .add_rule('# x \\div (# \\frac{y}{z})', '#0 \\frac{xz}{y}')
 
         .add_test('- 3 \\div (-\\frac{1}{2})', '-\\frac{3 \\times 2}{1}')

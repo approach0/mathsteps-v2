@@ -13,6 +13,7 @@ class NarrRoot():
         self.sign = sign
         self.Type = Type
         self.animation = animation
+        self.animatGrp = None
 
     def get(self):
         return self.sign, self.Type
@@ -24,8 +25,10 @@ class NarrRoot():
     def __repr__(self):
         if self.animation is None:
             return f'<{self.sign}, {self.Type}>'
-        else:
+        elif self.animatGrp is None:
             return f'<{self.sign}, {self.Type}, {self.animation}>'
+        else:
+            return f'<{self.sign}, {self.Type}, {self.animation}{self.animatGrp}>'
 
     def __getitem__(self, idx):
         if idx == 0:
@@ -205,6 +208,13 @@ class Tree2NestedArr(Transformer):
         x[0][0].animation = name
         return x[0]
 
+    def animation_group(self, x):
+        name = str(x[1])
+        group = int(x[2])
+        x[0][0].animation = name
+        x[0][0].animatGrp = group
+        return x[0]
+
     def animation_replace(self, x):
         return [NarrRoot(+1, 'REPLACE'), x[0], x[1]]
 
@@ -368,7 +378,10 @@ def narr2tex(narr, parentRoot=None, tag=True, rank=0):
     if need_outter_fence(parentRoot, narr, rank=rank):
         expr = '(' + expr + ')'
     if tag and root.animation:
-        expr = '`' + expr + '`[' + root.animation + ']'
+        if root.animatGrp is None:
+            expr = '`' + expr + '`[' + root.animation + ']'
+        else:
+            expr = '`' + expr + '`[' + root.animation + ',' + str(root.animatGrp) + ']'
     return expr
 
 
@@ -475,6 +488,7 @@ def trim_animations(narr, top_root=True):
         return
 
     root.animation = None
+    root.animatGrp = None
 
     if token in terminal_tokens():
         return
@@ -538,10 +552,11 @@ if __name__ == '__main__':
         '(-a)b',
         '`3`[replace]{1+2} + 3',
         '`(a+b)`[remove]c',
-        '`3`[remove]',
+        '`3`[remove,2]',
         '-(`(3\\frac{-2}{4})`[replace]{(3 + 2)})',
         '`(-2)^{2}`[replace]{4} + 1',
-        '(\sqrt{2})^{2}'
+        '(\sqrt{2})^{2}',
+        'a -`2`[moveAfter,2] = `2`[moveBefore,2] + `0`[add]'
     ]
 
     for expr in test_expressions[-1:]:
@@ -559,8 +574,8 @@ if __name__ == '__main__':
         narr = tree2narr(tree)
 
         rich.print('[[origin narr]]', narr)
-        trim_animations(narr)
-        rich.print('[[trim narr]]', narr)
+        #trim_animations(narr)
+        #rich.print('[[trim narr]]', narr)
 
         tex = narr2tex(narr)
         rich.print('[bold yellow]TeX:[/]', end=' ')

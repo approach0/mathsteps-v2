@@ -116,45 +116,48 @@ class Tree2MathJS(Transformer):
                   "mathjs": "ParenthesisNode",
                   "content": x[0]
                 }
-            elif op == 'add':
+            elif op == 'ani-add':
                 obj = x[0]
                 obj['变化'] = {
                     '类型': 'ani-add',
                     '范围': '全'
                 }
-            elif op == 'remove':
+            elif op == 'ani-remove':
                 obj = x[0]
                 obj['变化'] = {
                     '类型': 'ani-remove',
                     '范围': '全'
                 }
-            elif op == 'moveBefore':
+            elif op == 'ani-moveBefore':
                 obj = x[0]
+                grp = x[2]
                 obj['变化'] = {
                     '类型': 'ani-move-before',
                     '范围': '全',
-                    '组': 'ani-pair-no-1'
+                    '组': f'ani-pair-no-{grp}'
                 }
-            elif op == 'moveAfter':
+            elif op == 'ani-moveAfter':
                 obj = x[0]
+                grp = x[2]
                 obj['变化'] = {
                     '类型': 'ani-move-after',
                     '范围': '全',
-                    '组': 'ani-pair-no-1'
+                    '组': f'ani-pair-no-{grp}'
                 }
-            elif op == 'REPLACE':
+            elif op == 'ani-REPLACE':
                 obj = x[0]
                 subst = x[1]
+                grp = 1
                 obj['变化'] = {
                     '类型': 'ani-replaceBefore',
                     '范围': '全',
-                    '组': 'ani-pair-no-1',
-                    '替换为': subst
+                    '替换为': subst,
+                    '组': f'ani-pair-no-{grp}'
                 }
                 subst['变化'] = {
                     '类型': 'ani-replaceAfter',
                     '范围': '全',
-                    '组': 'ani-pair-no-1'
+                    '组': f'ani-pair-no-{grp}'
                 }
             else:
                 raise Exception('unexpected op: ' + op)
@@ -229,12 +232,17 @@ class Tree2MathJS(Transformer):
         return y
 
     def animation(self, x):
-        name = str(x[1])
+        name = 'ani-' + str(x[1])
+        y = self.gen_object(x, op=name)
+        return y
+
+    def animation_group(self, x):
+        name = 'ani-' + str(x[1])
         y = self.gen_object(x, op=name)
         return y
 
     def animation_replace(self, x):
-        y = self.gen_object(x, op='REPLACE')
+        y = self.gen_object(x, op='ani-REPLACE')
         return y
 
 
@@ -293,7 +301,7 @@ if __name__ == '__main__':
         '-(a+b)',
         '`(-2)^{2}`[replace]{4} + 1',
         '`(a+b)`[remove]c',
-        '-3 \\frac{-2}{4}'
+        'a -`2`[moveAfter,3] = `2`[moveBefore,3] + `0`[add]'
     ]
 
     for tex in test_expressions[-1:]:
