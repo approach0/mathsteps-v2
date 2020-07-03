@@ -86,7 +86,13 @@
       <pre style="display:inline-block; font-weight: 800">{{step.animate_tex}}</pre>
     </div>
     <div v-if="debug">
-        <pre>{{step.animate_json}}</pre>
+      <mu-button color="secondary" @click="toggle_json_mml(i, step.animate_json)">
+        {{ step.mml ? "查看 JSON" : "查看 MathML"  }}
+      </mu-button>
+      <pre v-if="step.mml">{{step.pretty_mml}}</pre>
+      <a href="http://192.168.3.54:8080/playground.html" v-if="step.mml">预览动画效果:</a>
+      <pre v-if="step.mml">{{[json_encode(step.mml)]}}</pre>
+      <pre v-else>{{step.animate_json}}</pre>
     </div>
 
     <mu-divider v-show="step.show"></mu-divider>
@@ -104,7 +110,7 @@ export default {
     return {
       debug: false,
       equations: [],
-      input: '',
+      input: '1 + 0 + 0',
       preview: '',
       error_msg: '',
       steps: [],
@@ -262,6 +268,53 @@ export default {
       } else {
         this.equations = []
         this.input = list[idx]
+      }
+    },
+
+
+    json_encode(input) {
+      return input.replace(/\\n/g, "\\n")
+                  .replace(/\\'/g, "\\'")
+                  .replace(/\\"/g, '\\"')
+                  .replace(/\\&/g, "\\&")
+                  .replace(/\\r/g, "\\r")
+                  .replace(/\\t/g, "\\t")
+                  .replace(/\\b/g, "\\b")
+                  .replace(/\\f/g, "\\f")
+    },
+
+    json2mml(i, json) {
+      json = json.replace(/\n/g, '');
+      json = json.replace(/ /g, '');
+      console.log('[json]', json)
+      let vm = this
+      $.ajax({
+        url: '/api/json2mml',
+        type: "POST",
+        data: JSON.stringify({ json: json }),
+        contentType:"application/json; charset=utf-8",
+        dataType:"json",
+        success: function(res){
+          console.log('[ajax]', res)
+          if (res.ret == 'successful') {
+            vm.$set(vm.steps[i], 'mml', res.mml)
+            vm.$set(vm.steps[i], 'pretty_mml', res.pretty_mml)
+          } else {
+            console.error(res.error)
+          }
+        },
+        error: function(err) {
+          console.error(err)
+          vm.error_msg = '服务器好像出了问题……'
+        }
+      })
+    },
+
+    toggle_json_mml(i, json) {
+      if (this.steps[i].mml === undefined) {
+        this.json2mml(i, json)
+      } else {
+        this.steps[i].mml = undefined
       }
     }
   }
