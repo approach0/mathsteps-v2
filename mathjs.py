@@ -204,8 +204,13 @@ class Tree2MathJS(Transformer):
         return y
 
     def ifrac(self, x):
-        y = self.gen_object(x, op='ifrac')
-        return y
+        num = float(x[0])
+        num_mathjs = self.number([x[0]])
+        if not num.is_integer():
+            return self.mul([num_mathjs, self.frac([x[1], x[2]])])
+        else:
+            y = self.gen_object([num_mathjs, x[1], x[2]], op='ifrac')
+            return y
 
     def sqrt(self, x):
         y = self.gen_object(x, op='sqrt')
@@ -288,10 +293,12 @@ if __name__ == '__main__':
         '-(a+b)',
         '`(-2)^{2}`[replace]{4} + 1',
         '`(a+b)`[remove]c',
+        '-3 \\frac{-2}{4}'
     ]
 
     for tex in test_expressions[-1:]:
         mathjs_obj = tex2mathjs(tex)
+        print(mathjs_obj)
         mathjs_fixhole(mathjs_obj)
         json_str = mathjs2json(mathjs_obj, indent=2)
         print(json_str)
