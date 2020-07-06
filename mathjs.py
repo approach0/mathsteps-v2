@@ -176,13 +176,13 @@ class Tree2MathJS(Transformer):
                 subst = x[1]
                 grp = 1
                 obj['变化'] = {
-                    '类型': 'ani-replaceBefore',
+                    '类型': 'ani-replace-before',
                     '范围': '全',
                     '替换为': subst,
                     '组': f'ani-pair-no-{grp}'
                 }
                 subst['变化'] = {
-                    '类型': 'ani-replaceAfter',
+                    '类型': 'ani-replace-after',
                     '范围': '全',
                     '组': f'ani-pair-no-{grp}'
                 }

@@ -531,6 +531,7 @@ def trim_animations(narr, top_root=True):
             narr[:] = narr[1]
             narr[0][0] *= sign
 
+
 def trim_animations_copy(narr):
     narr = deepcopy(narr)
     trim_animations(narr)
