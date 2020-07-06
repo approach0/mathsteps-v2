@@ -530,8 +530,6 @@ def trim_animations(narr, top_root=True):
         if token in (commutative_operators() + binary_operators()):
             narr[:] = narr[1]
             narr[0][0] *= sign
-        else:
-            raise ValueError(f'trim_animations: unhandled operator {token} has single child.')
 
 def trim_animations_copy(narr):
     narr = deepcopy(narr)
