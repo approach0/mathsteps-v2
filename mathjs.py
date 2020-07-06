@@ -75,7 +75,17 @@ class Tree2MathJS(Transformer):
                     "op": "/",
                     "fn": "divide",
                     "implicit": False,
-                    "args": [x[0], x[1]]
+                    "args": [x[0], x[1]],
+                    "是除法": True
+                }
+            elif op == 'frac':
+                obj = {
+                    "mathjs": "OperatorNode",
+                    "op": "/",
+                    "fn": "divide",
+                    "implicit": False,
+                    "args": [x[0], x[1]],
+                    "是分数": True
                 }
             elif op == 'ifrac':
                 obj = {
@@ -203,7 +213,7 @@ class Tree2MathJS(Transformer):
         return y
 
     def frac(self, x):
-        y = self.gen_object(x, op='div')
+        y = self.gen_object(x, op='frac')
         return y
 
     def ifrac(self, x):
@@ -301,7 +311,8 @@ if __name__ == '__main__':
         '-(a+b)',
         '`(-2)^{2}`[replace]{4} + 1',
         '`(a+b)`[remove]c',
-        'a -`2`[moveAfter,3] = `2`[moveBefore,3] + `0`[add]'
+        'a -`2`[moveAfter,3] = `2`[moveBefore,3] + `0`[add]',
+        '\\frac{b}{a}'
     ]
 
     for tex in test_expressions[-1:]:
