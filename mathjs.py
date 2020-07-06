@@ -89,12 +89,29 @@ class Tree2MathJS(Transformer):
                 }
             elif op == 'ifrac':
                 obj = {
-                    "mathjs": "OperatorNode",
-                    "op": "ifrac",
-                    "fn": "ifrac",
-                    "implicit": False,
-                    "args": [x[0], x[1], x[2]]
-                }
+                    "mathjs": "ParenthesisNode",
+                    "content": {
+                        "mathjs": "OperatorNode",
+                        "op": "+",
+                        "fn": "add",
+                        "args": [
+                        x[0],
+                        {
+                            "mathjs": "ParenthesisNode",
+                            "content": {
+                            "mathjs": "OperatorNode",
+                            "op": "/",
+                            "fn": "divide",
+                            "args": [x[1], x[2]],
+                            "implicit": False
+                            },
+                            "是分数": True
+                        }
+                        ],
+                        "implicit": False
+                    },
+                    "是分数": True
+                 }
             elif op == 'sup':
                 obj = {
                     "mathjs": "OperatorNode",
