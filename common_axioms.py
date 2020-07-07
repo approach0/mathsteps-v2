@@ -106,24 +106,30 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='绝对值分配到分子分母中', allow_complication=True)
-        .add_rule('# \\left| # \\frac{a}{b} \\right|', '#1 \\frac{\\left| a \\right|}{\\left| b \\right|}')
+        .add_rule('# \\left| # \\frac{a}{b} \\right|', '#1 \\frac{\\left| a \\right|}{\\left| b \\right|}',
+        animation='#1 `\\left| #2 \\frac{a}{b} \\right|`[replace]{\\frac{\\left| a \\right|}{\\left| b \\right|}}')
 
         .add_test('\\left| - \\frac{1}{2} \\right|')
     )
 
     axioms.append(
         Axiom(name='根号分配到分子分母中', allow_complication=True)
-        .add_rule('# \\sqrt{\\frac{a}{b}}', '#1 \\frac{\\sqrt{a}}{\\sqrt{b}}')
+        .add_rule('# \\sqrt{\\frac{a}{b}}', '#1 \\frac{\\sqrt{a}}{\\sqrt{b}}',
+        animation='#1 `\\sqrt{\\frac{a}{b}}`[replace]{ \\frac{\\sqrt{a}}{\\sqrt{b}} }')
 
         .add_test('- \sqrt{\\frac{1}{2}}')
     )
 
     axioms.append(
         Axiom(name='分子分母消除公因子', recursive_apply=True)
-        .add_rule('# \\frac{# x *{1} }{# x *{2} }', '#1 \\frac{#2 *{1}}{#3 *{2}}')
-        .add_rule('# \\frac{# x }{# x *{2} }', '#0 \\frac{1}{*{2}}')
-        .add_rule('# \\frac{# x *{1} }{# x }', '#0 *{1}')
-        .add_rule('# \\frac{# x }{# x }', '#0 1')
+        .add_rule('# \\frac{# x *{1} }{# x *{2} }', '#1 \\frac{#2 *{1}}{#3 *{2}}',
+        animation='#1 \\frac{#2 `x`[remove] *{1}}{#3 `x`[remove] *{2}}')
+        .add_rule('# \\frac{# x }{# x *{2} }', '#0 \\frac{1}{*{2}}',
+        animation='#0 \\frac{`x`[replace]{1} \\times 1}{`x`[remove] *{2}}')
+        .add_rule('# \\frac{# x *{1} }{# x }', '#0 *{1}',
+        animation='#0 \\frac{`x`[remove] *{1} }{`x`[removeDenom]}')
+        .add_rule('# \\frac{# x}{# x}', '#0 1',
+        animation='`#1 \\frac{#2 x}{#3 x}`[replace]{#0 1}')
 
         .add_test('- \\frac{bx}{ax}', '-\\frac{b}{a}')
         .add_test('- \\frac{-bx}{xa}', '-\\frac{-b}{a}')
@@ -138,7 +144,8 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='乘积写成乘方的形式', allow_complication=True)
-        .add_rule('#(#X)(#X)', '#0 X^{2}')
+        .add_rule('#(#X)(#X)', '#0 X^{2}',
+        animation='`#1(#2 X)(#3 X)`[replace]{#0 X^{2}}')
 
         .add_test('xx')
         .add_test('-\\frac{1}{2} \cdot \\frac{1}{2}', '-(\\frac{1}{2})^{2}')

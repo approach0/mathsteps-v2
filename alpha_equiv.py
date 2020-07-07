@@ -207,8 +207,11 @@ if __name__ == '__main__':
     #narr1 = expression.tex2narr('0 (-n)')
     #narr2 = expression.tex2narr('- 0 n')
 
-    narr1 = expression.tex2narr('-x \\times *{1} + x \\times *{2}')
-    narr2 = expression.tex2narr('-25 \\times 51 + 25 \\times 48')
+    #narr1 = expression.tex2narr('-x \\times *{1} + x \\times *{2}')
+    #narr2 = expression.tex2narr('-25 \\times 51 + 25 \\times 48')
+
+    narr1 = expression.tex2narr('+(-X)(-X)')
+    narr2 = expression.tex2narr('-yy')
 
     is_equiv, rewrite_rules = test_alpha_equiv(narr1, narr2, debug=False)
     if is_equiv:

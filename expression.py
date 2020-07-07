@@ -439,7 +439,7 @@ def get_wildcards_index(narr):
 
 
 def passchildren(root, children):
-    sign, op_type = root.get()
+    _, op_type = root.get()
     new_narr = [root.copy()]
     any_change = False
     for child in children:
@@ -448,13 +448,12 @@ def passchildren(root, children):
             if child_type == 'add':
                 # distribute sign
                 for grand_child in child[1:]:
-                    grand_sign, grand_type = grand_child[0].get()
-                    grand_child[0].set(grand_sign * child_sign, grand_type)
+                    grand_child[0].apply_sign(child_sign)
                     new_narr.append(grand_child)
 
             elif child_type == 'mul':
                 # reduce sign
-                new_narr[0].set(sign * child_sign, op_type)
+                new_narr[0].apply_sign(child_sign)
                 new_narr += child[1:]
 
             else:
@@ -466,7 +465,7 @@ def passchildren(root, children):
         else:
             if op_type == 'mul' and child_sign < 0:
                 child[0].set(+1, child_type)
-                new_narr[0].set(sign * -1, op_type)
+                new_narr[0].apply_sign(-1)
                 any_change = True
 
             new_narr.append(child)

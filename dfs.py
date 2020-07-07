@@ -136,6 +136,8 @@ def test():
         '(\sqrt{2})^{2}',
         '0+1+2',
         '-\\frac{1}{-2} \div \\frac{-3}{4}',
+        '\\frac{x}{3xy}',
+        '-x x',
     ]
 
     begin_from = 0

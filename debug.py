@@ -19,8 +19,9 @@ if __name__ == '__main__':
 
     if False:
         all_axioms = [
-            Axiom(name='负号提出括号', strict_simplify=False)
-            .add_rule('+(x + *{1})', '-(-x - *{1})')
+            Axiom(name='乘积写成乘方的形式', allow_complication=True)
+            .add_rule('#(#X)(#X)', '#0 X^{2}',
+            animation='`#1(#2 X)(#3 X)`[replace]{#0 X^{2}}')
         ]
 
     else:
@@ -33,7 +34,7 @@ if __name__ == '__main__':
         #"-x 0.391 - 629 - 2 x^{2} + y^{2} + \\frac{50x}{x+y} = 0"
         #"- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})"
         #"-200.9 + 28 + 0.9 + (-8)"
-        "6 \div 3"
+        "- x x"
     )
 
     try:

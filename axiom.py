@@ -337,6 +337,8 @@ class Axiom:
             dest = self.animation[pattern] if self.animation_mode else self.rules[pattern]
             dest_narr = [self.narrs[d] for d in dest] if isinstance(dest, list) else self.narrs[dest]
 
+            #print('dest:', dest)
+
             call = self.dp[pattern]
             if call is not None: # dynamical axiom
                 signs = self.signs[pattern]
@@ -346,7 +348,10 @@ class Axiom:
 
             if debug:
                 rich.print('applied:', is_applied, end=': ')
-                print(rewritten_narr)
+                if False:
+                    print(rewritten_narr)
+                else:
+                    print(expression.narr2tex(rewritten_narr))
 
             # if a rule with higher priority get applied, later ones are ignored
             if is_applied:
@@ -532,14 +537,12 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='test', recursive_apply=True)
-        .add_rule('# x \\div (# \\frac{y}{z})', '#0 \\frac{xz}{y}',
-        animation='#0 `x`[moveBefore,3] \\div \\frac{`y`[moveBefore,1] `z`[moveAfter,2] `x`[moveAfter,3]}{`z`[moveBefore,2] `y`[moveAfter,1]}')
-
-        .add_test('2 \div \\frac{4}{5}')
+        Axiom(name='乘积写成乘方的形式', allow_complication=True)
+        .add_rule('#(#X)(#X)', '#0 X^{2}',
+        animation='`#1(#2 X)(#3 X)`[replace]{#0 X^{2}}')
     )
 
     a.animation_mode = True
 
-    #a.test('2 -3 \\frac{-2}{4}', debug=False, printNarr=True, printTrim=True)
-    a.test(debug=True, printNarr=True, printTrim=True)
+    a.test('-xx', debug=True, printNarr=True, printTrim=True)
+    #a.test(debug=True, printNarr=True, printTrim=True)
