@@ -291,6 +291,13 @@ def tex2json(tex, indent=None):
 def mathjs_fixhole(obj, father_obj=None, rank=0):
     Type = obj['mathjs']
 
+    # add binary animation range tag if one child is animated
+    if '变化' in obj:
+        ani_type = obj['变化']['类型']
+        if ani_type not in ['ani-replace-before', 'ani-replace-after']:
+            father_obj['变化'] = deepcopy(obj['变化']) # copy meta-data
+            father_obj['变化']['范围'] = '左' if rank == 0 else '右'
+
     if Type == 'SymbolNode':
         children = []
     elif Type == 'ConstantNode':
