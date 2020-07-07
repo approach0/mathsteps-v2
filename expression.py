@@ -593,7 +593,8 @@ if __name__ == '__main__':
         '1+`(-a)^{2}`[add]',
         '- `1^{2}`[replace]{1}',
         '`(15 - 15)`[replace]{0} x',
-        '-`\\frac{1}{-2} \div \\frac{-3}{4}`[replace]{\\frac{1 \\times 4}{(-2) \\times (-3)}}'
+        '-`\\frac{1}{-2} \div \\frac{-3}{4}`[replace]{\\frac{1 \\times 4}{(-2) \\times (-3)}}',
+        '-3 \\times  (-\\frac{2}{3})',
     ]
 
     for expr in test_expressions[-1:]:

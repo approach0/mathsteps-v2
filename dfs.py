@@ -187,7 +187,7 @@ if __name__ == '__main__':
             quit()
 
         ret_arr = []
-        for narr, axiom, axiom_idx in steps:
+        for i, (narr, axiom, axiom_idx) in enumerate(steps):
             trim_narr = expression.trim_animations_copy(narr)
             trim_tex = expression.narr2tex(trim_narr)
 
@@ -195,8 +195,8 @@ if __name__ == '__main__':
             animate_json = mathjs.tex2json(animate_tex)
 
             ret_arr.append({
-                'tex': trim_tex,
-                'animate_tex': animate_tex,
+                'tex': tex if i == 0 else trim_tex,
+                'animate_tex': tex if i == 0 else animate_tex,
                 'animate_json': animate_json,
                 'axiom': axiom.name(),
                 'axiom_idx': axiom_idx
