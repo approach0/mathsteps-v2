@@ -272,8 +272,12 @@ fraction_addition = (
     .add_rule('#(#\\frac{a}{c} #\\frac{b}{c})', [
         'z',
         '\\frac{z}{c}'
-    ], dynamic_procedure=_fraction_addition_same_denom)
-    .add_rule('#\\frac{a}{b} #\\frac{c}{d}', '\\frac{#1 ad #2 cb}{bd}')
+    ], dynamic_procedure=_fraction_addition_same_denom, animation=[
+        '`#1(#2 \\frac{a}{c} #3\\frac{b}{c})`[replace]{z}',
+        '`#1(#2 \\frac{a}{c} #3\\frac{b}{c})`[replace]{ \\frac{z}{c} }',
+    ])
+    .add_rule('#\\frac{a}{b} #\\frac{c}{d}', '\\frac{#1 ad #2 cb}{bd}',
+    animation='`(#1 \\frac{a}{b} #2\\frac{c}{d})`[replace]{ \\frac{#1 ad #2 cb}{bd} }')
 
     .add_test('-(\\frac{4}{3} - \\frac{1}{3})', '-1')
     .add_test('\\frac{4}{3} - \\frac{1}{3}', '1')
@@ -296,7 +300,8 @@ def _fraction_int_addition(pattern_narr, signs, narr, rewrite_rules, output_temp
 
 fraction_int_addition = (
     Axiom(name='整数加分式的转换', allow_complication=True, root_sign_reduce=False)
-    .add_rule('#(#a # \\frac{b}{c})', '\\frac{#2 ac #3 b}{c}', dynamic_procedure=_fraction_int_addition)
+    .add_rule('#(#a # \\frac{b}{c})', '\\frac{#2 ac #3 b}{c}', dynamic_procedure=_fraction_int_addition,
+    animation='`#1(#2 a #3 \\frac{b}{c})`[replace]{\\frac{#2 ac #3 b}{c}}')
 
     .add_test('-(\\frac{1}{3} - \\frac{2}{3} + 2)')
     .add_test('- 1 - \\frac{-1}{2}', '\\frac{-2 + 1}{2}')
@@ -323,7 +328,11 @@ def _collapse_fraction(pattern_narr, signs, narr, rewrite_rules, output_tempalat
 
 collapse_fraction = (
     Axiom(name='分式中带小数的化简')
-    .add_rule('#\\frac{a}{b}', ['#1 c', '#1 kx'], dynamic_procedure=_collapse_fraction)
+    .add_rule('#\\frac{a}{b}', ['#1 c', '#1 kx'], dynamic_procedure=_collapse_fraction,
+    animation=[
+        '`#1 \\frac{a}{b}`[replace]{#1 c}',
+        '`#1 \\frac{a}{b}`[replace]{#1 kx}',
+    ])
 
     .add_test('-\\frac{-6.4}{3.2}', '2')
     .add_test('\\frac{9}{-2.5}', '-3.6')
@@ -345,7 +354,8 @@ def _collapse_fraction_add_float(pattern_narr, signs, narr, rewrite_rules, outpu
 
 collapse_fraction_add_float = (
     Axiom(name='分式加小数的化简', root_sign_reduce=False)
-    .add_rule('#(#\\frac{a}{b} # c)', '#2 x #3 c', dynamic_procedure=_collapse_fraction_add_float)
+    .add_rule('#(#\\frac{a}{b} # c)', '#2 x #3 c', dynamic_procedure=_collapse_fraction_add_float,
+    animation='`#2\\frac{a}{b}`[replace]{#2 x} #3 c')
 
     .add_test('3.25 - \\frac{1}{4}', '-0.25 + 3.25')
     .add_test('-(-3.25 + \\frac{1}{4})', '-(0.25 - 3.25)')
@@ -357,16 +367,19 @@ def _canonicalize(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
     sign, Type = narr[0].get()
     if Type in expression.commutative_operators():
         new_narr, is_applied = expression.canonicalize(narr)
-        return new_narr, is_applied
+
+        if is_applied:
+            rewrite_rules['X'] = new_narr
+            return rewrite_by_alpha(output_tempalate, rewrite_rules), True
+        else:
+            return new_narr, False
     return narr, False
 
 canonicalize = (
     Axiom(name='去括号')
-    .add_rule('# a *{1}', 'X', dynamic_procedure=_canonicalize)
-    .add_rule('# a # *{1}', 'X', dynamic_procedure=_canonicalize)
-    .add_rule('# a', 'X', dynamic_procedure=_canonicalize)
-
-    .add_test('-ab')
+    .add_rule('# a *{1}', 'X', animation='`#1 a *{1}`[replace]{X}', dynamic_procedure=_canonicalize)
+    .add_rule('# a # *{1}', 'X', animation='`#1 a #2 *{1}`[replace]{X}', dynamic_procedure=_canonicalize)
+    .add_rule('# a', 'X', animation='`#1 a`[replace]{X}', dynamic_procedure=_canonicalize)
 
     .add_test(
         [NarrRoot(1, 'add'),
@@ -422,8 +435,9 @@ if __name__ == '__main__':
     a = calc_add
     a = fraction_int_addition
     a = calc_pow
-    #a = collapse_fraction_add_float
-    #a = canonicalize
+    a = collapse_fraction_add_float
+    a = canonicalize
+
     a.animation_mode = True
     a.test(debug=False)
     pass
