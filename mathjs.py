@@ -300,20 +300,22 @@ def mathjs_hole_types():
 def mathjs_fixhole(obj, father_obj=None, rank=0):
     Type = obj['mathjs']
 
-    if '变化' in obj:
-        ani_type = obj['变化']['类型']
-        if ani_type in mathjs_hole_types():
-            father_obj['变化'] = deepcopy(obj['变化'])
-            father_obj['变化']['范围'] = '左' if rank == 0 else '右'
-
     if Type == 'SymbolNode':
-        return
+        children = []
     elif Type == 'ConstantNode':
-        return
+        children = []
     elif Type == 'ParenthesisNode':
         children = [obj['content']]
     else:
         children = obj['args']
+
+    if '变化' in obj:
+        if '替换为' in obj['变化']:
+            children.append(obj['变化']['替换为'])
+
+    if len(children) == 0:
+        if '变化' in obj:
+            obj['变化']['范围'] = '单'
 
     for i, child in enumerate(children):
         mathjs_fixhole(child, father_obj=obj, rank=i)
@@ -329,12 +331,12 @@ if __name__ == '__main__':
         '`(-2)^{2}`[replace]{4} + 1',
         '`(a+b)`[remove]c',
         'a -`2`[moveAfter,3] = `2`[moveBefore,3] + `0`[add]',
-        '\\frac{b}{a}'
+        '\\frac{b}{a}',
+        '`0ab`[replace]{0}'
     ]
 
     for tex in test_expressions[-1:]:
         mathjs_obj = tex2mathjs(tex)
-        print(mathjs_obj)
         mathjs_fixhole(mathjs_obj)
         json_str = mathjs2json(mathjs_obj, indent=2)
         print(json_str)
