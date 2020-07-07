@@ -23,6 +23,9 @@ class NarrRoot():
         self.sign = sign
         self.Type = Type
 
+    def apply_sign(self, sign):
+        self.sign *= sign
+
     def __repr__(self):
         if self.animation is None:
             return f'<{self.sign}, {self.Type}>'
@@ -498,6 +501,7 @@ def trim_animations(narr, top_root=True):
     sign, token = root.get()
 
     if top_root and token == 'REPLACE':
+        narr[2][0].apply_sign(sign)
         trim_animations(narr[2])
         narr[:] = narr[2]
         return
