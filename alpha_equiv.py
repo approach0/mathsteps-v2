@@ -35,7 +35,7 @@ def apply_sign(narr, apply_product):
         for i, c in enumerate(narr[1:]):
             apply_sign(c, apply_product)
     else:
-        narr[0].set(old_sign * apply_product, Type)
+        narr[0].apply_sign(apply_product)
 
 
 def children_wildcards_permutation(narr):

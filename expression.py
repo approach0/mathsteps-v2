@@ -102,9 +102,7 @@ class Tree2NestedArr(Transformer):
         """
         符号变负号
         """
-        sign, Type = x[0].get()
-        sign = sign * (-1)
-        x[0].set(sign, Type)
+        x[0].apply_sign(-1)
         return x
 
     def null_reduce(self, x):
