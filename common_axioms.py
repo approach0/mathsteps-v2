@@ -80,9 +80,9 @@ def common_axioms(full=False):
     axioms.append(
         Axiom(name='除以一个数等于乘上它的倒数', allow_complication=True)
         .add_rule('# (#\\frac{w}{x}) \\div (# \\frac{y}{z})', '#0 \\frac{wz}{xy}',
-        animation='#0 `(\\frac{w}{x}) \\div (\\frac{y}{z})`[replace]{\\frac{wz}{xy}}')
+        animation='`#1 (#2 \\frac{w}{x}) \\div (#3 \\frac{y}{z})`[replace]{#0 \\frac{wz}{xy}}')
         .add_rule('# x \\div (# \\frac{y}{z})', '#0 \\frac{xz}{y}',
-        animation='#0 `x`[moveBefore,3] \\div \\frac{`y`[moveBefore,1] `z`[moveAfter,2] `x`[moveAfter,3]}{`z`[moveBefore,2] `y`[moveAfter,1]}')
+        animation='`#1 x \\div (#2 \\frac{y}{z})`[replace]{#0 \\frac{xz}{y}}')
 
         .add_test('- 3 \\div (-\\frac{1}{2})', '-\\frac{3 \\times 2}{1}')
         .add_test('\\frac{2}{3} \div \\frac{4}{5}')
@@ -98,7 +98,7 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='因子和分母消去')
-        .add_rule('# x \\times \\frac{a}{x}', '#1 a')
+        .add_rule('# x \\times \\frac{a}{x}', '#1 a', animation="#1 `x`[remove] \\times \\frac{a}{`x`[removeDenom]}")
 
         .add_test('-3 \\times \\frac{-2}{3}', '2')
         .add_test('3 \\times \\frac{-2}{3}', '-2')

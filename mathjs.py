@@ -155,6 +155,12 @@ class Tree2MathJS(Transformer):
                     '类型': 'ani-remove',
                     '范围': '全'
                 }
+            elif op == 'ani-removeDenom':
+                obj = x[0]
+                obj['变化'] = {
+                    '类型': 'ani-remove-denominator',
+                    '范围': '全'
+                }
             elif op == 'ani-moveBefore':
                 obj = x[0]
                 grp = x[2]
@@ -294,7 +300,7 @@ def mathjs_fixhole(obj, father_obj=None, rank=0):
     # add binary animation range tag if one child is animated
     if '变化' in obj:
         ani_type = obj['变化']['类型']
-        if ani_type not in ['ani-replace-before', 'ani-replace-after']:
+        if ani_type not in ['ani-replace-before', 'ani-replace-after', 'ani-remove-denominator']:
             father_obj['变化'] = deepcopy(obj['变化']) # copy meta-data
             father_obj['变化']['范围'] = '左' if rank == 0 else '右'
 
@@ -333,6 +339,7 @@ if __name__ == '__main__':
         '`0ab`[replace]{0}',
         '\\frac{w`z`[moveAfter,1]}{x`y`[moveAfter,2]}',
         '`\\frac{1}{2} \div \\frac{3}{4}`[replace]{\\frac{1 \\times 4}{2 \\times 3}}',
+        '`3`[remove] \\times \\frac{2}{`3`[removeDenom]}'
     ]
 
     for tex in test_expressions[-1:]:
