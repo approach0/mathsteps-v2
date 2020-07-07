@@ -103,7 +103,7 @@ def _calc_add(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
 
 calc_add = (
     Axiom(name='加减法计算', root_sign_reduce=False)
-    .add_rule('#(a + b)', 'c', dynamic_procedure=_calc_add)
+    .add_rule('#(a + b)', 'c', animation='`#1(a + b)`[replace]{c}', dynamic_procedure=_calc_add)
 
     .add_test('-12 + 3', '-9')
     .add_test('(-12 - 3 - 1)', ['-15 - 1', '-13 - 3', '-4 - 12'])
@@ -127,7 +127,7 @@ def _calc_mul(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
 
 calc_mul = (
     Axiom(name='乘法计算')
-    .add_rule('#ab', '#1 c', dynamic_procedure=_calc_mul)
+    .add_rule('#ab', '#1 c', animation='`#1 ab`[replace]{#1 c}', dynamic_procedure=_calc_mul)
 
     .add_test('3(-2)')
     .add_test('-(3 \cdot (-2))')
@@ -156,7 +156,7 @@ def _calc_pow(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
 
 calc_pow = (
     Axiom(name='乘方计算')
-    .add_rule('#a^{b}', '#1 c', dynamic_procedure=_calc_pow)
+    .add_rule('#a^{b}', '#1 c', animation='`#1 a^{b}`[replace]{#1 c}', dynamic_procedure=_calc_pow)
 
     .add_test('2^{3}', '8')
     .add_test('-2^{3}', '-8')
@@ -183,7 +183,11 @@ def _calc_sqrt(pattern_narr, signs, narr, rewrite_rules, output_tempalates):
 
 calc_sqrt = (
     Axiom(name='开方化简')
-    .add_rule('#\sqrt{x}', ['#1 c', '#1 m \\sqrt{n}'], dynamic_procedure=_calc_sqrt)
+    .add_rule('#\sqrt{x}', ['#1 c', '#1 m \\sqrt{n}'], dynamic_procedure=_calc_sqrt,
+    animation=[
+        '`#1 \sqrt{x}`[replace]{#1 c}',
+        '`#1 \sqrt{x}`[replace]{#1 m \\sqrt{n} }',
+    ])
 
     .add_test('-\\sqrt{8}', '-2 \\times \sqrt{2}')
     .add_test('\\sqrt{16}', '4')
@@ -202,7 +206,7 @@ def _calc_abs(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
 
 calc_abs = (
     Axiom(name='绝对值计算')
-    .add_rule('#\\left| #x \\right|', '#1 c', dynamic_procedure=_calc_abs)
+    .add_rule('#\\left| #x \\right|', '#1 c', animation='`#1 \\left| #2x \\right|`[replace]{#1 c}', dynamic_procedure=_calc_abs)
 
     .add_test('-\\left| 8 \\right|', '-8')
     .add_test('\\left| -8 \\right|', '8')
@@ -231,7 +235,11 @@ def _simplify_fraction(pattern_narr, signs, narr, rewrite_rules, output_tempalat
 
 simplify_fraction = (
     Axiom(name='化简分式')
-    .add_rule('#\\frac{a}{b}', ['#1 c', '#1 \\frac{a}{b}'], dynamic_procedure=_simplify_fraction)
+    .add_rule('#\\frac{a}{b}', ['#1 c', '#1 \\frac{a}{b}'], dynamic_procedure=_simplify_fraction,
+    animation=[
+        '`#1 \\frac{a}{b}`[replace]{#1 c}',
+        '`#1 \\frac{a}{b}`[replace]{#1 \\frac{a}{b} }',
+    ])
 
     .add_test('-\\frac{-14}{-4}', '-\\frac{7}{2}')
     .add_test('\\frac{9}{-6}', '\\frac{-3}{2}')
@@ -413,8 +421,9 @@ canonicalize = (
 if __name__ == '__main__':
     a = calc_add
     a = fraction_int_addition
-    a = fraction_addition
-    a = collapse_fraction_add_float
+    a = calc_pow
+    #a = collapse_fraction_add_float
     #a = canonicalize
+    a.animation_mode = True
     a.test(debug=False)
     pass

@@ -138,6 +138,7 @@ def test():
         '-\\frac{1}{-2} \div \\frac{-3}{4}',
         '\\frac{x}{3xy}',
         '-x x',
+        '-\\frac{8}{-2}',
     ]
 
     begin_from = 0

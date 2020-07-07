@@ -30,7 +30,7 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='带分式的展开', allow_complication=True)
-        .add_rule('# & \\frac{a}{b}', '#1 (v + \\frac{a}{b})', animation="#1 `& \\frac{a}{b}`[replace]{v + \\frac{a}{b}}")
+        .add_rule('# & \\frac{a}{b}', '#1 (v + \\frac{a}{b})', animation="`#1 & \\frac{a}{b}`[replace]{#1 (v + \\frac{a}{b})}")
 
         .add_test('-3 \\frac{-2}{4}', '-(3 + \\frac{-2}{4})')
         .add_test('-3 \\frac{1}{2}', '-(3 + \\frac{1}{2})')
@@ -57,12 +57,12 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='根号的平方是其本身')
-        .add_rule('#(#\\sqrt{x})^{2}', '#1 x', animation='#1 `(#2\\sqrt{x})^{2}`[replace]{x}')
+        .add_rule('#(#\\sqrt{x})^{2}', '#1 x', animation='`#1 (#2\\sqrt{x})^{2}`[replace]{#1 x}')
     )
 
     axioms.append(
         Axiom(name='一的平方还是一')
-        .add_rule('#(# 1)^{2}', '#1 1', animation='#1 `(#2 1)^{2}`[replace]{1}')
+        .add_rule('#(# 1)^{2}', '#1 1', animation='`#1 (#2 1)^{2}`[replace]{#1 1}')
 
         .add_test('-1^{2}')
         .add_test('(-1)^{2}')
@@ -70,7 +70,7 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='负数的平方是其相反数的平方')
-        .add_rule('#(-a)^{2}', '#1 a^{2}', animation='#1 `(-a)^{2}`[replace]{a^{2}}')
+        .add_rule('#(-a)^{2}', '#1 a^{2}', animation='`#1 (-a)^{2}`[replace]{#1 a^{2}}')
 
         .add_test('(-3)^{2} - (6 \div (-\\frac{2}{3})^{2}) -  (-2)^{2}')
         .add_test('(6 \div (-\\frac{2}{3})^{2})')
@@ -107,7 +107,7 @@ def common_axioms(full=False):
     axioms.append(
         Axiom(name='绝对值分配到分子分母中', allow_complication=True)
         .add_rule('# \\left| # \\frac{a}{b} \\right|', '#1 \\frac{\\left| a \\right|}{\\left| b \\right|}',
-        animation='#1 `\\left| #2 \\frac{a}{b} \\right|`[replace]{\\frac{\\left| a \\right|}{\\left| b \\right|}}')
+        animation='`#1 \\left| #2 \\frac{a}{b} \\right|`[replace]{#1 \\frac{\\left| a \\right|}{\\left| b \\right|}}')
 
         .add_test('\\left| - \\frac{1}{2} \\right|')
     )
@@ -115,7 +115,7 @@ def common_axioms(full=False):
     axioms.append(
         Axiom(name='根号分配到分子分母中', allow_complication=True)
         .add_rule('# \\sqrt{\\frac{a}{b}}', '#1 \\frac{\\sqrt{a}}{\\sqrt{b}}',
-        animation='#1 `\\sqrt{\\frac{a}{b}}`[replace]{ \\frac{\\sqrt{a}}{\\sqrt{b}} }')
+        animation='`#1 \\sqrt{\\frac{a}{b}}`[replace]{#1 \\frac{\\sqrt{a}}{\\sqrt{b}} }')
 
         .add_test('- \sqrt{\\frac{1}{2}}')
     )
