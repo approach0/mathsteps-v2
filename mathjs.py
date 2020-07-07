@@ -305,11 +305,11 @@ def mathjs_fixhole(obj, father_obj=None, rank=0):
     elif Type == 'ParenthesisNode':
         children = [obj['content']]
     else:
-        children = obj['args']
+        children = [_ for _ in obj['args']]
 
     if '变化' in obj:
         if '替换为' in obj['变化']:
-            children.append(obj['变化']['替换为'])
+            mathjs_fixhole(obj['变化']['替换为'])
 
     if len(children) == 0:
         if '变化' in obj:
@@ -330,7 +330,9 @@ if __name__ == '__main__':
         '`(a+b)`[remove]c',
         'a -`2`[moveAfter,3] = `2`[moveBefore,3] + `0`[add]',
         '\\frac{b}{a}',
-        '`0ab`[replace]{0}'
+        '`0ab`[replace]{0}',
+        '\\frac{w`z`[moveAfter,1]}{x`y`[moveAfter,2]}',
+        '`\\frac{1}{2} \div \\frac{3}{4}`[replace]{\\frac{1 \\times 4}{2 \\times 3}}',
     ]
 
     for tex in test_expressions[-1:]:
