@@ -150,6 +150,7 @@ def rewrite_by_alpha(narr, alpha):
 
         subst[0].animation = root.animation
         subst[0].animatGrp = root.animatGrp
+
         apply_sign(subst, sign)
 
         return subst
@@ -159,7 +160,11 @@ def rewrite_by_alpha(narr, alpha):
 
     new_narr = [root.copy()]
     for i, c in enumerate(narr[1:]):
+        child_root = c[0]
         substitute = rewrite_by_alpha(c, alpha)
+
+        substitute[0].animation = child_root.animation
+        substitute[0].animatGrp = child_root.animatGrp
 
         i = len(new_narr) - 1
         new_narr.append(None)
@@ -168,6 +173,10 @@ def rewrite_by_alpha(narr, alpha):
         #print(substitute)
         #print()
         expression.replace_or_pass_children(new_narr, i, substitute)
+
+        print(c, '#########', substitute)
+        print(new_narr)
+        print()
 
     return new_narr
 

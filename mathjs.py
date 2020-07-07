@@ -339,7 +339,8 @@ if __name__ == '__main__':
         '`0ab`[replace]{0}',
         '\\frac{w`z`[moveAfter,1]}{x`y`[moveAfter,2]}',
         '`\\frac{1}{2} \div \\frac{3}{4}`[replace]{\\frac{1 \\times 4}{2 \\times 3}}',
-        '`3`[remove] \\times \\frac{2}{`3`[removeDenom]}'
+        '`3`[remove] \\times \\frac{2}{`3`[removeDenom]}',
+        '12 - `z`[add] = `z`[replace]{0}',
     ]
 
     for tex in test_expressions[-1:]:

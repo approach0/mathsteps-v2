@@ -337,7 +337,8 @@ class Axiom:
             dest = self.animation[pattern] if self.animation_mode else self.rules[pattern]
             dest_narr = [self.narrs[d] for d in dest] if isinstance(dest, list) else self.narrs[dest]
 
-            #print('dest:', dest)
+            if debug:
+                print('dest:', dest)
 
             call = self.dp[pattern]
             if call is not None: # dynamical axiom
@@ -537,12 +538,10 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='乘积写成乘方的形式', allow_complication=True)
-        .add_rule('#(#X)(#X)', '#0 X^{2}',
-        animation='`#1(#2 X)(#3 X)`[replace]{#0 X^{2}}')
+        Axiom(name='等式移项')
+        .add_rule('#x # y = z', '#1 x #2 y -z=0', animation='#1 x #2 y - `z`[add] = `z`[replace]{0}')
     )
 
     a.animation_mode = True
-
-    a.test('-xx', debug=True, printNarr=True, printTrim=True)
+    a.test('a + b = 3 + c', debug=False, printNarr=True, printTrim=True)
     #a.test(debug=True, printNarr=True, printTrim=True)

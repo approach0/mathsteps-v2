@@ -163,7 +163,7 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='等式移项')
-        .add_rule('#x # y = z', '#1 x #2 y -z=0')
+        .add_rule('#x # y = z', '#1 x #2 y -z=0', animation='#1 x #2 y - `z`[add] = `z`[replace]{0}')
         .add_rule('x = z', 'x - z = 0')
 
         .add_test('1 - 2 = -3 + 5', '1 - 2 + 3 - 5 = 0')
