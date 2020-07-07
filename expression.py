@@ -298,6 +298,8 @@ def need_outter_fence(root, child_narr, rank=0):
         return False
     elif root[1] == 'sup' and child_root[1] == 'sqrt':
         return True
+    elif child_root[1] == 'REPLACE':
+        return False
     elif child_root[0] == +1:
         if len(child_narr) <= 2: # unary
             return False
@@ -583,7 +585,7 @@ if __name__ == '__main__':
         'a -`2`[moveAfter,2] = `2`[moveBefore,2] + `0`[add]',
         '1+`(-a)^{2}`[add]',
         '- `1^{2}`[replace]{1}',
-        '`15 - 15`[replace]{0}',
+        '`(15 - 15)`[replace]{0} x',
     ]
 
     for expr in test_expressions[-1:]:
