@@ -498,9 +498,8 @@ def trim_animations(narr, top_root=True):
     sign, token = root.get()
 
     if top_root and token == 'REPLACE':
-        pseudo_narr = [NarrRoot(sign, 'add'), narr]
-        trim_animations(pseudo_narr)
-        narr[:] = pseudo_narr
+        trim_animations(narr[2])
+        narr[:] = narr[2]
         return
 
     root.animation = None
@@ -586,6 +585,7 @@ if __name__ == '__main__':
         '1+`(-a)^{2}`[add]',
         '- `1^{2}`[replace]{1}',
         '`(15 - 15)`[replace]{0} x',
+        '-`\\frac{1}{-2} \div \\frac{-3}{4}`[replace]{\\frac{1 \\times 4}{(-2) \\times (-3)}}'
     ]
 
     for expr in test_expressions[-1:]:
@@ -603,8 +603,8 @@ if __name__ == '__main__':
         narr = tree2narr(tree)
 
         rich.print('[[origin narr]]', narr)
-        #trim_animations(narr)
-        #rich.print('[[trim narr]]', narr)
+        trim_animations(narr)
+        rich.print('[[trim narr]]', narr)
 
         tex = narr2tex(narr)
         rich.print('[bold yellow]TeX:[/]', end=' ')

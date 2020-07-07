@@ -134,7 +134,8 @@ def test():
         '-3 \\frac{-2}{4}',
         '\\frac{2}{3} \div \\frac{4}{5}',
         '(\sqrt{2})^{2}',
-        '0+1+2'
+        '0+1+2',
+        '-\\frac{1}{-2} \div \\frac{-3}{4}',
     ]
 
     begin_from = 0
@@ -157,8 +158,8 @@ def test():
             rich.print(f'[red]{a.name()}')
             tex = expression.narr2tex(narr)
             print('\t', tex)
-            animation_json = mathjs.tex2json(tex)
-            print('\t', animation_json)
+            #animation_json = mathjs.tex2json(tex)
+            #print('\t', animation_json)
 
         render_steps(steps)
 
