@@ -288,15 +288,6 @@ def tex2json(tex, indent=None):
     return json
 
 
-def mathjs_hole_types():
-    return [
-        'ani-add',
-        'ani-remove',
-        'ani-move-before',
-        'ani-move-after'
-    ]
-
-
 def mathjs_fixhole(obj, father_obj=None, rank=0):
     Type = obj['mathjs']
 

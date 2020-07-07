@@ -349,8 +349,12 @@ def narr2tex(narr, parentRoot=None, tag=True, rank=0):
                 expr += sep_op + to_append
 
     elif token in binary_operators():
-        expr1 = narr2tex(narr[1], parentRoot=root, tag=tag, rank=1)
-        expr2 = narr2tex(narr[2], parentRoot=root, tag=tag, rank=2)
+        if token == 'REPLACE':
+            expr1 = narr2tex(narr[1], parentRoot=parentRoot, tag=tag, rank=1)
+            expr2 = narr2tex(narr[2], parentRoot=parentRoot, tag=tag, rank=2)
+        else:
+            expr1 = narr2tex(narr[1], parentRoot=root, tag=tag, rank=1)
+            expr2 = narr2tex(narr[2], parentRoot=root, tag=tag, rank=2)
 
         expr = None
         if token == 'div':
@@ -579,6 +583,7 @@ if __name__ == '__main__':
         'a -`2`[moveAfter,2] = `2`[moveBefore,2] + `0`[add]',
         '1+`(-a)^{2}`[add]',
         '- `1^{2}`[replace]{1}',
+        '`15 - 15`[replace]{0}',
     ]
 
     for expr in test_expressions[-1:]:
