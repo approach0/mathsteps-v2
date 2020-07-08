@@ -95,7 +95,7 @@ class Tree2NestedArr(Transformer):
         x = Tree2NestedArr().unwrap_null_reduce(x)
         x = [[(child[0])] + [_ for _ in Tree2NestedArr().children(child)] for child in x]
 
-        return passchildren(NarrRoot(+1, op_type), x)[0]
+        return _passchildren(NarrRoot(+1, op_type), x)[0]
 
     @staticmethod
     def negate(x):
@@ -299,6 +299,10 @@ def need_outter_fence(root, child_narr, rank=0):
 
     if root is None:
         return False
+    elif root[1] == 'add' and child_root[1] == 'add':
+        return True
+    elif root[1] == 'mul' and child_root[1] == 'mul':
+        return True
     elif root[1] in ['frac', 'ifrac', 'abs', 'sqrt', 'add', 'eq']:
         return False
     elif root[1] == 'sup' and child_root[1] == 'sqrt':
@@ -436,10 +440,10 @@ def get_wildcards_index(narr):
     return wildcards_index
 
 
-def passchildren(root, children):
+def _passchildren(root, children):
     _, op_type = root.get()
     new_narr = [root.copy()]
-    any_change = False
+    any_sign_changed = False
     for child in children:
         child_sign, child_type = child[0].get()
         if child_type == op_type:
@@ -459,25 +463,42 @@ def passchildren(root, children):
 
             # this part will only cause change if child sign is negative
             if child_sign < 0:
-                any_change = True
+                any_sign_changed = True
         else:
             if op_type == 'mul' and child_sign < 0:
                 child[0].set(+1, child_type)
                 new_narr[0].apply_sign(-1)
-                any_change = True
+                any_sign_changed = True
 
             new_narr.append(child)
 
-    return new_narr, any_change
+    return new_narr, any_sign_changed
+
+
+def _squeeze(narr):
+    root = narr[0].copy()
+    sign, Type = root.get()
+    if Type in commutative_operators():
+        old_len = len(narr)
+        narr, any_sign_changed = _passchildren(root, narr[1:])
+        return narr, len(narr) != old_len or any_sign_changed
+    else:
+        return narr, False
 
 
 def canonicalize(narr):
     sign, Type = narr[0].get()
+
+    # case 1: "-a (-b)" becomes "ab"
+    # case 2: "a + (b + c)" becomes "a + b + c"
+    narr, is_squeezed = _squeeze(narr)
+
     if Type == 'add':
-        # -(a + ...) becomes -a - ...
-        return passchildren(NarrRoot(+1, Type), [narr])
+        # "-(a + ...)" becomes "-a - ..."
+        narr, is_applied = _passchildren(NarrRoot(+1, Type), [narr])
+        return narr, (is_squeezed or is_applied)
     else:
-        return passchildren(NarrRoot(sign, Type), narr[1:])
+        return narr, is_squeezed
 
 
 def replace_or_pass_children(narr, i, substitute):
@@ -487,8 +508,9 @@ def replace_or_pass_children(narr, i, substitute):
     """
     root = narr[0]
     _, Type = root.get()
-    if Type == substitute[0][1] and Type in ['add', 'mul']:
-        new_narr, _ = passchildren(root.copy(), [substitute])
+    subroot = substitute[0]
+    if Type == subroot[1] and Type in commutative_operators() and subroot.animation is None:
+        new_narr, _ = _passchildren(root.copy(), [substitute])
         narr[0] = new_narr[0]
         del narr[1 + i]
         narr[:] = narr[0: 1 + i] + new_narr[1:] + narr[i + 1:]
@@ -592,7 +614,7 @@ if __name__ == '__main__':
         '`(15 - 15)`[replace]{0} x',
         '-`\\frac{1}{-2} \div \\frac{-3}{4}`[replace]{\\frac{1 \\times 4}{(-2) \\times (-3)}}',
         '-3 \\times  (-\\frac{2}{3})',
-        'a + 12 - `z`[add] = `z`[replace]{0}',
+        '12 + `-3`[add]',
     ]
 
     for expr in test_expressions[-1:]:
@@ -612,6 +634,15 @@ if __name__ == '__main__':
         #rich.print('[[origin narr]]', narr)
         #trim_animations(narr)
         #rich.print('[[trim narr]]', narr)
+
+        #narr = [NarrRoot(1, 'add'),
+        #    [NarrRoot(-1, 'NUMBER'), 30.0],
+        #    [NarrRoot(1, 'add'),
+        #        [NarrRoot(1, 'NUMBER'), 1.0],
+        #        [NarrRoot(1, 'NUMBER'), 3.0]
+        #    ]
+        #]
+        #narr, is_applied = canonicalize(narr)
 
         tex = narr2tex(narr)
         rich.print('[bold yellow]TeX:[/]', end=' ')

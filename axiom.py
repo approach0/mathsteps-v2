@@ -510,10 +510,6 @@ class Axiom:
                         new_narr = deepcopy(narr)
                         expression.replace_or_pass_children(new_narr, i, applied_narr)
 
-                        # ensure "(-(a+b)) x" will become "- (a+b) x"
-                        if new_narr[0][1] == 'mul':
-                            new_narr, _ = expression.canonicalize(new_narr)
-
                         # append result
                         if not Axiom()._uniq_append(result_narrs, new_narr, self.max_results):
                             return result_narrs
@@ -543,5 +539,8 @@ if __name__ == '__main__':
     )
 
     a.animation_mode = True
+
     a.test('a + b = 3 + c', debug=False, printNarr=True, printTrim=True)
+    #a.test('a + b = 3', debug=False, printNarr=True, printTrim=True)
+
     #a.test(debug=True, printNarr=True, printTrim=True)

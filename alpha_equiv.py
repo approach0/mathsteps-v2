@@ -25,7 +25,7 @@ def narr_identical(narr1, narr2):
     return True
 
 
-def apply_sign(narr, apply_product):
+def _apply_sign(narr, apply_product):
     root = narr[0]
     old_sign, Type = root.get()
     if Type == 'add':
@@ -33,7 +33,7 @@ def apply_sign(narr, apply_product):
         narr[:], _ = expression.canonicalize(narr)
         # distribute sign to each term
         for i, c in enumerate(narr[1:]):
-            apply_sign(c, apply_product)
+            _apply_sign(c, apply_product)
     else:
         narr[0].apply_sign(apply_product)
 
@@ -80,7 +80,7 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
         narr2 = deepcopy(narr2[:])
 
         # handle sign
-        apply_sign(narr2, sign1)
+        _apply_sign(narr2, sign1)
 
         #print(name1, end=' --> ')
         #print(narr2)
@@ -151,7 +151,7 @@ def rewrite_by_alpha(narr, alpha):
         subst[0].animation = root.animation
         subst[0].animatGrp = root.animatGrp
 
-        apply_sign(subst, sign)
+        _apply_sign(subst, sign)
 
         return subst
 
@@ -165,6 +165,8 @@ def rewrite_by_alpha(narr, alpha):
 
         substitute[0].animation = child_root.animation
         substitute[0].animatGrp = child_root.animatGrp
+        #alpha_prettyprint(alpha)
+        #print(c, '==>', substitute)
 
         i = len(new_narr) - 1
         new_narr.append(None)
@@ -173,10 +175,6 @@ def rewrite_by_alpha(narr, alpha):
         #print(substitute)
         #print()
         expression.replace_or_pass_children(new_narr, i, substitute)
-
-        print(c, '#########', substitute)
-        print(new_narr)
-        print()
 
     return new_narr
 
