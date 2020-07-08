@@ -400,8 +400,10 @@ def narr2tex(narr, parentRoot=None, tag=True, rank=0):
     if need_inner_fence(narr):
         expr = '(' + expr + ')'
     expr = sign + expr
+
     if need_outter_fence(parentRoot, narr, rank=rank):
         expr = '(' + expr + ')'
+
     if tag and root.animation:
         if root.animatGrp is None:
             expr = '`' + expr + '`[' + root.animation + ']'
@@ -614,6 +616,7 @@ if __name__ == '__main__':
         '`(15 - 15)`[replace]{0} x',
         '-`\\frac{1}{-2} \div \\frac{-3}{4}`[replace]{\\frac{1 \\times 4}{(-2) \\times (-3)}}',
         '-3 \\times  (-\\frac{2}{3})',
+        '12 - 3',
         '12 + `-3`[add]',
     ]
 
@@ -631,7 +634,7 @@ if __name__ == '__main__':
 
         narr = tree2narr(tree)
 
-        #rich.print('[[origin narr]]', narr)
+        rich.print('[[origin narr]]', narr)
         #trim_animations(narr)
         #rich.print('[[trim narr]]', narr)
 

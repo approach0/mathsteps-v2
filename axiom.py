@@ -540,7 +540,5 @@ if __name__ == '__main__':
 
     a.animation_mode = True
 
-    a.test('a + b = 3 + c', debug=False, printNarr=True, printTrim=True)
-    #a.test('a + b = 3', debug=False, printNarr=True, printTrim=True)
-
+    a.test('a + b = 3', debug=False, printNarr=True, printTrim=True)
     #a.test(debug=True, printNarr=True, printTrim=True)

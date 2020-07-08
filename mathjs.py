@@ -56,7 +56,7 @@ class Tree2MathJS(Transformer):
             elif op == 'eq':
                 obj = {
                     "mathjs": "OperatorNode",
-                    "op": "==",
+                    "op": "=",
                     "fn": "equal",
                     "implicit": False,
                     "args": [x[0], x[1]]
@@ -341,6 +341,7 @@ if __name__ == '__main__':
         '`\\frac{1}{2} \div \\frac{3}{4}`[replace]{\\frac{1 \\times 4}{2 \\times 3}}',
         '`3`[remove] \\times \\frac{2}{`3`[removeDenom]}',
         '12 - `z`[add] = `z`[replace]{0}',
+        'a + b + `-3`[add]',
     ]
 
     for tex in test_expressions[-1:]:
