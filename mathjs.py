@@ -325,6 +325,10 @@ def mathjs_fixhole(obj, father_obj=None, rank=0):
         mathjs_fixhole(child, father_obj=obj, rank=i)
 
 
+def mathjs_prettyprint(obj):
+    print(json.dumps(obj, indent=2, ensure_ascii=False))
+
+
 if __name__ == '__main__':
     from common_axioms import common_axioms
     from dfs import dfs
@@ -342,10 +346,14 @@ if __name__ == '__main__':
         '`3`[remove] \\times \\frac{2}{`3`[removeDenom]}',
         '12 - `z`[add] = `z`[replace]{0}',
         'a + b + `-3`[add]',
+        'a + b + `(-c)`[moveAfter,1] = `c`[moveBefore,1] + `0`[add]'
     ]
 
     for tex in test_expressions[-1:]:
         mathjs_obj = tex2mathjs(tex)
+        #mathjs_prettyprint(mathjs_obj)
         mathjs_fixhole(mathjs_obj)
+        #mathjs_prettyprint(mathjs_obj)
+
         json_str = mathjs2json(mathjs_obj, indent=2)
         print(json_str)

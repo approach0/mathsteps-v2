@@ -139,7 +139,7 @@ def test():
         '\\frac{x}{3xy}',
         '-x x',
         '-\\frac{8}{-2}',
-        "a + b = 3 + c"
+        "a + b = 3 - c",
     ]
 
     begin_from = 0

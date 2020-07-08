@@ -95,7 +95,7 @@ class Tree2NestedArr(Transformer):
         x = Tree2NestedArr().unwrap_null_reduce(x)
         x = [[(child[0])] + [_ for _ in Tree2NestedArr().children(child)] for child in x]
 
-        return _passchildren(NarrRoot(+1, op_type), x)[0]
+        return passchildren(NarrRoot(+1, op_type), x)[0]
 
     @staticmethod
     def negate(x):
@@ -444,7 +444,7 @@ def get_wildcards_index(narr):
     return wildcards_index
 
 
-def _passchildren(root, children):
+def passchildren(root, children):
     _, op_type = root.get()
     new_narr = [root.copy()]
     any_sign_changed = False
@@ -484,7 +484,7 @@ def _squeeze(narr):
     sign, Type = root.get()
     if Type in commutative_operators():
         old_len = len(narr)
-        narr, any_sign_changed = _passchildren(root, narr[1:])
+        narr, any_sign_changed = passchildren(root, narr[1:])
         return narr, len(narr) != old_len or any_sign_changed
     else:
         return narr, False
@@ -499,7 +499,7 @@ def canonicalize(narr):
 
     if Type == 'add':
         # "-(a + ...)" becomes "-a - ..."
-        narr, is_applied = _passchildren(NarrRoot(+1, Type), [narr])
+        narr, is_applied = passchildren(NarrRoot(+1, Type), [narr])
         return narr, (is_squeezed or is_applied)
     else:
         return narr, is_squeezed
@@ -514,7 +514,7 @@ def replace_or_pass_children(narr, i, substitute):
     _, Type = root.get()
     subroot = substitute[0]
     if Type == subroot[1] and Type in commutative_operators() and subroot.animation is None:
-        new_narr, _ = _passchildren(root.copy(), [substitute])
+        new_narr, _ = passchildren(root.copy(), [substitute])
         narr[0] = new_narr[0]
         del narr[1 + i]
         narr[:] = narr[0: 1 + i] + new_narr[1:] + narr[i + 1:]

@@ -383,9 +383,9 @@ canonicalize = (
 
     .add_test(
         [NarrRoot(1, 'add'),
-            [NarrRoot(-1, 'NUMBER'), 30.0],
+            [NarrRoot(1, 'NUMBER'), 30.0],
             [NarrRoot(1, 'add'),
-                [NarrRoot(1, 'NUMBER'), 1.0],
+                [NarrRoot(1, 'NUMBER'), -1.0],
                 [NarrRoot(1, 'NUMBER'), 3.0]
             ]
         ]
@@ -450,4 +450,3 @@ if __name__ == '__main__':
 
     a.animation_mode = True
     a.test(debug=False)
-    pass
