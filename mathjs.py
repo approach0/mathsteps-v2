@@ -211,6 +211,15 @@ class Tree2MathJS(Transformer):
         if x[0] == None:
             y = self.gen_object([x[1]], op='unary_add')
             return y
+        elif 'fn' in x[1] and x[1]['fn'] == 'unaryMinus':
+            # fix cases like a + `-b`[add]
+            old_x1 = x[1]
+            x[1] = x[1]['args'][0]
+            if '变化' in old_x1:
+                x[1]['变化'] = old_x1['变化']
+
+            y = self.gen_object(x, op='minus')
+            return y
         else:
             y = self.gen_object(x, op='add')
             return y
@@ -218,6 +227,15 @@ class Tree2MathJS(Transformer):
     def minus(self, x):
         if x[0] == None:
             y = self.gen_object([x[1]], op='unary_minus')
+            return y
+        elif 'fn' in x[1] and x[1]['fn'] == 'unaryMinus':
+            # fix cases like a - `-b`[add]
+            old_x1 = x[1]
+            x[1] = x[1]['args'][0]
+            if '变化' in old_x1:
+                x[1]['变化'] = old_x1['变化']
+
+            y = self.gen_object(x, op='add')
             return y
         else:
             y = self.gen_object(x, op='minus')
@@ -345,8 +363,8 @@ if __name__ == '__main__':
         '`\\frac{1}{2} \div \\frac{3}{4}`[replace]{\\frac{1 \\times 4}{2 \\times 3}}',
         '`3`[remove] \\times \\frac{2}{`3`[removeDenom]}',
         '12 - `z`[add] = `z`[replace]{0}',
-        'a + b + `-3`[add]',
-        'a + b + `(-c)`[moveAfter,1] = `c`[moveBefore,1] + `0`[add]'
+        'a + `-3`[add]',
+        'a - `-4`[add]',
     ]
 
     for tex in test_expressions[-1:]:

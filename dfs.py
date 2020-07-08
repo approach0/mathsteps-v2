@@ -73,6 +73,8 @@ def dfs(narr, axioms, debug=False, maxsteps=150, animation_mode=False):
             narr, axiom, axiom_idx = next_steps[0]
 
             output_narr = deepcopy(narr)
+            #print('[output narr]', narr)
+
             if animation_mode:
                 #if debug:
                 #    rich.print('[light]before trim[/]')
@@ -140,6 +142,7 @@ def test():
         '-x x',
         '-\\frac{8}{-2}',
         "a + b = 3 - c",
+        "x + b = 12",
     ]
 
     begin_from = 0

@@ -303,7 +303,7 @@ def need_outter_fence(root, child_narr, rank=0):
         return True
     elif root[1] == 'mul' and child_root[1] == 'mul':
         return True
-    elif root[1] == 'add' and child_root.animation is None:
+    elif root[1] == 'add':
         return False
     elif root[1] in ['frac', 'ifrac', 'abs', 'sqrt', 'eq']:
         return False
