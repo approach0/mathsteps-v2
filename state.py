@@ -135,11 +135,13 @@ def value_v1(narr, debug=False):
         'n_terms': 0.6,
         'n_terms_in_sqrt': 25,
         'n_deepest_var_level': 100,
-        'right_side_of_eq': 15,
+        'right_side_of_eq': 200,
     }
     stats = token_stats(narr, {})
 
-    if debug: print(stats)
+    if debug:
+        print('[value_v1]', expression.narr2tex(narr))
+        print(stats)
 
     accum = 0
     # symbol type values
@@ -228,10 +230,11 @@ def value_v2(narr, level=0, debug=False):
     collect_stats(narr, stats, 0, None, False)
 
     #tex = expression.narr2tex(narr)
+    #print('[value_v2]', tex)
     #stats['parentheses_cnt'] = tex.count('(')
 
     complexity = [
-        15. * stats['right_side_of_eq'],
+        (2.0 * stats['right_side_of_eq']) ** 3,
         1.0 * math.log(1 + math.log(1 + stats['NUMBER_sum'])),
         5.0 * math.log(1 + stats['NUMBER_in_sqrt']),
         1.0 * (0

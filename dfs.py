@@ -74,14 +74,14 @@ def dfs(narr, axioms, debug=False, maxsteps=150, animation_mode=False):
 
             output_narr = deepcopy(narr)
             if animation_mode:
-                if debug:
-                    rich.print('[light]before trim[/]')
-                    expression.narr_prettyprint(narr)
+                #if debug:
+                #    rich.print('[light]before trim[/]')
+                #    expression.narr_prettyprint(narr)
                 expression.trim_animations(narr)
-                if debug:
-                    rich.print('[light]after trim[/]')
-                    expression.narr_prettyprint(narr)
-                    print('[tex]', expression.narr2tex(narr))
+                #if debug:
+                #    rich.print('[light]after trim[/]')
+                #    expression.narr_prettyprint(narr)
+                #    print('[tex]', expression.narr2tex(narr))
 
             return_steps.append((output_narr, axiom, axiom_idx))
             next_steps = possible_next_steps(narr, axioms, state.value_v1,
@@ -199,8 +199,8 @@ if __name__ == '__main__':
             animate_json = mathjs.tex2json(animate_tex)
 
             ret_arr.append({
-                'tex': tex if i == 0 else trim_tex,
-                'animate_tex': tex if i == 0 else animate_tex,
+                'tex': trim_tex,
+                'animate_tex': animate_tex,
                 'animate_json': animate_json,
                 'axiom': axiom.name(),
                 'axiom_idx': axiom_idx

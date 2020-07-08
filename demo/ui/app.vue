@@ -110,7 +110,7 @@ export default {
     return {
       debug: false,
       equations: [],
-      input: '1 + 0 + 0',
+      input: '',
       preview: '',
       error_msg: '',
       steps: [],

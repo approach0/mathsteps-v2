@@ -46,7 +46,8 @@ app.post('/query', async function (req, res) {
     if (qry.length == 0) {
       throw 'input query length is zero'
 
-    } else if (qry.length == 1 && !qry[0].includes('=')) {
+    //} else if (qry.length == 1 && !qry[0].includes('=')) {
+    } else if (qry.length == 1) {
       steps = await run('python', '../dfs.py', qry)
     } else {
       steps = await run('python', '../../mathsteps-v1/mathstep.py', qry)
