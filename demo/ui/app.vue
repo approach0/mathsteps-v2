@@ -86,13 +86,12 @@
       <pre style="display:inline-block; font-weight: 800">{{step.animate_tex}}</pre>
     </div>
     <div v-if="debug">
-      <mu-button color="secondary" @click="toggle_json_mml(i, step.animate_json)">
-        {{ step.mml ? "查看 JSON" : "查看 MathML"  }}
-      </mu-button>
-      <pre v-if="step.mml">{{step.pretty_mml}}</pre>
-      <a href="http://192.168.3.54:8080/playground.html" v-if="step.mml">预览动画效果:</a>
-      <pre v-if="step.mml">{{[json_encode(step.mml)]}}</pre>
-      <pre v-else>{{step.animate_json}}</pre>
+      <mu-button color="secondary" @click="json_show(i, step.animate_json)"> 查看 JSON </mu-button>
+      <mu-button color="secondary" @click="json2mml(i, false)"> 查看 MML </mu-button>
+      <mu-button color="secondary" @click="json2mml(i, true)"> 查看 oneline MML </mu-button>
+      <mu-button color="secondary" @click="json_show(i, null)"> 收起 </mu-button>
+      <pre v-if="step.debug_content">{{step.debug_content}}</pre>
+      <a target="_blank" v-if="Array.isArray(step.debug_content)" href="http://192.168.3.54:8080/playground.html">动画效果预览</a>
     </div>
 
     <mu-divider v-show="step.show"></mu-divider>
@@ -189,7 +188,8 @@ export default {
           animate_tex: step.animate_tex,
           animate_json: animate_json,
           info: step.axiom,
-          html: html
+          html: html,
+          debug_content: null
         }
       )
 
@@ -283,7 +283,8 @@ export default {
                   .replace(/\\f/g, "\\f")
     },
 
-    json2mml(i, json) {
+    json2mml(i, oneline) {
+      let json = this.steps[i].animate_json
       json = json.replace(/\n/g, '');
       json = json.replace(/ /g, '');
       console.log('[json]', json)
@@ -297,8 +298,11 @@ export default {
         success: function(res){
           console.log('[ajax]', res)
           if (res.ret == 'successful') {
-            vm.$set(vm.steps[i], 'mml', res.mml)
-            vm.$set(vm.steps[i], 'pretty_mml', res.pretty_mml)
+            if (oneline)
+                vm.$set(vm.steps[i], 'debug_content', [vm.json_encode(res.mml)])
+            else
+                vm.$set(vm.steps[i], 'debug_content', res.pretty_mml)
+
           } else {
             console.error(res.error)
           }
@@ -310,12 +314,9 @@ export default {
       })
     },
 
-    toggle_json_mml(i, json) {
-      if (this.steps[i].mml === undefined) {
-        this.json2mml(i, json)
-      } else {
-        this.steps[i].mml = undefined
-      }
+    json_show(i, content) {
+        console.log('[debug show]', content)
+        this.$set(this.steps[i], 'debug_content', content)
     }
   }
 }
