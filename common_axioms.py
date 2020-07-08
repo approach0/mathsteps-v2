@@ -193,11 +193,16 @@ def common_axioms(full=False):
     else:
         tmp_axiom = (
             Axiom(name='合并同类项', recursive_apply=True, allow_complication=True, root_sign_reduce=False, max_results=4)
-            .add_rule('#(X + X)', '2X')
-            .add_rule('#(-X - X)', '-2X')
-            .add_rule('#(#X # kX)', '(#2 1 #3 k) X')
-            .add_rule('#(#X # Xk)', '(#2 1 #3 k) X')
-            .add_rule('#(#X *{1} # X *{2})', '(#2 *{1} #3 *{2}) X')
+            .add_rule('#(X + X)', '2X',
+            animation='`#1(X + X)`[replace]{2X}')
+            .add_rule('#(-X - X)', '-2X',
+            animation='`#1(-X - X)`[replace]{-2X}')
+            .add_rule('#(#X # kX)', '(#2 1 #3 k) X',
+            animation='`#1(#2 X #3 kX)`[replace]{(#2 1 #3 k) X}')
+            .add_rule('#(#X # Xk)', '(#2 1 #3 k) X',
+            animation='`#1(#2 X #3 Xk)`[replace]{(#2 1 #3 k) X}')
+            .add_rule('#(#X *{1} # X *{2})', '(#2 *{1} #3 *{2}) X',
+            animation='`#1(#2 X *{1} #3 X *{2})`[replace]{(#2 *{1} #3 *{2}) X}')
         )
 
     axioms.append(

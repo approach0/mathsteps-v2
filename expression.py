@@ -301,8 +301,6 @@ def need_outter_fence(root, child_narr, rank=0):
         return False
     elif root[1] == 'add' and child_root[1] == 'add':
         return True
-    elif root[1] == 'mul' and child_root[1] == 'mul':
-        return True
     elif root[1] == 'add':
         return False
     elif root[1] in ['frac', 'ifrac', 'abs', 'sqrt', 'eq']:
@@ -317,6 +315,8 @@ def need_outter_fence(root, child_narr, rank=0):
         elif root[1] == 'sup' and child_root[1] in ['frac', 'afrac', 'sup']:
             return True
         elif child_root[1] in ['frac', 'sup']:
+            return False
+        elif root[1] == 'mul' and child_root[1] == 'mul':
             return False
         return True
 

@@ -534,11 +534,12 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='等式移项')
-        .add_rule('#x # y = z', '#1 x #2 y -z=0', animation='#1 x #2 y - `z`[add] = `z`[replace]{0}')
+        Axiom(name='合并同类项', recursive_apply=True, allow_complication=True, root_sign_reduce=False, max_results=4)
+        .add_rule('#(#X *{1} # X *{2})', '(#2 *{1} #3 *{2}) X',
+        animation='`#1(#2 X *{1} #3 X *{2})`[replace]{(#2 *{1} #3 *{2}) X}')
     )
 
     a.animation_mode = True
 
-    a.test('a + b = 3', debug=False, printNarr=True, printTrim=True)
+    a.test('(12y + 3y)x', debug=False, printNarr=True, printTrim=False)
     #a.test(debug=True, printNarr=True, printTrim=True)
