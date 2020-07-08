@@ -98,11 +98,9 @@ def dfs(narr, axioms, debug=False, maxsteps=150, animation_mode=False):
     return return_steps, any_err
 
 
-def test():
+def test(all_axioms):
     from render_math import render_steps
     from test_cases import test_cases_x3_rational, test_cases_wiki131278697
-
-    all_axioms = common_axioms()
 
     testcases = []
 
@@ -143,6 +141,7 @@ def test():
         '-\\frac{8}{-2}',
         "a + b = 3 - c",
         "x + b = 12",
+        '\\frac{2}{x} + y = a + b'
     ]
 
     begin_from = 0
@@ -180,13 +179,21 @@ def test():
 
 
 if __name__ == '__main__':
-    from common_axioms import common_axioms
+    if False:
+        all_axioms = [
+            Axiom(name='等式两边同乘', allow_complication=True)
+            .add_rule('#\\frac{x}{y} + *{1} = z', '#1 x + y(*{1}) = yz',
+            animation='#1 \\frac{x}{`y`[removeDenom]} + `y`[add](*{1}) = `y`[add] z')
+        ]
+
+    else:
+        from common_axioms import common_axioms
+        all_axioms = common_axioms()
 
     args = sys.argv[1:]
     if len(args) > 0:
         tex = args[0]
         narr = expression.tex2narr(tex)
-        all_axioms = common_axioms()
         steps, err = dfs(narr, all_axioms, debug=False, animation_mode=True)
 
         if err:
@@ -215,4 +222,4 @@ if __name__ == '__main__':
     else:
         #import cProfile
         #cProfile.run('test()')
-        test()
+        test(all_axioms)

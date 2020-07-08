@@ -172,8 +172,10 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='等式两边同乘', allow_complication=True)
-        .add_rule('#\\frac{x}{y} + *{1} = z', '#1 x + y(*{1}) = yz')
-        .add_rule('#\\frac{x}{y} = z', '#1 x = yz')
+        .add_rule('#\\frac{x}{y} + *{1} = z', '#1 x + y(*{1}) = yz',
+        animation='#1 \\frac{x}{`y`[removeDenom]} + `y`[add](*{1}) = `y`[add] z')
+        .add_rule('#\\frac{x}{y} = z', '#1 x = yz',
+        animation='#1 \\frac{x}{`y`[removeDenom]} = `y`[add] z')
 
         .add_test('-\\frac{-2}{-3} = -4', '2 = (-3) \\times (-4)')
         .add_test('\\frac{x}{2} + a - b = z', 'x + 2 \\times (a - b) = 2 \\times z')
