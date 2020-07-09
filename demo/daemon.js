@@ -22,10 +22,14 @@ function run(cmd, script, qry) {
   return new Promise((resolve, reject) => {
     cmd_args = [script, ...qry]
     console.log(cmd_args)
+    let returnStr = ''
     const process = spawn(cmd, cmd_args)
     process.stdout.on('data', (data) => {
-      const steps = data.toString()
-      resolve(steps)
+      returnStr += data.toString()
+    })
+
+    process.stdout.on('end', (data) => {
+      resolve(returnStr)
     })
 
     process.stderr.on('data', (data) => {
@@ -53,6 +57,7 @@ app.post('/query', async function (req, res) {
       steps = await run('python', '../../mathsteps-v1/mathstep.py', qry)
     }
 
+    //console.log('[steps]', steps)
     steps = JSON.parse(steps)
     res.json({
       qry: qry,
