@@ -235,12 +235,16 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='嵌套分式的化简')
-        .add_rule('#\\frac{#\\frac{x}{y}}{#\\frac{x}{y}}', '#0 1')
-        .add_rule('#\\frac{#\\frac{x}{y}}{#\\frac{a}{b}}', '#0 \\frac{bx}{ay}')
-        .add_rule('#\\frac{#1}{#\\frac{x}{y}}', '#0 \\frac{y}{x}')
-        .add_rule('#\\frac{#\\frac{x}{y}}{#1}', '#0 \\frac{x}{y}')
-        .add_rule('#\\frac{a}{#\\frac{x}{y}}', '#0 \\frac{ay}{x}')
-        .add_rule('#\\frac{#\\frac{x}{y}}{a}', '#0 \\frac{x}{ay}')
+        .add_rule('#\\frac{#\\frac{x}{y}}{#\\frac{a}{b}}', '#0 \\frac{bx}{ay}',
+        animation='`#1 \\frac{#2 \\frac{x}{y}}{#3 \\frac{a}{b}}`[replace]{#0 \\frac{bx}{ay}}')
+        .add_rule('#\\frac{#1}{#\\frac{x}{y}}', '#0 \\frac{y}{x}',
+        animation='`#1 \\frac{#2 1}{#3 \\frac{x}{y}}`[replace]{#0 \\frac{y}{x}}')
+        .add_rule('#\\frac{#\\frac{x}{y}}{#1}', '#0 \\frac{x}{y}',
+        animation='`#1 \\frac{#2 \\frac{x}{y}}{#3 1}`[replace]{#0 \\frac{x}{y}}')
+        .add_rule('#\\frac{a}{#\\frac{x}{y}}', '#0 \\frac{ay}{x}',
+        animation='`#1 \\frac{a}{#2 \\frac{x}{y}}`[replace]{#0 \\frac{ay}{x}}')
+        .add_rule('#\\frac{#\\frac{x}{y}}{a}', '#0 \\frac{x}{ay}',
+        animation='`#1 \\frac{#2 \\frac{x}{y}}{a}`[replace]{#0 \\frac{x}{ay}}')
 
         .add_test('-\\frac{-\\frac{4}{3}}{-\\frac{4}{3}}', '-1')
         .add_test('-\\frac{-\\frac{4}{3}}{\\frac{1}{2}}', '\\frac{2 \\times 4}{1 \\times 3}')
@@ -254,18 +258,21 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='分母为一的分式化简')
-        .add_rule('#\\frac{k}{#1}', '#0 k')
+        .add_rule('#\\frac{k}{#1}', '#0 k', animation='`#1 \\frac{k}{#2 1}`[replace]{#0 k}')
 
         .add_test('\\frac{3}{-1}', '-3')
     )
 
     axioms.append(
         Axiom(name='分式的乘法', allow_complication=True)
-        .add_rule('#\\frac{1}{x} \\frac{1}{y}', '#1 \\frac{1}{xy}')
-        .add_rule('#\\frac{1}{x} \\frac{y}{1}', '#1 \\frac{y}{x}')
-        .add_rule('#\\frac{x}{1} \\frac{1}{y}', '#1 \\frac{x}{y}')
-        .add_rule('#\\frac{x}{1} \\frac{y}{1}', '#1 xy')
-        .add_rule('#\\frac{a}{c} \\frac{b}{d}', '#1 \\frac{ab}{cd}')
+        .add_rule('#\\frac{#1}{x} \\frac{#1}{y}', '#0 \\frac{1}{xy}',
+        animation='`#1 \\frac{#2 1}{x} \\frac{#3 1}{y}`[replace]{#0 \\frac{1}{xy}}')
+        .add_rule('#\\frac{#1}{x} \\frac{y}{#1}', '#0 \\frac{y}{x}',
+        animation='`#1 \\frac{#2 1}{x} \\frac{y}{#3 1}`[replace]{#0 \\frac{y}{x}}')
+        .add_rule('#\\frac{x}{#1} \\frac{y}{#1}', '#0 xy',
+        animation='`#1 \\frac{x}{#2 1} \\frac{y}{#3 1}`[replace]{#0 xy}')
+        .add_rule('#\\frac{a}{c} \\frac{b}{d}', '#1 \\frac{ab}{cd}',
+        animation='`#1 \\frac{a}{c} \\frac{b}{d}`[replace]{#1 \\frac{ab}{cd}}')
 
         .add_test('-\\frac{1}{-2} \cdot \\frac{-2}{1}', '-\\frac{-2}{-2}')
     )

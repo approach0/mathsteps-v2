@@ -141,7 +141,8 @@ def test(all_axioms):
         '-\\frac{8}{-2}',
         "a + b = 3 - c",
         "x + b = 12",
-        '\\frac{2}{x} + y = a + b'
+        '\\frac{2}{x} + y = a + b',
+        '\\frac{1}{y} \\frac{x}{1}'
     ]
 
     begin_from = 0
@@ -181,9 +182,15 @@ def test(all_axioms):
 if __name__ == '__main__':
     if False:
         all_axioms = [
-            Axiom(name='等式两边同乘', allow_complication=True)
-            .add_rule('#\\frac{x}{y} + *{1} = z', '#1 x + y(*{1}) = yz',
-            animation='#1 \\frac{x}{`y`[removeDenom]} + `y`[add](*{1}) = `y`[add] z')
+            Axiom(name='分式的乘法', allow_complication=True)
+            .add_rule('#\\frac{#1}{x} \\frac{#1}{y}', '#0 \\frac{1}{xy}',
+            animation='`#1 \\frac{#2 1}{x} \\frac{#3 1}{y}`[replace]{#0 \\frac{1}{xy}}')
+            .add_rule('#\\frac{#1}{x} \\frac{y}{#1}', '#0 \\frac{y}{x}',
+            animation='`#1 \\frac{#2 1}{x} \\frac{y}{#3 1}`[replace]{#0 \\frac{y}{x}}')
+            .add_rule('#\\frac{x}{#1} \\frac{y}{#1}', '#0 xy',
+            animation='`#1 \\frac{x}{#2 1} \\frac{y}{#3 1}`[replace]{#0 xy}')
+            .add_rule('#\\frac{a}{c} \\frac{b}{d}', '#1 \\frac{ab}{cd}',
+            animation='`#1 \\frac{a}{c} \\frac{b}{d}`[replace]{#1 \\frac{ab}{cd}}')
         ]
 
     else:

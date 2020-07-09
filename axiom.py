@@ -534,12 +534,12 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='合并同类项', recursive_apply=True, allow_complication=True, root_sign_reduce=False, max_results=4)
-        .add_rule('#(#X *{1} # X *{2})', '(#2 *{1} #3 *{2}) X',
-        animation='`#1(#2 X *{1} #3 X *{2})`[replace]{(#2 *{1} #3 *{2}) X}')
+        Axiom(name='分式的乘法', allow_complication=True)
+        .add_rule('#\\frac{#1}{x} \\frac{y}{#1}', '#0 \\frac{y}{x}',
+        animation='`#1 \\frac{#2 1}{x} \\frac{y}{#3 1}`[replace]{#0 \\frac{y}{x}}')
     )
 
     a.animation_mode = True
 
-    a.test('(12y + 3y)x', debug=False, printNarr=True, printTrim=False)
+    a.test('\\frac{1}{y} \\frac{x}{1}', debug=False, printNarr=True, printTrim=False)
     #a.test(debug=True, printNarr=True, printTrim=True)
