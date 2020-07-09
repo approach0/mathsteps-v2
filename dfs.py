@@ -144,6 +144,7 @@ def test(all_axioms):
         '\\frac{2}{x} + y = a + b',
         '\\frac{1}{y} \\frac{x}{1}',
         '-7(a-b)',
+        '-(-2-3)^{2}',
     ]
 
     begin_from = 0
@@ -183,9 +184,11 @@ def test(all_axioms):
 if __name__ == '__main__':
     if False:
         all_axioms = [
-            Axiom(name='乘法分配率', allow_complication=True, recursive_apply=True, max_results=4)
-            .add_rule('#a(x + *{1})', '#1 ax #1 a *{1}',
-            animation='#1 `a`[moveBefore,1] `(`#1 a`[moveAfter,1] x + `#1 a`[moveAfter,1] *{1})`[removeOnly]')
+            Axiom(name='和平方公式', allow_complication=True)
+            .add_rule('#(#a + *{1})^{2}', '#1 ( a^{2} #2 2 a *{1} + (*{1})^{2} )',
+            animation='`#1 (#2 a + *{1})^{2}`[replace]{#1 (a^{2} #2 2 a *{1} + (*{1})^{2})}')
+            .add_rule('# \\left| #a + *{1} \\right|^{2}', '#1 ( a^{2} #2 2 a *{1} + (*{1})^{2} )',
+            animation='`#1 \\left| #2 a + *{1} \\right|^{2}`[replace]{#1 ( a^{2} #2 2 a *{1} + (*{1})^{2} )}')
         ]
 
     else:

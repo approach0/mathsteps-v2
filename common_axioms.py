@@ -332,8 +332,10 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='和平方公式', allow_complication=True)
-        .add_rule('#(#a + *{1})^{2}', '#1 ( a^{2} #2 2 a *{1} + (*{1})^{2} )')
-        .add_rule('# \\left| #a + *{1} \\right|^{2}', '#1 ( a^{2} #2 2 a *{1} + (*{1})^{2} )')
+        .add_rule('#(#a + *{1})^{2}', '#1 ( a^{2} #2 2 a *{1} + (*{1})^{2} )',
+        animation='`#1 (#2 a + *{1})^{2}`[replace]{#1 (a^{2} #2 2 a *{1} + (*{1})^{2})}')
+        .add_rule('# \\left| #a + *{1} \\right|^{2}', '#1 ( a^{2} #2 2 a *{1} + (*{1})^{2} )',
+        animation='`#1 \\left| #2 a + *{1} \\right|^{2}`[replace]{#1 ( a^{2} #2 2 a *{1} + (*{1})^{2} )}')
 
         .add_test('-(3 - 2)^{2}', '-(3^{2} + 2 \\times 3 \\times (-2) + (-2)^{2})')
     )
