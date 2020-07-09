@@ -933,3 +933,10 @@ def test_cases_wiki131278697():
     #answers.append([])
 
     return questions, answers
+
+
+if __name__ == '__main__':
+
+    questions, _ = test_cases_wiki131278697()
+    for q in questions:
+        print('\t', q)

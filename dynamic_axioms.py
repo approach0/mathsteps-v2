@@ -227,18 +227,18 @@ def _simplify_fraction(pattern_narr, signs, narr, rewrite_rules, output_tempalat
                 rewrite_rules['c'] = gen_atom_number(a)
                 return rewrite_by_alpha(output_tempalates[0], rewrite_rules), True
             elif b != 0:
-                rewrite_rules['a'] = gen_atom_number(a)
-                rewrite_rules['b'] = gen_atom_number(b)
+                rewrite_rules['c'] = gen_atom_number(a)
+                rewrite_rules['d'] = gen_atom_number(b)
                 return rewrite_by_alpha(output_tempalates[1], rewrite_rules), True
 
     return narr, False
 
 simplify_fraction = (
     Axiom(name='化简分式')
-    .add_rule('#\\frac{a}{b}', ['#1 c', '#1 \\frac{a}{b}'], dynamic_procedure=_simplify_fraction,
+    .add_rule('#\\frac{a}{b}', ['#1 c', '#1 \\frac{c}{d}'], dynamic_procedure=_simplify_fraction,
     animation=[
         '`#1 \\frac{a}{b}`[replace]{#1 c}',
-        '`#1 \\frac{a}{b}`[replace]{#1 \\frac{a}{b} }',
+        '`#1 \\frac{a}{b}`[replace]{#1 \\frac{c}{d} }',
     ])
 
     .add_test('-\\frac{-14}{-4}', '-\\frac{7}{2}')
