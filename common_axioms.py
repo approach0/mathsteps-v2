@@ -342,7 +342,8 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='平方差公式', allow_complication=True)
-        .add_rule('#(a + *{1})(a - *{1})', '#1( a^{2} - (*{1})^{2} )')
+        .add_rule('#(a + *{1})(a - *{1})', '#1( a^{2} - (*{1})^{2} )',
+        animation='`#1 (a + *{1})(a - *{1})`[replace]{#1( a^{2} - (*{1})^{2} )}')
 
         .add_test('(3 + a + b)(-a - b + 3)', [
             '3^{2} - (a + b)^{2}',
