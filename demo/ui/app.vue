@@ -180,7 +180,7 @@ export default {
     append_step(step) {
       let tex = step.tex
       let html = this.render(tex)
-      let animate_json = JSON.stringify(JSON.parse(step.animate_json), null, 2)
+      let animate_json = JSON.stringify(JSON.parse(step.animate_json), null, 4)
       this.steps.push(
         {
           show: false,
