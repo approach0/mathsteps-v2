@@ -324,7 +324,10 @@ def mathjs_fixhole(obj, father_obj=None, rank=0):
     # add binary animation range tag if one child is animated
     if '变化' in obj:
         ani_type = obj['变化']['类型']
-        if ani_type not in ['ani-replace-before', 'ani-replace-after', 'ani-remove-denominator']:
+        if obj['变化']['范围'] == '单' and ani_type == 'ani-remove':
+            # @chenhaojun enforces this case
+            pass
+        elif ani_type not in ['ani-replace-before', 'ani-replace-after', 'ani-remove-denominator']:
             father_obj['变化'] = deepcopy(obj['变化']) # copy meta-data
             father_obj['变化']['范围'] = '左' if rank == 0 else '右'
 
