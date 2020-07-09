@@ -439,7 +439,9 @@ class Axiom:
                             # in addition case, we will need to keep father sign,
                             # e.g. -(1+2+3) => -(3+3)
                             new_root = NarrRoot(root_sign, root_type)
-                        new_narr = [new_root] + [rewritten_narr] + brothers
+
+                        new_narr = [new_root, None, *brothers]
+                        expression.replace_or_pass_children(new_narr, 0, rewritten_narr)
                     else:
                         # the entire expression in this level gets reduced
                         new_narr = rewritten_narr
@@ -534,12 +536,12 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='分式的乘法', allow_complication=True)
-        .add_rule('#\\frac{#1}{x} \\frac{y}{#1}', '#0 \\frac{y}{x}',
-        animation='`#1 \\frac{#2 1}{x} \\frac{y}{#3 1}`[replace]{#0 \\frac{y}{x}}')
+        Axiom(name='任何数加零还是它本身', recursive_apply=True, root_sign_reduce=False)
+        .add_rule('#(0 + n)', 'n', animation='`0`[remove] + n')
+        .add_rule('#(n - 0)', 'n', animation='n - `0`[remove]')
     )
 
     a.animation_mode = True
 
-    a.test('\\frac{1}{y} \\frac{x}{1}', debug=False, printNarr=True, printTrim=False)
+    a.test('0 - 1 + 3', debug=False, printNarr=True, printTrim=False)
     #a.test(debug=True, printNarr=True, printTrim=True)

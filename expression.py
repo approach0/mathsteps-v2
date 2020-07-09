@@ -519,6 +519,7 @@ def replace_or_pass_children(narr, i, substitute):
     root = narr[0]
     _, Type = root.get()
     subroot = substitute[0]
+
     if Type == subroot[1] and Type in commutative_operators() and subroot.animation is None:
         new_narr, _ = passchildren(root.copy(), [substitute])
         narr[0] = new_narr[0]
@@ -526,6 +527,7 @@ def replace_or_pass_children(narr, i, substitute):
         narr[:] = narr[0: 1 + i] + new_narr[1:] + narr[i + 1:]
     else:
         narr[1 + i] = substitute
+
     return narr
 
 
