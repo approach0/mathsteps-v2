@@ -143,6 +143,9 @@ class Tree2MathJS(Transformer):
                   "mathjs": "ParenthesisNode",
                   "content": x[0]
                 }
+            ###
+            # 动画节点
+            ###
             elif op == 'ani-add':
                 obj = x[0]
                 obj['变化'] = {
@@ -204,6 +207,19 @@ class Tree2MathJS(Transformer):
 
         return obj
 
+    @staticmethod
+    def son_after_animation(x, rank, assign=None):
+        obj = x[rank]
+        if '变化' in obj:
+            ani_type = obj['变化']['类型']
+            if ani_type == 'ani-replace-before':
+                if assign: obj['变化']['替换为'] = assign
+                return obj['变化']['替换为']
+            else:
+                if assign: x[rank] = assign
+                return x[rank]
+        return {}
+
     def null_reduce(self, x):
         return None
 
@@ -217,34 +233,32 @@ class Tree2MathJS(Transformer):
         if x[0] == None:
             y = self.gen_object([x[1]], op='unary_add')
             return y
-        elif 'fn' in x[1] and x[1]['fn'] == 'unaryMinus':
-            # fix cases like a + `-b`[add]
-            old_x1 = x[1]
-            x[1] = x[1]['args'][0]
-            if '变化' in old_x1:
-                x[1]['变化'] = old_x1['变化']
-
-            y = self.gen_object(x, op='minus')
-            return y
         else:
-            y = self.gen_object(x, op='add')
+            after_ani = self.son_after_animation(x, 1)
+            if 'fn' in after_ani and after_ani['fn'] == 'unaryMinus':
+                # fix cases like a + `-b`[add]
+                unwrap = after_ani['args'][0]
+                unwrap['变化'] = after_ani['变化']
+                self.son_after_animation(x, 1, unwrap)
+                y = self.gen_object(x, op='minus')
+            else:
+                y = self.gen_object(x, op='add')
             return y
 
     def minus(self, x):
         if x[0] == None:
             y = self.gen_object([x[1]], op='unary_minus')
             return y
-        elif 'fn' in x[1] and x[1]['fn'] == 'unaryMinus':
-            # fix cases like a - `-b`[add]
-            old_x1 = x[1]
-            x[1] = x[1]['args'][0]
-            if '变化' in old_x1:
-                x[1]['变化'] = old_x1['变化']
-
-            y = self.gen_object(x, op='add')
-            return y
         else:
-            y = self.gen_object(x, op='minus')
+            after_ani = self.son_after_animation(x, 1)
+            if 'fn' in after_ani and after_ani['fn'] == 'unaryMinus':
+                # fix cases like a + `-b`[add]
+                unwrap = after_ani['args'][0]
+                unwrap['变化'] = after_ani['变化']
+                self.son_after_animation(x, 1, unwrap)
+                y = self.gen_object(x, op='add')
+            else:
+                y = self.gen_object(x, op='minus')
             return y
 
     def eq(self, x):

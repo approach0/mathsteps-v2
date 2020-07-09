@@ -2,6 +2,7 @@ import rich
 import re
 import itertools
 import functools
+import mathjs
 import expression
 from expression import NarrRoot
 from copy import deepcopy
@@ -119,7 +120,7 @@ class Axiom:
         return self
 
 
-    def test(self, tex=None, debug=False, render=True, printNarr=False, printTrim=False):
+    def test(self, tex=None, debug=False, render=True, printNarr=False, printTrim=False, printJSON=False):
         import render_math
         tests = self.tests if tex is None else [(tex, None)]
         if len(tests) == 0: print('[no test case]')
@@ -147,12 +148,20 @@ class Axiom:
                     print()
 
                 render_texs.append(applied_tex)
+
                 if printNarr:
+                    rich.print("[red]narr[/]:")
                     expression.narr_prettyprint(applied_narr)
+
                 if printTrim:
                     rich.print("[red]trim[/]:")
                     expression.trim_animations(applied_narr)
                     expression.narr_prettyprint(applied_narr)
+
+                if printJSON:
+                    rich.print('[red]JSON[/]:')
+                    json = mathjs.tex2json(applied_tex, indent=4)
+                    print(json)
 
             if render:
                 render_math.render_equations(render_texs)
@@ -536,12 +545,11 @@ class Axiom:
 
 if __name__ == '__main__':
     a = (
-        Axiom(name='任何数加零还是它本身', recursive_apply=True, root_sign_reduce=False)
-        .add_rule('#(0 + n)', 'n', animation='`0`[remove] + n')
-        .add_rule('#(n - 0)', 'n', animation='n - `0`[remove]')
+        Axiom(name='分母为一的分式化简')
+        .add_rule('#\\frac{k}{#1}', '#0 k', animation='`#1 \\frac{k}{#2 1}`[replace]{#0 k}')
     )
 
     a.animation_mode = True
 
-    a.test('0 - 1 + 3', debug=False, printNarr=True, printTrim=False)
+    a.test('-12 + \\frac{27}{-9}', debug=False, printNarr=True, printTrim=False)
     #a.test(debug=True, printNarr=True, printTrim=True)

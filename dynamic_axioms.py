@@ -447,6 +447,8 @@ if __name__ == '__main__':
     a = calc_pow
     a = collapse_fraction_add_float
     a = canonicalize
+    a = simplify_fraction
 
     a.animation_mode = True
-    a.test(debug=False)
+    #a.test(debug=False)
+    a.test('-12 + \\frac{27}{-9}', debug=False, printJSON=True)
