@@ -95,7 +95,10 @@ class Tree2NestedArr(Transformer):
         x = Tree2NestedArr().unwrap_null_reduce(x)
         x = [[(child[0])] + [_ for _ in Tree2NestedArr().children(child)] for child in x]
 
-        return passchildren(NarrRoot(+1, op_type), x)[0]
+        animations = [c[0].animation is not None for c in x]
+
+        reduce_sign = False if any(animations) else True
+        return passchildren(NarrRoot(+1, op_type), x, reduce_sign=reduce_sign)[0]
 
     @staticmethod
     def negate(x):
@@ -444,7 +447,7 @@ def get_wildcards_index(narr):
     return wildcards_index
 
 
-def passchildren(root, children):
+def passchildren(root, children, reduce_sign=True):
     _, op_type = root.get()
     new_narr = [root.copy()]
     any_sign_changed = False
@@ -458,21 +461,24 @@ def passchildren(root, children):
                     new_narr.append(grand_child)
 
             elif child_type == 'mul':
-                # reduce sign
-                new_narr[0].apply_sign(child_sign)
-                new_narr += child[1:]
+                if reduce_sign:
+                    new_narr[0].apply_sign(child_sign)
+                    new_narr += child[1:]
+                else:
+                    new_narr += child
 
             else:
                 raise Exception('unexpected type: ' + Type)
 
-            # this part will only cause change if child sign is negative
-            if child_sign < 0:
+            # this closure will only cause change if child sign is negative
+            if child_sign < 0 and reduce_sign:
                 any_sign_changed = True
         else:
             if op_type == 'mul' and child_sign < 0:
-                child[0].set(+1, child_type)
-                new_narr[0].apply_sign(-1)
-                any_sign_changed = True
+                if reduce_sign:
+                    child[0].set(+1, child_type)
+                    new_narr[0].apply_sign(-1)
+                    any_sign_changed = True
 
             new_narr.append(child)
 
@@ -620,6 +626,7 @@ if __name__ == '__main__':
         '-3 \\times  (-\\frac{2}{3})',
         '12 - 3',
         '12 + `-3`[add]',
+        '`-a`[remove] x',
     ]
 
     for expr in test_expressions[-1:]:

@@ -142,8 +142,8 @@ def test(all_axioms):
         "a + b = 3 - c",
         "x + b = 12",
         '\\frac{2}{x} + y = a + b',
-        '\\frac{1}{y} \\frac{x}{1}'
-        '-7(a-b)'
+        '\\frac{1}{y} \\frac{x}{1}',
+        '-7(a-b)',
     ]
 
     begin_from = 0
