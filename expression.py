@@ -265,7 +265,7 @@ def no_permute_tokens():
     return ['ifrac']
 
 
-def placeholder_animations():
+def recursive_hole_animations():
     return ['remove',  'moveBefore', 'removeDenom']
 
 
@@ -549,7 +549,7 @@ def trim_animations(narr, top_root=True):
             substitute[0].sign *= child_sign
             replace_or_pass_children(narr, i, substitute)
             child = substitute # for further trim
-        elif child_root.animation in placeholder_animations():
+        elif child_root.animation in recursive_hole_animations():
             narr[1 + i] = None
             continue
 

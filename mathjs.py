@@ -155,6 +155,12 @@ class Tree2MathJS(Transformer):
                     '类型': 'ani-remove',
                     '范围': '全'
                 }
+            elif op == 'ani-removeOnly':
+                obj = x[0]
+                obj['变化'] = {
+                    '类型': 'ani-remove',
+                    '范围': '单'
+                }
             elif op == 'ani-removeDenom':
                 obj = x[0]
                 obj['变化'] = {

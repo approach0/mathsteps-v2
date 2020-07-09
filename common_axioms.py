@@ -279,15 +279,18 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='乘数的指数是各个因子指数的乘数', recursive_apply=True, allow_complication=True)
-        .add_rule('# (# a *{1})^{k}', '#1 (#2 a)^{k} \\times (*{1})^{k}')
+        .add_rule('# (# a *{1})^{k}', '#1 (#2 a)^{k} \\times (*{1})^{k}',
+        animation='`#1 (#2 a *{1})^{k}`[replace]{#1 (#2 a)^{k} \\times (*{1})^{k}}')
 
         .add_test('-(-3xy)^{2}', '-(-3)^{2} \\times x^{2} \\times y^{2}')
     )
 
     axioms.append(
         Axiom(name='将指数分配进分子分母', allow_complication=True)
-        .add_rule('#(-\\frac{#a}{#b})^{k}', '#1 (-1)^{k} \\frac{(#2 a)^{k}}{(#3 b)^{k}}')
-        .add_rule('#(+\\frac{#a}{#b})^{k}', '#1 \\frac{(#2 a)^{k}}{(#3 b)^{k}}')
+        .add_rule('#(-\\frac{#a}{#b})^{k}', '#1 (-1)^{k} \\frac{(#2 a)^{k}}{(#3 b)^{k}}',
+        animation='`#1 (-\\frac{#2 a}{#3 b})^{k}`[replace]{#1 (-1)^{k} \\frac{(#2 a)^{k}}{(#3 b)^{k}}}')
+        .add_rule('#(+\\frac{#a}{#b})^{k}', '#1 \\frac{(#2 a)^{k}}{(#3 b)^{k}}',
+        animation='`#1 (+\\frac{#2 a}{#3 b})^{k}`[replace]{#1 \\frac{(#2 a)^{k}}{(#3 b)^{k}}}')
 
         .add_test('(-\\frac{-2}{3})^{2}', '(-1)^{2} \\times \\frac{(-2)^{2}}{3^{2}}')
         .add_test('-(\\frac{-2}{3})^{2}', '-\\frac{(-2)^{2}}{3^{2}}')
@@ -295,8 +298,10 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='系数乘进分式的分子', allow_complication=True)
-        .add_rule('# a \\times \\frac{# 1}{b}', '#0 \\frac{a}{b}')
-        .add_rule('# a \\times \\frac{# c}{b}', '#0 \\frac{ac}{b}')
+        .add_rule('# a \\times \\frac{# 1}{b}', '#0 \\frac{a}{b}',
+        animation='`#1 a \\times \\frac{#2 1}{b}`[replace]{#0 \\frac{a}{b}}')
+        .add_rule('# a \\times \\frac{# c}{b}', '#0 \\frac{ac}{b}',
+        animation='`#1 a \\times \\frac{#2 c}{b}`[replace]{#0 \\frac{ac}{b}}')
 
         .add_test('-\\frac{-1}{3} \\times 12', '\\frac{4}{1}')
         .add_test('12 \cdot \\frac{3}{2}', '\\frac{18}{1}')
@@ -305,7 +310,8 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='乘法分配率', allow_complication=True, recursive_apply=True, max_results=4)
-        .add_rule('#a(x + *{1})', '#1 ax #1 a *{1}')
+        .add_rule('#a(x + *{1})', '#1 ax #1 a *{1}',
+        animation='`#1 a`[moveBefore,1] `(`#1 a`[moveAfter,1] x + `#1 a`[moveAfter,1] *{1})`[removeOnly]')
 
         .add_test('3(a + b + c) + 1', '1 + 3 \\times a + 3 \\times b + 3 \\times c')
         .add_test('(a - b)(-2)', '-2 \\times a - 2 \\times (-b)')
