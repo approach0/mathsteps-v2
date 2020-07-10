@@ -197,7 +197,6 @@ if __name__ == '__main__':
     args = sys.argv[1:]
     if len(args) > 0:
         tex = args[0]
-        tex = "\left| -(5+\\frac{1}{2})\\right| (\\frac{1}{3} - \\frac{1}{2}) \\frac{3}{11} \\div (1 - \\frac{1}{4})"
         narr = expression.tex2narr(tex)
         steps, err = dfs(narr, all_axioms, debug=False, animation_mode=True)
 
