@@ -59,6 +59,10 @@
     <mu-icon left value="warning"></mu-icon> {{error_msg}}
   </mu-alert>
 
+  <mu-alert color="success" v-if="succ_msg.length > 0">
+    <mu-icon left value="check_circle"></mu-icon> {{succ_msg}}
+  </mu-alert>
+
   <mu-button v-if="iframe_url !== null" @click="iframe_url = null"> 收起讲题板 </mu-button>
   <iframe v-if="iframe_url !== null" v-bind:src="iframe_url" width="544" height="841"></iframe>
 
@@ -119,6 +123,7 @@ export default {
       input: '',
       preview: '',
       error_msg: '',
+      succ_msg: '',
       steps: [],
       iframe_url: null,
       last_random_idx: -1
@@ -233,6 +238,7 @@ export default {
       let query = this.input
       let equations = this.equations
       this.error_msg = ''
+      this.succ_msg = ''
       if (query.trim().length == 0 && equations.length == 0) {
         this.error_msg = '空表达式'
         return
@@ -269,6 +275,7 @@ export default {
       let query = this.input
       let equations = this.equations
       this.error_msg = ''
+      this.succ_msg = ''
       if (query.trim().length == 0 && equations.length == 0) {
         this.error_msg = '空表达式'
         return
@@ -297,7 +304,7 @@ export default {
           if (res.ret == 'successful') {
             const room = res.room
             const output = res.output
-            vm.error_msg = `room ${room} is ready!`
+            vm.succ_msg = `room ${room} is ready!`
           } else {
             console.error(res.error)
             vm.error_msg = res.error
