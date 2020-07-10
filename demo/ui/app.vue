@@ -4,7 +4,7 @@
     <h2>表达式求解 Demo</h2>
   </mu-row>
 
-  <mu-row gutter align-items="start" justify-content="center">
+  <mu-row gutter align-items="start" justify-content="center" wrap="nowrap">
     <div>
       <mu-text-field v-model="input" placeholder="请输入 TeX 表达式">
       </mu-text-field>
@@ -275,7 +275,11 @@ export default {
       }
 
       const room = '' + new Date() / 1
-      this.iframe_url = `http://ait-tutor-board-ait.dev.dm-ai.cn/#/tutor-board?fromCpm=1&roomId=${room}`
+      const url = `http://ait-tutor-board-ait.dev.dm-ai.cn/#/tutor-board?fromCpm=1&roomId=${room}`
+      this.iframe_url = null
+      this.$nextTick(() => {
+        this.iframe_url = url
+      })
 
       console.log('[mathboard query]', query)
       let vm = this

@@ -16,21 +16,21 @@ app.use(cors())
 //  page = await browser.newPage()
 //  console.log('puppeteer ready.')
 //})();
-//
-//process.on('SIGINT', async function() {
-//  console.log('')
-//  console.log('Bye bye.')
-//  process.exit()
-//})
+
+process.on('SIGINT', async function() {
+  console.log('')
+  console.log('Bye bye.')
+  process.exit()
+})
 
 const port = 3889
 app.listen(port)
 console.log(`Listen on ${port}`)
 
-function run(cmd, script, qry) {
+function run(cmd, script, args) {
   return new Promise((resolve, reject) => {
-    cmd_args = [script, ...qry]
-    console.log(cmd_args)
+    cmd_args = [script, ...args]
+    console.log('[cmd_args]', cmd_args)
     let returnStr = ''
     const process = spawn(cmd, cmd_args)
     process.stdout.on('data', (data) => {
@@ -137,7 +137,8 @@ app.post('/query', async function (req, res) {
       //  throw err.toString()
       //}
 
-      output += await run('node', '/home/dm/Desktop/math-board-tester/index.js', qry, room)
+      output += await run('node', '/home/dm/Desktop/math-board-tester/index.js', [qry[0], room])
+      console.log(output)
     }
 
     res.json({
