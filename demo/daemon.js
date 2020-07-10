@@ -138,7 +138,7 @@ app.post('/query', async function (req, res) {
       //}
 
       output += await run('node', '/home/dm/Desktop/math-board-tester/index.js', [qry[0], room])
-      console.log(output)
+      //console.log(output)
     }
 
     res.json({

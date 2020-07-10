@@ -64,7 +64,7 @@
   </mu-alert>
 
   <mu-row justify-content="center">
-    <mu-button v-if="iframe_url !== null" @click="iframe_url = null"> 收起讲题板 </mu-button>
+    <mu-button v-if="iframe_url !== null" @click="iframe_url = null; succ_msg = ''"> 收起讲题板 </mu-button>
   </mu-row>
   <mu-row justify-content="center">
     <iframe v-if="iframe_url !== null" v-bind:src="iframe_url" width="544" height="841"></iframe>
@@ -145,7 +145,31 @@ export default {
     }
   },
 
+  mounted: function () {
+    const initQry = this.gup('q')
+    const vm = this
+    if (initQry !== null) {
+      setTimeout(function() {
+        vm.input = decodeURIComponent(initQry)
+      }, 500)
+    }
+  },
+
   methods: {
+    set_url_params(k, v) {
+      const enc_v = decodeURIComponent(v)
+      history.pushState({}, null, `/demo/?${k}=${enc_v}`)
+    },
+
+    gup(name, url) {
+        if (!url) url = location.href;
+        name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+        var regexS = "[\\?&]"+name+"=([^&#]*)";
+        var regex = new RegExp( regexS );
+        var results = regex.exec( url );
+        return results == null ? null : results[1];
+    },
+
     clear() {
       this.input = ''
       this.equations = []
@@ -220,9 +244,13 @@ export default {
     },
 
     render(latex, display=false) {
-      return MathJax.tex2svg(latex, {
-        display
-      }).outerHTML
+      if (MathJax === undefined) {
+        return latex
+      } else {
+        return MathJax.tex2svg(latex, {
+          display
+        }).outerHTML
+      }
     },
 
     async show_steps(steps) {
@@ -241,8 +269,12 @@ export default {
     calc() {
       let query = this.input
       let equations = this.equations
+
       this.error_msg = ''
       this.succ_msg = ''
+      this.iframe_url = null
+      this.set_url_params('q', query)
+
       if (query.trim().length == 0 && equations.length == 0) {
         this.error_msg = '空表达式'
         return
@@ -278,8 +310,11 @@ export default {
     mathboard() {
       let query = this.input
       let equations = this.equations
-      this.error_msg = ''
+
+      this.error_msg = '请等待讲题板初始化和上传 PG ...'
       this.succ_msg = ''
+      this.set_url_params('q', query)
+
       if (query.trim().length == 0 && equations.length == 0) {
         this.error_msg = '空表达式'
         return
@@ -308,6 +343,7 @@ export default {
           if (res.ret == 'successful') {
             const room = res.room
             const output = res.output
+            vm.error_msg = ''
             vm.succ_msg = `room ${room} is ready!`
           } else {
             console.error(res.error)
