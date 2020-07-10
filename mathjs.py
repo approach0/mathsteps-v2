@@ -387,7 +387,7 @@ if __name__ == '__main__':
         '`3`[remove] \\times \\frac{2}{`3`[removeDenom]}',
         '12 - `z`[add] = `z`[replace]{0}',
         'a + `-3`[add]',
-        'a - `-4`[add]',
+        'a - `-4`[add]'
     ]
 
     for tex in test_expressions[-1:]:

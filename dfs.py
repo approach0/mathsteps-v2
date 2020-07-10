@@ -222,7 +222,7 @@ if __name__ == '__main__':
             })
 
         import json
-        print(json.dumps(ret_arr, ensure_ascii=False))
+        print(json.dumps(ret_arr, ensure_ascii=True))
 
     else:
         #import cProfile

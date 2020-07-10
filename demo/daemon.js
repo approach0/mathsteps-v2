@@ -28,7 +28,7 @@ function run(cmd, script, qry) {
       returnStr += data.toString()
     })
 
-    process.stdout.on('end', (data) => {
+    process.stdout.on('end', () => {
       resolve(returnStr)
     })
 
