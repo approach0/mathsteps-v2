@@ -96,8 +96,8 @@ class Tree2NestedArr(Transformer):
         x = [[(child[0])] + [_ for _ in Tree2NestedArr().children(child)] for child in x]
 
         animations = [c[0].animation is not None for c in x]
-
         reduce_sign = False if any(animations) else True
+
         return passchildren(NarrRoot(+1, op_type), x, reduce_sign=reduce_sign)[0]
 
     @staticmethod

@@ -42,6 +42,10 @@
     <mu-button @click="calc" color="primary" style="margin-left: 40px">
       求解
     </mu-button>
+
+    <mu-button @click="mathboard" color="primary" style="margin-left: 40px">
+      讲题板演示
+    </mu-button>
   </mu-row>
 
   <mu-row justify-content="end">
@@ -54,6 +58,9 @@
   <mu-alert color="error" v-if="error_msg.length > 0">
     <mu-icon left value="warning"></mu-icon> {{error_msg}}
   </mu-alert>
+
+  <mu-button v-if="iframe_url !== null" @click="iframe_url = null"> 收起讲题板 </mu-button>
+  <iframe v-if="iframe_url !== null" v-bind:src="iframe_url" width="544" height="841"></iframe>
 
   <div v-for="(step, i) in steps" :key="i + step.latex">
 
@@ -113,6 +120,7 @@ export default {
       preview: '',
       error_msg: '',
       steps: [],
+      iframe_url: null,
       last_random_idx: -1
     }
   },
@@ -245,6 +253,47 @@ export default {
           if (res.ret == 'successful') {
             vm.steps = []
             vm.show_steps(res.steps)
+          } else {
+            console.error(res.error)
+            vm.error_msg = res.error
+          }
+        },
+        error: function(err) {
+          console.error(err)
+          vm.error_msg = '服务器好像出了问题……'
+        }
+      })
+    },
+
+    mathboard() {
+      let query = this.input
+      let equations = this.equations
+      this.error_msg = ''
+      if (query.trim().length == 0 && equations.length == 0) {
+        this.error_msg = '空表达式'
+        return
+      }
+
+      const room = '' + new Date() / 1
+      this.iframe_url = `http://ait-tutor-board-ait.dev.dm-ai.cn/#/tutor-board?fromCpm=1&roomId=${room}`
+
+      console.log('[mathboard query]', query)
+      let vm = this
+      $.ajax({
+        url: '/api/mathboard',
+        type: "POST",
+        data: JSON.stringify({
+          query: vm.all_equations(),
+          room: room
+        }),
+        contentType:"application/json; charset=utf-8",
+        dataType:"json",
+        success: function(res){
+          console.log('[ajax]', res)
+          if (res.ret == 'successful') {
+            const room = res.room
+            const output = res.output
+            vm.error_msg = `room ${room} is ready!`
           } else {
             console.error(res.error)
             vm.error_msg = res.error
