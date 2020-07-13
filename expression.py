@@ -570,18 +570,21 @@ def trim_animations(narr, top_root=True):
         if child_token == 'REPLACE' or child_root.animation == 'removeOnly':
             if child_token == 'REPLACE':
                 replace_by = child[2]
-            elif child[0][1] in terminal_tokens():
-                narr[1 + i] = None
-                continue
-            elif len(child[1:]) >= 1:
-                replace_by = child[1]
             else:
-                narr[1 + i] = None
-                continue
+                # for removeOnly
+                if child[0][1] in terminal_tokens():
+                    narr[1 + i] = None
+                    continue
+                elif len(child[1:]) >= 1:
+                    replace_by = child[1]
+                else:
+                    narr[1 + i] = None
+                    continue
 
             replace_by[0].apply_sign(child_sign)
             replace_or_pass_children(narr, i, replace_by)
             child = replace_by # for further trim
+
         elif child_root.animation in hole_animations():
             narr[1 + i] = None
             continue
