@@ -42,6 +42,9 @@ def _apply_sign(narr, apply_product):
 
 
 def children_wildcards_permutation(narr):
+    """
+    Generate O(n) number of permutations for wildcards matching
+    """
     children = narr[1:]
     permutations = []
     for i, a in enumerate(children):
@@ -51,6 +54,10 @@ def children_wildcards_permutation(narr):
 
 
 def alpha_universe_add_constraint(alpha_universe, name, narr):
+    """
+    Test constraint `alpha[name]=narr' against all alphas in alpha universe.
+    Keep those not violating the new constraint.
+    """
     tmp_universe = deepcopy(alpha_universe)
     new_universe = []
     for alpha in tmp_universe:
@@ -80,7 +87,7 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
     elif type1 in ['VAR', 'WILDCARDS']:
 
         name1 = narr1[1] if type1 == 'VAR' else '*' + narr1[1]
-        narr2 = deepcopy(narr2[:])
+        narr2 = deepcopy(narr2)
 
         # handle sign
         _apply_sign(narr2, sign1)
@@ -90,12 +97,13 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
         #print()
 
         # uppercase pattern such as X, Y only match variables / polynomials
-        if name1.isupper() and type2 not in ['sup', 'VAR']:
+        if name1.isupper() and type2 not in ['VAR', 'sup']:
             return False, []
         # same variables must match same structures
         else:
             return alpha_universe_add_constraint(alpha_universe, name1, narr2)
 
+    # quick test of identicalness for non-wildcards pattern
     wildcards_index = expression.get_wildcards_index(narr1)
     if root1 != root2:
         return False, []
@@ -103,30 +111,35 @@ def test_alpha_equiv(narr1, narr2, alpha_universe=[{}], debug=False):
         return False, []
 
     alpha_universe_new = []
+    # use exact order for concrete match or permuted order for wildcards match.
+    # (the latter will possibly generate multiple universes/possibilities)
     permutations = [narr2[1:]] if wildcards_index == None else children_wildcards_permutation(narr2)
     for perm_children in permutations:
-        match_perm = True
+        match_perm = True # require all children get matched.
         alpha_universe_copy = deepcopy(alpha_universe)
         for i, c1 in enumerate(narr1[1:]):
-            # safe-guard for long wildcards
+            # safe-guard for long wildcards, e.g., 'abc*' matching 'ab'
             if i >= len(perm_children):
                 match_perm = False
                 break
 
             if c1[0][1] == 'WILDCARDS':
-                # wildcards match
+                # wildcards match (no sign reduce here)
                 c2 = [NarrRoot(+1, type2)] + perm_children[i:]
                 # unwrap matched group if necessary
                 if len(c2[1:]) == 1:
                     c2 = c2[1]
             else:
+                # concrete child match
                 c2 = perm_children[i]
 
+            # test subtree
             match_any, alpha_universe_copy = test_alpha_equiv(
                 c1, c2, alpha_universe=alpha_universe_copy, debug=debug
             )
 
             if match_any:
+                # stop early for wildcards match
                 if c1[0][1] == 'WILDCARDS':
                     break
             else:
@@ -225,7 +238,7 @@ if __name__ == '__main__':
 
     #narr1 = expression.tex2narr('a + *{1}')
     #narr1 = expression.tex2narr('- a - *{1}')
-    narr1 = expression.tex2narr('a')
+    narr1 = expression.tex2narr('-a')
     narr2 = [NarrRoot(1, 'add'),
             [NarrRoot(1, 'NUMBER'), 30.0],
             [NarrRoot(1, 'add'),
@@ -233,14 +246,6 @@ if __name__ == '__main__':
                 [NarrRoot(1, 'NUMBER'), 3.0]
             ]
         ]
-
-    #_apply_sign(narr2, -1)
-    #expression.narr_prettyprint(narr2)
-    #rich.print(expression.narr2tex(narr2))
-    #narr2, _ = expression.canonicalize(narr2)
-    #print(narr2)
-    #rich.print(expression.narr2tex(narr2))
-    #quit()
 
     is_equiv, rewrite_rules = test_alpha_equiv(narr1, narr2, debug=True)
     if is_equiv:
