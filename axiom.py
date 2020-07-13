@@ -431,10 +431,10 @@ class Axiom:
 
 
     def _level_apply(self, narr, debug=False):
-        ret_narrs = []
+        ret_narrs = [] # store possible results
         root_sign, root_type = narr[0].get()
 
-        # ignore terminal tokens (no operator)
+        # ignore terminal tokens (no rule has a single terminal token as pattern)
         if root_type in expression.terminal_tokens():
             return []
 
@@ -445,6 +445,7 @@ class Axiom:
             if debug: rich.print(f'\n[red]level apply[/] {pattern} wildcards_idx={wildcards_idx},' +
                 f' no_permute={no_permute} [red]to[/]', expression.narr2tex(narr))
 
+            # extract and try partial one or two operands to match against pattern
             for construct_tree, brothers in self._children_permutation(narr, no_permute=no_permute):
                 rewritten_narr, is_applied = self._exact_apply(pattern, construct_tree, debug=debug)
                 if is_applied:
@@ -465,7 +466,8 @@ class Axiom:
                         # the entire expression in this level gets reduced
                         new_narr = rewritten_narr
                         if not self.root_sign_reduce and root_sign < 0:
-                            new_narr = expression.Tree2NestedArr().negate(new_narr)
+                            new_narr[0].apply_sign(-1)
+
                     Axiom()._uniq_append(ret_narrs, new_narr, self.max_results)
         return ret_narrs
 
