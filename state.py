@@ -52,6 +52,13 @@ def token_stats(narr, stats={}, right_side_of_eq=False, inside_of_sqrt=False, le
     if sign < 0:
         incr(stats, 'neg')
 
+    # ignore animation holes
+    if root.animation in expression.hole_animations():
+        return stats
+    elif token == 'REPLACE':
+        token_stats(narr[2], stats, right_side_of_eq, inside_of_sqrt, level)
+        return stats
+
     # count leaves
     if token in ['NUMBER', 'VAR']:
         if token == 'NUMBER':
@@ -108,9 +115,6 @@ def value_v1(narr, debug=False):
     """
     计算 表达式的价值（等于各个符号频率的自定义加权和）
     """
-    narr = deepcopy(narr)
-    expression.trim_animations(narr)
-
     if isinstance(narr, str):
         return value(expression.tex2narr(narr))
 
@@ -164,6 +168,13 @@ def collect_stats(narr, stats, level, grandRoot, right_side_of_eq):
     if sign < 0:
         stats['neg'] += 1
 
+    # ignore animation holes
+    if root.animation in expression.hole_animations():
+        return stats
+    elif token == 'REPLACE':
+        collect_stats(narr[2], stats, level, grandRoot, right_side_of_eq)
+        return stats
+
     if token in expression.terminal_tokens():
         if right_side_of_eq:
             stats['right_side_of_eq'] += 1
@@ -210,9 +221,6 @@ def collect_stats(narr, stats, level, grandRoot, right_side_of_eq):
 
 
 def value_v2(narr, level=0, debug=False):
-    narr = deepcopy(narr)
-    expression.trim_animations(narr)
-
     stats = {
         'right_side_of_eq': 0,
         'neg': 0,
@@ -289,6 +297,9 @@ if __name__ == '__main__':
     #print(right_padding_zeros(0))
 
     vf = value_v2
+
+    test('`4`[remove] + 2', vf)
+    quit()
 
     test('0 + 0 + 0', vf)
     test('0', vf)
