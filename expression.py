@@ -10,11 +10,11 @@ debug = False
 
 class NarrRoot():
 
-    def __init__(self, sign, Type, animation=None):
+    def __init__(self, sign, Type, animation=None, animatGrp=None):
         self.sign = sign
         self.Type = Type
         self.animation = animation
-        self.animatGrp = None
+        self.animatGrp = animatGrp
 
     def get(self):
         return self.sign, self.Type
@@ -28,11 +28,11 @@ class NarrRoot():
 
     def __repr__(self):
         if self.animation is None:
-            return f'<{self.sign}, {self.Type}>'
+            return f'NarrRoot({self.sign}, "{self.Type}")'
         elif self.animatGrp is None:
-            return f'<{self.sign}, {self.Type}, {self.animation}>'
+            return f'NarrRoot({self.sign}, "{self.Type}", animation="{self.animation}")'
         else:
-            return f'<{self.sign}, {self.Type}, {self.animation}{self.animatGrp}>'
+            return f'NarrRoot({self.sign}, "{self.Type}", animation="{self.animation}", animatGrp={self.animatGrp})'
 
     def __getitem__(self, idx):
         if idx == 0:
@@ -419,7 +419,7 @@ def narr_prettyprint(narr, level=0):
     children = narr[1:]
     sign, token = root.get()
 
-    if token in ['NUMBER', 'VAR', 'WILDCARDS']:
+    if token in terminal_tokens():
         print('    ' * level, narr)
         return
 
