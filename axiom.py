@@ -324,6 +324,10 @@ class Axiom:
 
 
     def _exact_apply(self, pattern, narr, debug=False):
+        # refuse to apply when rule is not animation compatible in animation mode.
+        if self.animation_mode and pattern not in self.animation:
+            return narr, False
+
         # apply pattern transformation to nested array
         pattern_narr = self.narrs[pattern]
         is_match, rewrite_rules = test_alpha_equiv(pattern_narr, narr, debug=False)
@@ -348,10 +352,6 @@ class Axiom:
         if is_match:
             if debug:
                 alpha_prettyprint(rewrite_rules[0])
-
-            if self.animation_mode and pattern not in self.animation:
-                #raise ValueError(self.name() + ' does not appear to support animation.')
-                return narr, False
 
             dest = self.animation[pattern] if self.animation_mode else self.rules[pattern]
             dest_narr = [self.narrs[d] for d in dest] if isinstance(dest, list) else self.narrs[dest]
