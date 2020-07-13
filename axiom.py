@@ -12,8 +12,9 @@ import numpy as np
 
 class Axiom:
 
-    def __init__(self, name=None, recursive_apply=False, root_sign_reduce=True, max_results=10,
-        allow_complication=False, strict_simplify=False):
+    def __init__(self, name=None, max_results=10,
+        recursive_apply=False, root_sign_reduce=True, allow_complication=False, strict_simplify=False):
+
         self.rules = {}
         self.dp = {}
         self.animation = {}
@@ -121,13 +122,15 @@ class Axiom:
 
 
     def test(self, tex=None, debug=False, render=True, printNarr=False, printTrim=False, printJSON=False):
-        import render_math
+        # construct test pairs (TeX, expected TeX)
         tests = self.tests if tex is None else [(tex, None)]
         if len(tests) == 0: print('[no test case]')
+        # test through each testcase for this axiom ...
         for test, expect in tests:
             expr = test if isinstance(test, str) else expression.narr2tex(test)
             narr = expression.tex2narr(expr) if isinstance(test, str) else test
             possible_applied_narrs = self.apply(narr, debug=debug)
+            # render texs is for HTML preview
             render_texs = [expr]
 
             rich.print('[bold cyan][[test]][/]', end=" ")
@@ -147,6 +150,7 @@ class Axiom:
                 else:
                     print()
 
+                # render texs is for HTML preview
                 render_texs.append(applied_tex)
 
                 if printNarr:
@@ -164,6 +168,7 @@ class Axiom:
                     print(json)
 
             if render:
+                import render_math
                 render_math.render_equations(render_texs)
 
 
@@ -191,6 +196,11 @@ class Axiom:
                 retstr += ' recursive_apply'
                 retstr += '\033[0m'
 
+            if not self.root_sign_reduce:
+                retstr += '\033[92m'
+                retstr += ' no-root_sign_reduce'
+                retstr += '\033[0m'
+
             if self.dp[k] is not None:
                 retstr += '\033[91m'
                 retstr += ' dynamic_rule'
@@ -206,7 +216,7 @@ class Axiom:
 
 
     def name(self):
-        return 'Axiom (anonymous)' if self._name is None else f'{self._name}'
+        return 'Axiom (anonymous)' if self._name is None else self._name
 
 
     @staticmethod
@@ -550,6 +560,7 @@ if __name__ == '__main__':
     )
 
     a.animation_mode = True
+    print(a)
 
     a.test('-12 + \\frac{27}{-9}', debug=False, printNarr=True, printTrim=False)
     #a.test(debug=True, printNarr=True, printTrim=True)
