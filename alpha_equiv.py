@@ -164,6 +164,7 @@ def rewrite_by_alpha(narr, alpha):
         name = children[0] if Type == 'VAR' else "*" + children[0]
         subst = deepcopy(alpha[name])
 
+        # if `x' is going to be replaced by `y', we need to keep `x' node animations
         subst[0].animation = root.animation
         subst[0].animatGrp = root.animatGrp
 
@@ -172,24 +173,25 @@ def rewrite_by_alpha(narr, alpha):
         return subst
 
     elif Type == 'NUMBER':
+        # number will not change, copy this number
         return deepcopy(narr)
 
+    # construct new narr after children recursive replacement
     new_narr = [root.copy()]
     for i, c in enumerate(narr[1:]):
         child_root = c[0]
         substitute = rewrite_by_alpha(c, alpha)
 
+        # if `x' is going to be replaced by `y', we need to keep `x' node animations
         substitute[0].animation = child_root.animation
         substitute[0].animatGrp = child_root.animatGrp
+
         #alpha_prettyprint(alpha)
         #print(c, '==>', substitute)
 
+        # append substitute to new_narr, passing children if necessary
         i = len(new_narr) - 1
         new_narr.append(None)
-
-        #print(new_narr, i)
-        #print(substitute)
-        #print()
         expression.replace_or_pass_children(new_narr, i, substitute)
 
     return new_narr
