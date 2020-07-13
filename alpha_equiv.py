@@ -26,16 +26,19 @@ def narr_identical(narr1, narr2):
 
 
 def _apply_sign(narr, apply_product):
+    """
+    apply sign to `narr', distribute sign in addition case.
+    """
+    if apply_product > 0:
+        return
+
     root = narr[0]
     old_sign, Type = root.get()
+    narr[0].apply_sign(apply_product)
+
     if Type == 'add':
-        # make narr positive
+        # Distribute signs (i.e., make addition root positive)
         narr[:], _ = expression.passchildren(NarrRoot(+1, Type), [narr])
-        # distribute sign to each term
-        for i, c in enumerate(narr[1:]):
-            _apply_sign(c, apply_product)
-    else:
-        narr[0].apply_sign(apply_product)
 
 
 def children_wildcards_permutation(narr):
@@ -226,10 +229,18 @@ if __name__ == '__main__':
     narr2 = [NarrRoot(1, 'add'),
             [NarrRoot(1, 'NUMBER'), 30.0],
             [NarrRoot(1, 'add'),
-                [NarrRoot(1, 'NUMBER'), -1.0],
+                [NarrRoot(1, 'NUMBER'), 1.0],
                 [NarrRoot(1, 'NUMBER'), 3.0]
             ]
         ]
+
+    #_apply_sign(narr2, -1)
+    #expression.narr_prettyprint(narr2)
+    #rich.print(expression.narr2tex(narr2))
+    #narr2, _ = expression.canonicalize(narr2)
+    #print(narr2)
+    #rich.print(expression.narr2tex(narr2))
+    #quit()
 
     is_equiv, rewrite_rules = test_alpha_equiv(narr1, narr2, debug=True)
     if is_equiv:

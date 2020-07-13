@@ -662,8 +662,9 @@ if __name__ == '__main__':
         narr = tree2narr(tree)
 
         rich.print('[[origin narr]]', narr)
-        trim_animations(narr)
-        rich.print('[[trim narr]]', narr)
+        #trim_animations(narr)
+        #rich.print('[[trim narr]]', narr)
+        print()
 
         #narr = [NarrRoot(1, 'add'),
         #    [NarrRoot(-1, 'NUMBER'), 30.0],
@@ -675,6 +676,8 @@ if __name__ == '__main__':
         #narr, is_applied = canonicalize(narr)
 
         tex = narr2tex(narr)
+
+        print()
         rich.print('[bold yellow]TeX:[/]', end=' ')
         print(tex)
 
