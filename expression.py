@@ -442,6 +442,17 @@ def get_wildcards_index(narr):
 
 
 def passchildren(root, children, reduce_sign=True):
+    """
+    Pass grand-children to root if children and root have the same operator.
+    Otherwise, attach children to root (only reduce signs).
+
+    root (+)
+    |             <——*
+    children (+)     |
+    |                *
+    grand-children _/
+
+    """
     _, op_type = root.get()
     new_narr = [root.copy()]
     any_sign_changed = False
@@ -480,6 +491,10 @@ def passchildren(root, children, reduce_sign=True):
 
 
 def _squeeze(narr):
+    """
+    Squeeze two level of operations with same commutative operators.
+    Example: (a+b)+c => a+b+c
+    """
     root = narr[0].copy()
     sign, Type = root.get()
     if Type in commutative_operators():
@@ -491,16 +506,21 @@ def _squeeze(narr):
 
 
 def canonicalize(narr):
+    """
+    Remove parentheses in expression represented by nested array `narr'
+    """
     sign, Type = narr[0].get()
 
+    # Pass children:
     # case 1: "-a (-b)" becomes "ab"
     # case 2: "a + (b + c)" becomes "a + b + c"
     narr, is_squeezed = _squeeze(narr)
 
     if Type == 'add':
-        # "-(a + ...)" becomes "-a - ..."
-        narr, is_applied = passchildren(NarrRoot(+1, Type), [narr])
-        return narr, (is_squeezed or is_applied)
+        # Distribute signs in **this** level.
+        # Example: "-(a + ...)" becomes "-a - ..."
+        narr, is_distributed = passchildren(NarrRoot(+1, Type), [narr])
+        return narr, (is_squeezed or is_distributed)
     else:
         return narr, is_squeezed
 
@@ -509,6 +529,7 @@ def replace_or_pass_children(narr, i, substitute):
     """
     表达式 narr 的第 i 个子节点，用 substitute 替换。
     如果表达式有相同的 root 操作符，且满足交换律，则把两个表达式合并。
+    例外：如果 substitute 节点含有动画，则不合并。
     """
     root = narr[0]
     _, Type = root.get()
