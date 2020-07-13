@@ -377,15 +377,13 @@ def _canonicalize(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
 
 canonicalize = (
     Axiom(name='去括号')
-    .add_rule('# a *{1}', 'X', animation='`#1 a *{1}`[replace]{X}', dynamic_procedure=_canonicalize)
-    .add_rule('# a # *{1}', 'X', animation='`#1 a #2 *{1}`[replace]{X}', dynamic_procedure=_canonicalize)
-    .add_rule('# a', 'X', animation='`#1 a`[replace]{X}', dynamic_procedure=_canonicalize)
+    .add_rule('a', 'X', animation='`a`[replace]{X}', dynamic_procedure=_canonicalize)
 
     .add_test(
         [NarrRoot(1, 'add'),
             [NarrRoot(1, 'NUMBER'), 30.0],
             [NarrRoot(1, 'add'),
-                [NarrRoot(1, 'NUMBER'), -1.0],
+                [NarrRoot(1, 'NUMBER'), 1.0],
                 [NarrRoot(1, 'NUMBER'), 3.0]
             ]
         ]
@@ -446,9 +444,9 @@ if __name__ == '__main__':
     a = fraction_int_addition
     a = calc_pow
     a = collapse_fraction_add_float
-    a = canonicalize
     a = simplify_fraction
+    a = canonicalize
 
     a.animation_mode = True
-    #a.test(debug=False)
-    a.test('-12 + \\frac{27}{-9}', debug=False, printJSON=True)
+    a.test(debug=False)
+    #a.test('-12 + \\frac{27}{-9}', debug=False, printJSON=True)

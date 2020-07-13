@@ -468,6 +468,13 @@ class Axiom:
                         if not self.root_sign_reduce and root_sign < 0:
                             new_narr[0].apply_sign(-1)
 
+                    if False:
+                        rich.print('[red]level apply[/]:')
+                        print('[origin]', expression.narr2tex(narr))
+                        print('[pattern]', pattern)
+                        print('[result]', expression.narr2tex(new_narr))
+                        print()
+
                     Axiom()._uniq_append(ret_narrs, new_narr, self.max_results)
         return ret_narrs
 
