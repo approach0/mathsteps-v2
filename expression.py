@@ -268,7 +268,7 @@ def no_permute_tokens():
     return ['ifrac']
 
 
-def recursive_hole_animations():
+def hole_animations():
     return ['remove',  'moveBefore', 'removeDenom']
 
 
@@ -529,16 +529,16 @@ def trim_animations(narr, top_root=True):
     root = narr[0]
     sign, token = root.get()
 
+    root.animation = None
+    root.animatGrp = None
+
     if top_root and token == 'REPLACE':
         narr[2][0].apply_sign(sign)
         trim_animations(narr[2])
         narr[:] = narr[2]
         return
 
-    root.animation = None
-    root.animatGrp = None
-
-    if token in terminal_tokens():
+    elif token in terminal_tokens():
         return
 
     children = narr[1:]
@@ -547,11 +547,11 @@ def trim_animations(narr, top_root=True):
         child_sign, child_token = child_root.get()
 
         if child_token == 'REPLACE':
-            substitute = child[2]
-            substitute[0].sign *= child_sign
-            replace_or_pass_children(narr, i, substitute)
-            child = substitute # for further trim
-        elif child_root.animation in recursive_hole_animations():
+            replace_by = child[2]
+            replace_by[0].apply_sign(child_sign)
+            replace_or_pass_children(narr, i, replace_by)
+            child = replace_by # for further trim
+        elif child_root.animation in hole_animations():
             narr[1 + i] = None
             continue
 
@@ -562,12 +562,12 @@ def trim_animations(narr, top_root=True):
     # prune None children and if necessary, pass the children of single
     # commutative operands to its grand father.
     narr[:] = [x for x in narr if x is not None]
-    if len(narr[1:]) == 0:
+    if len(narr[1:]) == 0: # no child attached
         narr[:] = []
-    elif len(narr[1:]) == 1:
+    elif len(narr[1:]) == 1: # single child attached
         if token in (commutative_operators() + binary_operators()):
             narr[:] = narr[1]
-            narr[0][0] *= sign
+            narr[0].apply_sign(sign)
 
 
 def trim_animations_copy(narr):
@@ -623,6 +623,7 @@ if __name__ == '__main__':
         '12 - 3',
         '12 + `-3`[add]',
         '`-a`[remove] x',
+        '`a`[remove] + b',
     ]
 
     for expr in test_expressions[-1:]:
@@ -640,8 +641,8 @@ if __name__ == '__main__':
         narr = tree2narr(tree)
 
         rich.print('[[origin narr]]', narr)
-        #trim_animations(narr)
-        #rich.print('[[trim narr]]', narr)
+        trim_animations(narr)
+        rich.print('[[trim narr]]', narr)
 
         #narr = [NarrRoot(1, 'add'),
         #    [NarrRoot(-1, 'NUMBER'), 30.0],
