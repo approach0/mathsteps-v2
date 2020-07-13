@@ -482,7 +482,7 @@ class Axiom:
         candidates = [(applied_times, narr0)]
         while len(Q) > 0:
             depth, narr = Q.pop(0)
-            if depth + 1 > max_times:
+            if depth >= max_times:
                 #rich.print('[red]maxtime[/]', depth)
                 break
 
@@ -515,6 +515,7 @@ class Axiom:
             _, root_type = narr[0].get()
             none_applied = True
 
+            # has any sub-tree ?
             if root_type not in expression.terminal_tokens():
                 children = narr[1:]
                 for i, child in enumerate(children):
@@ -533,9 +534,10 @@ class Axiom:
                         new_narr = deepcopy(narr)
                         expression.replace_or_pass_children(new_narr, i, applied_narr)
 
-                        # append result
+                        # append new result
                         if not Axiom()._uniq_append(result_narrs, new_narr, self.max_results):
                             return result_narrs
+            # append dead-end result
             if none_applied and depth > 0:
                 new_narr = deepcopy(narr)
                 if not Axiom()._uniq_append(result_narrs, new_narr, self.max_results):
