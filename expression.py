@@ -567,8 +567,18 @@ def trim_animations(narr, top_root=True):
         child_root = child[0]
         child_sign, child_token = child_root.get()
 
-        if child_token == 'REPLACE':
-            replace_by = child[2]
+        if child_token == 'REPLACE' or child_root.animation == 'removeOnly':
+            if child_token == 'REPLACE':
+                replace_by = child[2]
+            elif child[0][1] in terminal_tokens():
+                narr[1 + i] = None
+                continue
+            elif len(child[1:]) >= 1:
+                replace_by = child[1]
+            else:
+                narr[1 + i] = None
+                continue
+
             replace_by[0].apply_sign(child_sign)
             replace_or_pass_children(narr, i, replace_by)
             child = replace_by # for further trim
@@ -645,6 +655,7 @@ if __name__ == '__main__':
         '12 + `-3`[add]',
         '`-a`[remove] x',
         '`a`[remove] + b',
+        '`(\sqrt{2})`[removeOnly] + `c`[removeOnly]'
     ]
 
     for expr in test_expressions[-1:]:
@@ -662,8 +673,8 @@ if __name__ == '__main__':
         narr = tree2narr(tree)
 
         rich.print('[[origin narr]]', narr)
-        #trim_animations(narr)
-        #rich.print('[[trim narr]]', narr)
+        trim_animations(narr)
+        rich.print('[[trim narr]]', narr)
         print()
 
         #narr = [NarrRoot(1, 'add'),
