@@ -280,10 +280,8 @@ def need_inner_fence(narr):
 
     if debug: print('inner fence?', narr)
 
-    if Type == 'REPLACE':
-        return False
-    elif sign < 0 and len(narr) > 2: # non-unary
-        if Type in ['mul', 'frac', 'sup', 'ifrac']:
+    if sign < 0 and len(narr) > 2: # negative non-unary
+        if Type in ['mul', 'frac', 'sup', 'ifrac', 'REPLACE']:
             return False
         else:
             return True
@@ -304,14 +302,10 @@ def need_outter_fence(root, child_narr, rank=0):
         return False
     elif root[1] == 'add' and child_root[1] == 'add':
         return True
-    elif root[1] == 'add':
-        return False
-    elif root[1] in ['frac', 'ifrac', 'abs', 'sqrt', 'eq']:
+    elif root[1] in ['frac', 'ifrac', 'abs', 'sqrt', 'eq', 'add', 'REPLACE']:
         return False
     elif root[1] == 'sup' and child_root[1] == 'sqrt':
         return True
-    elif child_root[1] == 'REPLACE':
-        return False
     elif child_root[0] == +1:
         if len(child_narr) <= 2: # unary
             return False
