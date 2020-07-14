@@ -146,6 +146,7 @@ def test(all_axioms):
         '-7(a-b)',
         '-(-2-3)^{2}',
         "\left| -(5+\\frac{1}{2})\\right| (\\frac{1}{3} - \\frac{1}{2}) \\frac{3}{11} \\div (1 - \\frac{1}{4})",
+        "2 \cdot 3 \cdot 4"
     ]
 
     begin_from = 0
@@ -165,9 +166,10 @@ def test(all_axioms):
                 print('DFS error:', err)
 
         for narr, a, ai in steps:
-            rich.print(f'[red]{a.name()}')
+            rich.print(f'[red]{a.name()}', narr)
             tex = expression.narr2tex(narr)
             print('\t', tex)
+
             #animation_json = mathjs.tex2json(tex)
             #print('\t', animation_json)
 
