@@ -64,9 +64,6 @@
   </mu-alert>
 
   <mu-row justify-content="center">
-    <mu-button v-if="iframe_url !== null" @click="iframe_url = null; succ_msg = ''"> 收起讲题板 </mu-button>
-  </mu-row>
-  <mu-row justify-content="center">
     <iframe v-if="iframe_url !== null" v-bind:src="iframe_url" width="544" height="841"></iframe>
   </mu-row>
 
