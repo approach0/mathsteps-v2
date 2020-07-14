@@ -120,9 +120,9 @@ def value_v1(narr, debug=False):
 
     value_dict = {
         'VAR': 10,
-        'NUMBER_integer': 0.5,
+        'NUMBER_integer': 0.1,
         'NUMBER_decimal': 2,
-        'NUMBER_pad_zeros': - 0.2,
+        'NUMBER_pad_zeros': - 0.25,
         'NUMBER_one':  - 0.1,
         'NUMBER_zero': 0.1,
         'NUMBER_in_sqrt': 0.5,
@@ -246,11 +246,11 @@ def value_v2(narr, level=0, debug=False):
         1.0 * math.log(1 + math.log(1 + stats['NUMBER_sum'])),
         5.0 * math.log(1 + stats['NUMBER_in_sqrt']),
         1.0 * (0
-            + 0.2 * stats['NUMBER_one_zero']
+            + 0.9 * stats['NUMBER_one_zero']
             + 1.0 * stats['NUMBER_other_ints']
             + 0.1 * stats['neg']
             + 3.0 + stats['NUMBER_decimal']
-            - 0.1 * stats['NUMBER_pad_zeros']
+            - 0.2 * stats['NUMBER_pad_zeros']
             + 3.0 * stats['VAR_level_cnt']
             + 1.0 * stats['NUMBER_level_cnt']
             #+ 0.05 * stats['parentheses_cnt']
@@ -298,8 +298,9 @@ if __name__ == '__main__':
 
     vf = value_v2
 
-    test('`4`[remove] + 2', vf)
-    quit()
+    test('13 + 1', vf)
+    test('10 + 4', vf)
+    test_done()
 
     test('0 + 0 + 0', vf)
     test('0', vf)
