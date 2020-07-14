@@ -63,7 +63,7 @@ def possible_next_steps(narr, axioms, state_value, animation_mode=False,
     return return_steps
 
 
-def dfs(narr, axioms, debug=False, maxsteps=150, animation_mode=False):
+def dfs(narr, axioms, debug=False, maxsteps=150, animation_mode=False, printTrim=False):
     any_err = None
     try:
         next_steps = [(narr, Axiom(name='原式'), -1)]
@@ -76,14 +76,15 @@ def dfs(narr, axioms, debug=False, maxsteps=150, animation_mode=False):
             #print('[output narr]', narr)
 
             if animation_mode:
-                #if debug:
-                #    rich.print('[light]before trim[/]')
-                #    expression.narr_prettyprint(narr)
+                if printTrim:
+                    rich.print('[blue]before trim[/]')
+                    expression.narr_prettyprint(narr)
+                    print('[tex]', expression.narr2tex(narr))
                 expression.trim_animations(narr)
-                #if debug:
-                #    rich.print('[light]after trim[/]')
-                #    expression.narr_prettyprint(narr)
-                #    print('[tex]', expression.narr2tex(narr))
+                if printTrim:
+                    rich.print('[blue]after trim[/]')
+                    expression.narr_prettyprint(narr)
+                    print('[tex]', expression.narr2tex(narr))
 
             return_steps.append((output_narr, axiom, axiom_idx))
             next_steps = possible_next_steps(narr, axioms, state.value_v1,
@@ -146,7 +147,7 @@ def test(all_axioms):
         '-7(a-b)',
         '-(-2-3)^{2}',
         "\left| -(5+\\frac{1}{2})\\right| (\\frac{1}{3} - \\frac{1}{2}) \\frac{3}{11} \\div (1 - \\frac{1}{4})",
-        "2 \cdot 3 \cdot 4"
+        "3x + 3 = 2x - 1",
     ]
 
     begin_from = 0
@@ -161,12 +162,12 @@ def test(all_axioms):
         test_narr = expression.tex2narr(test)
 
         with timer:
-            steps, err = dfs(test_narr, all_axioms, debug=True, animation_mode=True)
+            steps, err = dfs(test_narr, all_axioms, debug=True, animation_mode=True, printTrim=False)
             if err:
                 print('DFS error:', err)
 
         for narr, a, ai in steps:
-            rich.print(f'[red]{a.name()}', narr)
+            rich.print(f'[red]{a.name()}')
             tex = expression.narr2tex(narr)
             print('\t', tex)
 
