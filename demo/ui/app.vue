@@ -101,6 +101,7 @@
       <mu-button color="secondary" @click="json_show(i, step.animate_json)"> 查看 JSON </mu-button>
       <mu-button color="secondary" @click="json2mml(i, false)"> 查看 MML </mu-button>
       <mu-button color="secondary" @click="json2mml(i, true)"> 查看 oneline MML </mu-button>
+      <mu-button color="secondary" @click="upload_pg(i)"> 上传 AIT-math PG </mu-button>
       <mu-button color="secondary" @click="json_show(i, null)"> 收起 </mu-button>
       <pre v-if="step.debug_content">{{step.debug_content}}</pre>
       <div v-if="Array.isArray(step.debug_content)">
@@ -407,6 +408,39 @@ export default {
             else
                 vm.$set(vm.steps[i], 'debug_content', res.pretty_mml)
 
+          } else {
+            console.error(res.error)
+          }
+        },
+        error: function(err) {
+          console.error(err)
+          vm.error_msg = '服务器好像出了问题……'
+        }
+      })
+    },
+
+    upload_pg(i) {
+      const content = this.steps[i]['debug_content']
+      if (!Array.isArray(content)) {
+        this.succ_msg = ''
+        this.error_msg = '请选择 oneline MML 再上传'
+        return
+      }
+
+      console.log('[PG upload]', content[0])
+
+      let vm = this
+      $.ajax({
+        url: '/api/aitmath-pg-upload',
+        type: "POST",
+        data: JSON.stringify({ mathml: content[0] }),
+        contentType: "application/json; charset=utf-8",
+        dataType:"json",
+        success: function(res){
+          console.log('[ajax]', res)
+          if (res.ret == 'successful') {
+            vm.succ_msg = res.output
+            vm.error_msg = ''
           } else {
             console.error(res.error)
           }

@@ -4,6 +4,7 @@ const cors = require('cors')
 const format = require('xml-formatter')
 const {spawn} = require('child_process')
 //const puppeteer = require('puppeteer')
+const he = require('he')
 
 var app = express()
 app.use(bodyParser.json())
@@ -30,7 +31,7 @@ console.log(`Listen on ${port}`)
 function run(cmd, script, args) {
   return new Promise((resolve, reject) => {
     cmd_args = [script, ...args]
-    console.log('[cmd_args]', cmd_args)
+    console.log('[run]', cmd, cmd_args)
     let returnStr = ''
     const process = spawn(cmd, cmd_args)
     process.stdout.on('data', (data) => {
@@ -44,6 +45,12 @@ function run(cmd, script, args) {
     process.stderr.on('data', (data) => {
       reject(data)
     })
+  })
+}
+
+function html_entities_codes(input) {
+  return input.replace(/&([^#]+);/g, function(match, name) {
+    return he.encode(he.decode(match))
   })
 }
 
@@ -83,6 +90,7 @@ app.post('/query', async function (req, res) {
       error: err.toString()
     })
   }
+
 }).post('/json2mml', async function (req, res) {
   let json = req.body.json
   console.log('[json]', json)
@@ -92,6 +100,8 @@ app.post('/query', async function (req, res) {
       throw 'internal undefined query'
 
     let mml = await run('node', '/home/dm/Desktop/ait-math/src/json2mathml.js', [json])
+    mml = html_entities_codes(mml)
+    mml = mml.trim()
 
     res.json({
       json: json,
@@ -109,6 +119,32 @@ app.post('/query', async function (req, res) {
       error: err.toString()
     })
   }
+
+}).post('/aitmath-pg-upload', async function (req, res) {
+  let mml = req.body.mathml
+  console.log('[mml]', mml)
+
+  try {
+    if (mml === undefined)
+      throw 'internal undefined query'
+
+    let output = await run('ait-math-pg-tester', 'ga6840', [mml])
+
+    res.json({
+      ret: 'successful',
+      mml: mml,
+      output: output
+    })
+
+  } catch (err) {
+    console.error(err.toString())
+
+    res.json({
+      ret: 'failed',
+      error: err.toString()
+    })
+  }
+
 
 }).get('/', async function (req, res) {
     res.json({
