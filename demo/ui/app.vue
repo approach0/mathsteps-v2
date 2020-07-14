@@ -103,7 +103,14 @@
       <mu-button color="secondary" @click="json2mml(i, true)"> 查看 oneline MML </mu-button>
       <mu-button color="secondary" @click="json_show(i, null)"> 收起 </mu-button>
       <pre v-if="step.debug_content">{{step.debug_content}}</pre>
-      <a target="_blank" v-if="Array.isArray(step.debug_content)" href="http://192.168.3.54:8080/playground.html">动画效果预览</a>
+      <div v-if="Array.isArray(step.debug_content)">
+        <a target="_blank" href="http://192.168.3.54:8080/playground.html">playground</a>:
+        动画效果预览
+      </div>
+      <div v-if="Array.isArray(step.debug_content)">
+        <a target="_blank" href="https://cpm-ait.dev.dm-ai.cn/board">对比 AIT-math 动画</a>:
+        ait-math-pg-tester ROOM_ID MML
+      </div>
     </div>
 
     <mu-divider v-show="step.show"></mu-divider>
