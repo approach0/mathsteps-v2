@@ -52,13 +52,6 @@ def token_stats(narr, stats={}, right_side_of_eq=False, inside_of_sqrt=False, le
     if sign < 0:
         incr(stats, 'neg')
 
-    # ignore animation holes
-    if root.animation in expression.hole_animations():
-        return stats
-    elif token == 'REPLACE':
-        token_stats(narr[2], stats, right_side_of_eq, inside_of_sqrt, level)
-        return stats
-
     # count leaves
     if token in ['NUMBER', 'VAR']:
         if token == 'NUMBER':
@@ -118,6 +111,8 @@ def value_v1(narr, debug=False):
     if isinstance(narr, str):
         return value(expression.tex2narr(narr))
 
+    narr = expression.trim_animations_copy(narr)
+
     value_dict = {
         'VAR': 10,
         'NUMBER_integer': 0.1,
@@ -167,13 +162,6 @@ def collect_stats(narr, stats, level, grandRoot, right_side_of_eq):
 
     if sign < 0:
         stats['neg'] += 1
-
-    # ignore animation holes
-    if root.animation in expression.hole_animations():
-        return stats
-    elif token == 'REPLACE':
-        collect_stats(narr[2], stats, level, grandRoot, right_side_of_eq)
-        return stats
 
     if token in expression.terminal_tokens():
         if right_side_of_eq:
@@ -235,11 +223,13 @@ def value_v2(narr, level=0, debug=False):
         'VAR_level_cnt': 0
     }
 
+    narr = expression.trim_animations_copy(narr)
+
     collect_stats(narr, stats, 0, None, False)
 
-    #tex = expression.narr2tex(narr)
-    #print('[value_v2]', tex)
-    #stats['parentheses_cnt'] = tex.count('(')
+    if debug:
+        tex = expression.narr2tex(narr)
+        print('[value_v2]', tex)
 
     complexity = [
         (2.0 * stats['right_side_of_eq']) ** 3,
@@ -253,7 +243,6 @@ def value_v2(narr, level=0, debug=False):
             - 0.2 * stats['NUMBER_pad_zeros']
             + 3.0 * stats['VAR_level_cnt']
             + 1.0 * stats['NUMBER_level_cnt']
-            #+ 0.05 * stats['parentheses_cnt']
         ),
         (2.0 * stats['VAR_max_level']) ** 2
     ]
@@ -276,7 +265,6 @@ def test(tex, state_value):
     narr = expression.tex2narr(tex)
     value = state_value(narr, debug=True)
 
-    print('[expression]', tex)
     print(value)
     if value > g_test_last_val:
         rich.print('[green][[pass]][/]')
@@ -297,6 +285,10 @@ if __name__ == '__main__':
     #print(right_padding_zeros(0))
 
     vf = value_v2
+
+    test('1x + 4 = 0', vf)
+    test('`1`[remove] \\times x + 4 = 0', vf)
+    test_done()
 
     test('13 + 1', vf)
     test('10 + 4', vf)

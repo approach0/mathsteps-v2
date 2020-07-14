@@ -11,10 +11,10 @@ from timer import Timer
 def possible_next_steps(narr, axioms, state_value, animation_mode=False,
                         debug=False, restrict_rules=None, fast_return=False):
     return_steps = []
+    cur_value = state_value(narr)
     if debug:
         tex = expression.narr2tex(narr)
-        value = state_value(narr)
-        rich.print(f'[light]{value:.2f}', end=' ')
+        rich.print(f'[light]{cur_value:.2f}', end=' ')
         print(tex)
 
     for axiom_idx, axiom in enumerate(axioms):
@@ -24,29 +24,27 @@ def possible_next_steps(narr, axioms, state_value, animation_mode=False,
 
         value_constrain_narrs = []
         for applied_narr in possible_applied_narrs:
+            next_value = state_value(applied_narr)
             if not axiom.allow_complication:
-                curr_value = state_value(narr)
-                next_value = state_value(applied_narr)
-                if ((axiom.strict_simplify and next_value <= curr_value) or
-                   next_value < curr_value):
+                if ((axiom.strict_simplify and next_value <= cur_value) or
+                   next_value < cur_value):
                     if debug:
                         rich.print('[grey50][[x]]', end=' ')
-                        value = state_value(applied_narr)
                         tex = expression.narr2tex(applied_narr)
                         print(axiom.name(), end=' ')
-                        rich.print(f'[light]{value:.2f}', end=' ')
+                        rich.print(f'[light]{next_value:.2f}', end=' ')
                         print(tex)
                     continue
-            value_constrain_narrs.append((applied_narr, axiom, axiom_idx))
+            value_constrain_narrs.append((applied_narr, axiom, axiom_idx, next_value))
 
         return_steps += value_constrain_narrs
 
         if fast_return and len(value_constrain_narrs) > 0: break
 
-    return_steps.sort(key=lambda x: (x[2], -state_value(x[0])))
+    return_steps.sort(key=lambda x: (x[2], -x[3]))
 
     if debug:
-        for i, (narr, axiom, axiom_idx) in enumerate(return_steps):
+        for i, (narr, axiom, axiom_idx, value) in enumerate(return_steps):
             # print axiom name
             if i == 0:
                 rich.print(f'[bright_green][[✓]]', end=' ')
@@ -54,13 +52,13 @@ def possible_next_steps(narr, axioms, state_value, animation_mode=False,
                 rich.print(f'[grey50][[ ]]', end=' ')
             print(axiom.name(), end=" ")
             # print value
-            value = state_value(narr)
             rich.print(f'[light]{value:.2f}', end=' ')
             # print tex
             tex = expression.narr2tex(narr)
             print(tex)
         print()
-    return return_steps
+
+    return [s[:-1] for s in return_steps]
 
 
 def dfs(narr, axioms, debug=False, maxsteps=150, animation_mode=False, printTrim=False):
@@ -148,6 +146,7 @@ def test(all_axioms):
         '-(-2-3)^{2}',
         "\left| -(5+\\frac{1}{2})\\right| (\\frac{1}{3} - \\frac{1}{2}) \\frac{3}{11} \\div (1 - \\frac{1}{4})",
         "3x + 3 = 2x - 1",
+        "1x + 4 = 0"
     ]
 
     begin_from = 0
