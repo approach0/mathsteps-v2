@@ -377,7 +377,30 @@ def _canonicalize(pattern_narr, signs, narr, rewrite_rules, output_tempalate):
 
 canonicalize = (
     Axiom(name='去括号')
+    .add_rule('# a *{1}', 'X', animation='`#1 a *{1}`[replace]{X}', dynamic_procedure=_canonicalize)
+    .add_rule('# a # *{1}', 'X', animation='`#1 a #2 *{1}`[replace]{X}', dynamic_procedure=_canonicalize)
     .add_rule('a', 'X', animation='`a`[replace]{X}', dynamic_procedure=_canonicalize)
+
+    .add_test(
+         [NarrRoot(1, "eq"),
+             [NarrRoot(1, "add"),
+                 [NarrRoot(1, "mul"),
+                     [NarrRoot(1, "NUMBER"), 3.0],
+                     [NarrRoot(1, "VAR"), 'x']
+                 ],
+                 [NarrRoot(1, "NUMBER"), 3.0],
+                 [NarrRoot(1, "add"),
+                    [NarrRoot(-1, "mul"),
+                        [NarrRoot(1, "NUMBER"), 2.0],
+                        [NarrRoot(1, "VAR"), 'x']
+                    ],
+                    [NarrRoot(1, "NUMBER"), 1.0]
+                 ]
+             ],
+             [NarrRoot(1, "NUMBER"), 0.0]
+        ]
+    )
+
 
     .add_test(
         [NarrRoot(1, 'add'),
