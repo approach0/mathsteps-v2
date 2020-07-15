@@ -9,5 +9,5 @@ docker images
 docker build --tag ${IMAGE_NAME} .
 
 echo "==== USE COMMANDS BELOW TO MODIFY ===="
-echo docker run --cap-add=NET_ADMIN -it ${IMAGE_NAME} /bin/bash
+echo docker run --network host -it ${IMAGE_NAME} /bin/bash
 echo docker commit d46b7a389162 ${IMAGE_NAME}

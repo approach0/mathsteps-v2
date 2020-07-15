@@ -7,4 +7,4 @@ RUN apt install -y --no-install-recommends python3 nodejs npm
 ADD . ./code
 WORKDIR ./code/demo
 RUN npm config set registry https://npm.dm-ai.cn/repository/npm/
-#RUN npm install
+RUN npm install
