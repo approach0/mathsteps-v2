@@ -1,16 +1,15 @@
+# base
 FROM ubuntu:16.04
 RUN apt update
-RUN apt install -y --no-install-recommends curl sudo python3
-RUN curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-RUN apt install -y --no-install-recommends nodejs npm
-
-RUN useradd -ms /bin/bash dm
-USER dm
-
-ADD --chown=dm:dm . /home/dm/code
-WORKDIR /home/dm
-
-WORKDIR /home/dm/code/demo
+# install Python3
+RUN apt install -y --no-install-recommends python3
+# install nodejs and NPM
+ADD ./node_setup_14.x.sh /setup_14.sh
+RUN chmod +x /setup_14.sh
+RUN ./setup_14.sh
+RUN apt install -y --no-install-recommends nodejs
+# setup code environment
+ADD . /code
+WORKDIR /code/demo
 RUN npm config set registry https://npm.dm-ai.cn/repository/npm/
-RUN npm install
-RUN echo hello
+#RUN npm install
