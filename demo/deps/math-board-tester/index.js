@@ -5,7 +5,7 @@ const mathResultPgConverter = require("./dependencies/math-result-pg-converter")
 // DEV CONFIG
 // BOARD:  http://ait-tutor-board-ait.dev.dm-ai.cn/#/tutor-board?fromCpm=1&roomId={{ROOMID}}
 const AIT_EAOG_RUNNER_URL = "http://ait-eaog-runner-ait.dev.dm-ai.cn";
-const MATH_SERVICE_URL = "http://192.168.4.46";
+const MATH_SERVICE_URL = "http://localhost:3889";
 //==============================================================================================
 
 
@@ -27,7 +27,7 @@ console.log(QUERY, ROOM_ID)
  * 调用接口获得步骤信息.
  */
 async function solveToSteps(query) {
-    const url = `${MATH_SERVICE_URL}/api/query`;
+    const url = `${MATH_SERVICE_URL}/query`;
     const body = { query };
     const resp = await fetch(url, {
         method: "POST",
@@ -47,7 +47,7 @@ async function solveToSteps(query) {
  * 调用接口将JSON转为MML
  */
 async function convertJsonToMML(json) {
-    const url = `${MATH_SERVICE_URL}/api/json2mml`;
+    const url = `${MATH_SERVICE_URL}/json2mml`;
     const body = { json };
     const resp = await fetch(url, {
         method: "POST",

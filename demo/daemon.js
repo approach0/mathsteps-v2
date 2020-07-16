@@ -9,6 +9,10 @@ var app = express()
 app.use(bodyParser.json())
 app.use(cors())
 
+const AIT_math_dir = './deps/math-board-tester/node_modules/ait-math'
+const AIT_math_tester_dir = './deps/math-board-tester'
+const AIT_math_tester_default_room = 'ga6840'
+
 process.on('SIGINT', async function() {
   console.log('')
   console.log('Bye bye.')
@@ -90,7 +94,7 @@ app.post('/query', async function (req, res) {
     if (json === undefined)
       throw 'internal undefined query'
 
-    let mml = await run('node', './deps/ait-math/src/json2mathml.js', [json])
+    let mml = await run('node', `${AIT_math_dir}/src/json2mathml.js`, [json])
     mml = html_entities_codes(mml)
     mml = mml.trim()
 
@@ -119,7 +123,7 @@ app.post('/query', async function (req, res) {
     if (mml === undefined)
       throw 'internal undefined query'
 
-    let output = await run('ait-math-pg-tester', 'ga6840', [mml])
+    let output = await run('ait-math-pg-tester', AIT_math_tester_default_room, [mml])
 
     res.json({
       ret: 'successful',
@@ -156,7 +160,7 @@ app.post('/query', async function (req, res) {
       throw 'input query length is zero'
 
     } else {
-      output += await run('node', './deps/math-board-tester/index.js', [qry[0], room])
+      output += await run('node', `${AIT_math_tester_dir}/index.js`, [qry[0], room])
     }
 
     res.json({
