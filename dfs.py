@@ -146,6 +146,7 @@ def test(all_axioms):
         '-(-2-3)^{2}',
         "\left| -(5+\\frac{1}{2})\\right| (\\frac{1}{3} - \\frac{1}{2}) \\frac{3}{11} \\div (1 - \\frac{1}{4})",
         "3x + 3 = 2x - 1",
+        "2 + 7 + 8"
     ]
 
     begin_from = 0

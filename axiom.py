@@ -409,34 +409,56 @@ class Axiom:
         if len(children) == 1 or no_permute:
             # generate unary operations
             construct_tree = deepcopy(narr)
-            yield construct_tree, []
+            yield construct_tree, [], None
         else:
             is_commutative = True if root[1] in expression.commutative_operators() else False
             # generate binary operations
             for (cl, cr), (i, j) in self._children_choose_two(children, is_commutative):
                 construct_tree = [root.copy(), cl, cr]
+
+                children_copy = deepcopy(children)
+                construct_copy = deepcopy(construct_tree)
+
+                children_copy[i][0].animation = 'moveBefore'
+                children_copy[i][0].animatGrp = 6
+
+                children_copy[j][0].animation = 'moveBefore'
+                children_copy[j][0].animatGrp = 7
+
+                construct_copy[1][0].animation = 'moveAfter'
+                construct_copy[1][0].animatGrp = 6
+
+                construct_copy[2][0].animation = 'moveAfter'
+                construct_copy[2][0].animatGrp = 7
+
+                animation_tree = construct_copy + children_copy
+
                 brothers = [c for k, c in enumerate(children) if k != i and k != j and j >= 0]
-                yield deepcopy(construct_tree), deepcopy(brothers)
+                yield deepcopy(construct_tree), deepcopy(brothers), animation_tree
 
 
     @staticmethod
     def _uniq_append(result_narrs, new_narr, max_results):
+        full = False
         if len(result_narrs) + 1 > max_results:
-            return False
+            return True, False
         applied_set = set([expression.narr2tex(narr) for narr in result_narrs])
         new_tex = expression.narr2tex(new_narr)
+        append = False
         if new_tex not in applied_set:
             result_narrs.append(new_narr)
-        return True
+            append = True
+        return full, append
 
 
     def _level_apply(self, narr, debug=False):
         ret_narrs = [] # store possible results
+        ani_narrs = [] # store transition animations
         root_sign, root_type = narr[0].get()
 
         # ignore terminal tokens (no rule has a single terminal token as pattern)
         if root_type in expression.terminal_tokens():
-            return []
+            return [], []
 
         for pattern in self.rules:
             wildcards_idx = self.wildcards_idx[pattern]
@@ -446,7 +468,7 @@ class Axiom:
                 f' no_permute={no_permute} [red]to[/]', expression.narr2tex(narr))
 
             # extract and try partial one or two operands to match against pattern
-            for construct_tree, brothers in self._children_permutation(narr, no_permute=no_permute):
+            for construct_tree, brothers, ani_tree in self._children_permutation(narr, no_permute=no_permute):
                 rewritten_narr, is_applied = self._exact_apply(pattern, construct_tree, debug=debug)
                 if is_applied:
                     new_narr = [] # construct a new father
@@ -468,6 +490,9 @@ class Axiom:
                         if not self.root_sign_reduce and root_sign < 0:
                             new_narr[0].apply_sign(-1)
 
+                    #print('[animat]', expression.narr2tex(ani_tree))
+                    #print('[result]', expression.narr2tex(new_narr))
+                    #print()
                     if False:
                         rich.print('[red]level apply[/]:')
                         print('[origin]', expression.narr2tex(narr))
@@ -475,8 +500,9 @@ class Axiom:
                         print('[result]', expression.narr2tex(new_narr))
                         print()
 
-                    Axiom()._uniq_append(ret_narrs, new_narr, self.max_results)
-        return ret_narrs
+                    _, append = Axiom()._uniq_append(ret_narrs, new_narr, self.max_results)
+                    if append: ani_narrs.append(ani_tree)
+        return ret_narrs, ani_tree
 
 
     def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=4, bfs_bandwith=5, level=0):
@@ -493,7 +519,7 @@ class Axiom:
                 #rich.print('[red]maxtime[/]', depth)
                 break
 
-            narrs = self._level_apply(narr, debug=debug)
+            narrs, ani_narrs = self._level_apply(narr, debug=debug)
 
             # keep adding next level or dead ends to candidates
             if len(narrs) > 0:
@@ -542,13 +568,13 @@ class Axiom:
                         expression.replace_or_pass_children(new_narr, i, applied_narr)
 
                         # append new result
-                        if not Axiom()._uniq_append(result_narrs, new_narr, self.max_results):
-                            return result_narrs
+                        full, _ = Axiom()._uniq_append(result_narrs, new_narr, self.max_results)
+                        if full: return result_narrs
             # append dead-end result
             if none_applied and depth > 0:
                 new_narr = deepcopy(narr)
-                if not Axiom()._uniq_append(result_narrs, new_narr, self.max_results):
-                    return result_narrs
+                full, _ = Axiom()._uniq_append(result_narrs, new_narr, self.max_results)
+                if full: return result_narrs
 
         #if level == 0:
         #    for n in result_narrs:
