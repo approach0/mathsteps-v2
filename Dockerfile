@@ -24,3 +24,5 @@ RUN npm install
 RUN pip3 install rich lark-parser numpy
 RUN npm install xml-formatter
 RUN cd deps/math-board-tester && npm install
+RUN cp deps/ait-math-* deps/math-board-tester/node_modules/ait-math/src
+RUN cd deps/math-board-tester/node_modules/ait-math/src && mv ait-math-json2mathml.js json2mathml.js && ./ait-math-fix-runtime.sh
