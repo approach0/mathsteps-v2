@@ -26,3 +26,4 @@ RUN npm install -g xml-formatter ait-math-pg-tester
 RUN cd deps/math-board-tester && npm install
 RUN cp deps/ait-math-* deps/math-board-tester/node_modules/ait-math/src
 RUN cd deps/math-board-tester/node_modules/ait-math/src && mv ait-math-json2mathml.js json2mathml.js && ./ait-math-fix-runtime.sh
+CMD /usr/bin/node daemon.js
