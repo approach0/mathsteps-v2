@@ -7,7 +7,6 @@
 *.pkl
 dist/
 node_modules/
-demo/deps
 output/
 __pycache__/
 package-lock.json
