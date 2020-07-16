@@ -15,6 +15,7 @@
   },
   "scripts": {
     "dev": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js --inline",
+    "srv": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js --host 0.0.0.0 --inline",
     "watch": "webpack --mode development -w",
     "build": "webpack --mode production --module-bind js=babel-loader --display-error-details"
   },
