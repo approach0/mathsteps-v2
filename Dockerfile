@@ -1,6 +1,6 @@
 FROM docker.dm-ai.cn/public/ubuntu:16.04-python37-node14
 
-## base
+## base environment
 #FROM ubuntu:16.04
 #RUN apt update
 #RUN apt install -y --no-install-recommends software-properties-common
