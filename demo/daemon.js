@@ -68,9 +68,9 @@ app.post('/query', async function (req, res) {
 
     //} else if (qry.length == 1 && !qry[0].includes('=')) {
     } else if (qry.length == 1) {
-      steps = await run('python', '../dfs.py', qry)
+      steps = await run('python3', '../dfs.py', qry)
     } else {
-      steps = await run('python', '../../mathsteps-v1/mathstep.py', qry)
+      steps = await run('python3', '../../mathsteps-v1/mathstep.py', qry)
     }
 
     //console.log('[steps]', steps)
