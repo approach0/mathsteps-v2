@@ -1,8 +1,8 @@
 ## Daemon
 Build docker image and run daemon:
 ```sh
-# ./Docker-build.sh
-# docker run --network host -it mathsteps-v2 /usr/bin/node daemon.js
+$ sudo ./Docker-build.sh
+$ sudo docker run --network host -it mathsteps-v2 /usr/bin/node daemon.js
 ```
 Daemon is listening on port `3889`.
 
