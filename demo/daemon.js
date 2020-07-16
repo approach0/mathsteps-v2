@@ -3,20 +3,11 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const format = require('xml-formatter')
 const {spawn} = require('child_process')
-//const puppeteer = require('puppeteer')
 const he = require('he')
 
 var app = express()
 app.use(bodyParser.json())
 app.use(cors())
-
-//var page = null
-//;(async () => {
-//  console.log('puppeteer preparing ...')
-//  const browser = await puppeteer.launch()
-//  page = await browser.newPage()
-//  console.log('puppeteer ready.')
-//})();
 
 process.on('SIGINT', async function() {
   console.log('')
@@ -99,7 +90,7 @@ app.post('/query', async function (req, res) {
     if (json === undefined)
       throw 'internal undefined query'
 
-    let mml = await run('node', '/home/dm/Desktop/ait-math/src/json2mathml.js', [json])
+    let mml = await run('node', './deps/ait-math/src/json2mathml.js', [json])
     mml = html_entities_codes(mml)
     mml = mml.trim()
 
@@ -165,16 +156,7 @@ app.post('/query', async function (req, res) {
       throw 'input query length is zero'
 
     } else {
-      //try {
-      //  await page.goto(`http://ait-tutor-board-ait.dev.dm-ai.cn/#/tutor-board?fromCpm=1&roomId=${room}`, {
-      //    waitUntil: 'networkidle0'
-      //  })
-      //} catch (err) {
-      //  throw err.toString()
-      //}
-
-      output += await run('node', '/home/dm/Desktop/math-board-tester/index.js', [qry[0], room])
-      //console.log(output)
+      output += await run('node', './deps/math-board-tester/index.js', [qry[0], room])
     }
 
     res.json({

@@ -937,6 +937,7 @@ def test_cases_wiki131278697():
 
 if __name__ == '__main__':
 
-    questions, _ = test_cases_wiki131278697()
+    questions, _ = test_cases_x3_rational()
+    #questions, _ = test_cases_wiki131278697()
     for q in questions:
         print('\t', q)
