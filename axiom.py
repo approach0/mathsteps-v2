@@ -129,7 +129,7 @@ class Axiom:
         for test, expect in tests:
             expr = test if isinstance(test, str) else expression.narr2tex(test)
             narr = expression.tex2narr(expr) if isinstance(test, str) else test
-            possible_applied_narrs = self.apply(narr, debug=debug)
+            results = self.apply(narr, debug=debug)
             # render texs is for HTML preview
             render_texs = [expr]
 
@@ -138,7 +138,14 @@ class Axiom:
             #if printNarr:
             #    expression.narr_prettyprint(narr)
 
-            for applied_narr in possible_applied_narrs:
+            for applied_narr, ani_narr in results:
+                # print transition animations
+                if ani_narr:
+                    ani_tex = expression.narr2tex(ani_narr)
+                    rich.print('[bold cyan][[transition]][/]', end=" ")
+                    print(ani_tex)
+
+                # print result expression
                 applied_tex = expression.narr2tex(applied_narr)
                 rich.print('[bold cyan][[result]][/]', end=" ")
                 print(applied_tex, end=" ")
@@ -502,7 +509,7 @@ class Axiom:
 
                     _, append = Axiom()._uniq_append(ret_narrs, new_narr, self.max_results)
                     if append: ani_narrs.append(ani_tree)
-        return ret_narrs, ani_tree
+        return ret_narrs, ani_narrs
 
 
     def _recursive_apply(self, narr0, debug=False, applied_times=0, max_times=4, bfs_bandwith=5, level=0):
@@ -519,7 +526,7 @@ class Axiom:
                 #rich.print('[red]maxtime[/]', depth)
                 break
 
-            narrs, ani_narrs = self._level_apply(narr, debug=debug)
+            narrs, _ = self._level_apply(narr, debug=debug)
 
             # keep adding next level or dead ends to candidates
             if len(narrs) > 0:
@@ -583,21 +590,58 @@ class Axiom:
         return result_narrs
 
 
+    @staticmethod
+    def _print_results_in_tex(narrs):
+        for n in narrs:
+            print(expression.narr2tex(n))
+        print()
+
+
+    def _onetime_apply(self, narr0, debug=False):
+        if narr0[0][1] in expression.terminal_tokens():
+            return []
+
+        # apply at this level
+        applied_narrs, ani_narrs = self._level_apply(narr0, debug=debug)
+        if len(applied_narrs) > 0:
+            return zip(applied_narrs, ani_narrs)
+
+        # apply to children recursively
+        children = narr0[1:]
+        results = []
+        for i, child in enumerate(children):
+            applied_tuples = self._onetime_apply(child, debug=debug)
+            for narr, ani_narr in applied_tuples:
+                new_res_narr = deepcopy(narr0)
+                new_ani_narr = deepcopy(narr0)
+                expression.replace_or_pass_children(new_res_narr, i, narr)
+                expression.replace_or_pass_children(new_ani_narr, i, ani_narr)
+                results.append((new_res_narr, new_ani_narr))
+
+            if len(results) > 0:
+                break
+
+        return results
+
+
     def apply(self, narr, debug=False):
         if self.recursive_apply and not self.animation_mode:
-            return self._recursive_apply(narr, debug=debug, bfs_bandwith=1)
+            results = self._recursive_apply(narr, debug=debug)
+            return [(r, None) for r in results]
         else:
-            return self._recursive_apply(narr, debug=debug, max_times=1)
+            return self._onetime_apply(narr, debug=debug)
 
 
 if __name__ == '__main__':
-    a = (
-        Axiom(name='分母为一的分式化简')
-        .add_rule('#\\frac{k}{#1}', '#0 k', animation='`#1 \\frac{k}{#2 1}`[replace]{#0 k}')
-    )
+    import dynamic_axioms
+    #a = (
+    #    Axiom(name='分母为一的分式化简')
+    #    .add_rule('#\\frac{k}{#1}', '#0 k', animation='`#1 \\frac{k}{#2 1}`[replace]{#0 k}')
+    #)
+    a = dynamic_axioms.calc_add
 
     a.animation_mode = True
     print(a)
 
-    a.test('-12 + \\frac{27}{-9}', debug=False, printNarr=True, printTrim=False)
+    a.test('2 + 7 + 8', debug=False, printNarr=False, printTrim=False)
     #a.test(debug=True, printNarr=True, printTrim=True)
