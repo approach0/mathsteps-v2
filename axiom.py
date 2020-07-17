@@ -144,6 +144,8 @@ class Axiom:
                     ani_tex = expression.narr2tex(ani_narr)
                     rich.print('[bold cyan][[transition]][/]', end=" ")
                     print(ani_tex)
+                else:
+                    rich.print('[bold cyan][[transition]][/]', None)
 
                 # print result expression
                 applied_tex = expression.narr2tex(applied_narr)
@@ -413,32 +415,34 @@ class Axiom:
     def _children_permutation(self, narr, no_permute=False):
         root = narr[0]
         children = narr[1:]
+        animation_tree = None
         if len(children) == 1 or no_permute:
             # generate unary operations
             construct_tree = deepcopy(narr)
-            yield construct_tree, [], None
+            yield construct_tree, [], animation_tree
         else:
             is_commutative = True if root[1] in expression.commutative_operators() else False
             # generate binary operations
             for (cl, cr), (i, j) in self._children_choose_two(children, is_commutative):
                 construct_tree = [root.copy(), cl, cr]
 
-                children_copy = deepcopy(children)
-                construct_copy = deepcopy(construct_tree)
+                if i != 0 or j != 1:
+                    children_copy = deepcopy(children)
+                    construct_copy = deepcopy(construct_tree)
 
-                children_copy[i][0].animation = 'moveBefore'
-                children_copy[i][0].animatGrp = 6
+                    children_copy[i][0].animation = 'moveBefore'
+                    children_copy[i][0].animatGrp = 6
 
-                children_copy[j][0].animation = 'moveBefore'
-                children_copy[j][0].animatGrp = 7
+                    children_copy[j][0].animation = 'moveBefore'
+                    children_copy[j][0].animatGrp = 7
 
-                construct_copy[1][0].animation = 'moveAfter'
-                construct_copy[1][0].animatGrp = 6
+                    construct_copy[1][0].animation = 'moveAfter'
+                    construct_copy[1][0].animatGrp = 6
 
-                construct_copy[2][0].animation = 'moveAfter'
-                construct_copy[2][0].animatGrp = 7
+                    construct_copy[2][0].animation = 'moveAfter'
+                    construct_copy[2][0].animatGrp = 7
 
-                animation_tree = construct_copy + children_copy
+                    animation_tree = construct_copy + children_copy
 
                 brothers = [c for k, c in enumerate(children) if k != i and k != j and j >= 0]
                 yield deepcopy(construct_tree), deepcopy(brothers), animation_tree
