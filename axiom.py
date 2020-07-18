@@ -616,12 +616,17 @@ class Axiom:
         for i, child in enumerate(children):
             applied_tuples = self._onetime_apply(child, debug=debug)
             for narr, ani_narr in applied_tuples:
+                # attach applied subexpression
                 new_res_narr = deepcopy(narr0)
-                new_ani_narr = deepcopy(narr0)
                 expression.replace_or_pass_children(new_res_narr, i, narr)
-                expression.replace_or_pass_children(new_ani_narr, i, ani_narr)
+                # attach applied transition animation
+                new_ani_narr = None
+                if ani_narr:
+                    new_ani_narr = deepcopy(narr0)
+                    expression.replace_or_pass_children(new_ani_narr, i, ani_narr)
+                # append to results
                 results.append((new_res_narr, new_ani_narr))
-
+            # only apply once in this function
             if len(results) > 0:
                 break
 

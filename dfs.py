@@ -145,8 +145,8 @@ def test(all_axioms):
         '-7(a-b)',
         '-(-2-3)^{2}',
         "\left| -(5+\\frac{1}{2})\\right| (\\frac{1}{3} - \\frac{1}{2}) \\frac{3}{11} \\div (1 - \\frac{1}{4})",
+        "2 + 7 + 8",
         "3x + 3 = 2x - 1",
-        "2 + 7 + 8"
     ]
 
     begin_from = 0
@@ -161,7 +161,7 @@ def test(all_axioms):
         test_narr = expression.tex2narr(test)
 
         with timer:
-            steps, err = dfs(test_narr, all_axioms, debug=True, animation_mode=False, printTrim=False)
+            steps, err = dfs(test_narr, all_axioms, debug=True, animation_mode=True, printTrim=False)
             if err:
                 print('DFS error:', err)
 
