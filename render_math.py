@@ -51,7 +51,7 @@ def render_axioms(axioms, output='./render-tex.html'):
 
 def render_steps(steps, output='./render-tex.html', show_index=False):
     display_str = '\\begin{align}'
-    for i, (narr, axiom, axiom_idx) in enumerate(steps):
+    for i, (narr, _, axiom, axiom_idx) in enumerate(steps):
         tex = expression.narr2tex(narr)
         if show_index: display_str += '' if i == 0 else ('\\text{step %d}' % i)
         display_str += '&' if i == 0 else '=&'

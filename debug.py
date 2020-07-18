@@ -8,11 +8,15 @@ from render_math import render_steps
 from test_cases import test_cases_x3_rational, test_cases_wiki131278697
 
 def print_steps(steps):
-    for i, (narr, axiom, axiomIdx) in enumerate(steps):
+    for i, (narr, ani_narr, axiom, axiomIdx) in enumerate(steps):
         tex = expression.narr2tex(narr)
         value = state_value(narr)
         rich.print(f'[red]{i + 1}[/red] [blue]{value:.2f}[/]', end=" ")
-        print(axiom.name(), tex)
+        print(axiom.name())
+        if ani_narr:
+            ani_tex = expression.narr2tex(ani_narr)
+            print('\t', ani_tex)
+        print('\t', tex)
 
 
 if __name__ == '__main__':
@@ -34,13 +38,14 @@ if __name__ == '__main__':
         #"-x 0.391 - 629 - 2 x^{2} + y^{2} + \\frac{50x}{x+y} = 0"
         #"- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})"
         #"-200.9 + 28 + 0.9 + (-8)"
-        "- x x"
+        #"- x x"
+        "2 + 7 + 8"
     )
 
     try:
         narr = expression.tex2narr(testcase)
         val0 = state_value(narr)
-        steps = [(narr, Axiom(name='原式'), -1)]
+        steps = [(narr, None, Axiom(name='原式'), -1)]
         choices = [0]
         values = [val0]
         while len(steps) > 0:
@@ -48,7 +53,10 @@ if __name__ == '__main__':
             value = state_value(narr)
             values.append(value)
 
-            next_steps = possible_next_steps(narr, all_axioms, state_value, debug=True)
+            # only used in animation_mode
+            expression.trim_animations(narr)
+
+            next_steps = possible_next_steps(narr, all_axioms, state_value, debug=True, animation_mode=True)
 
             if len(next_steps) == 0:
                 break

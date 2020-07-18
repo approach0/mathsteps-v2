@@ -426,21 +426,21 @@ class Axiom:
             for (cl, cr), (i, j) in self._children_choose_two(children, is_commutative):
                 construct_tree = [root.copy(), cl, cr]
 
-                if i != 0 or j != 1:
+                if self.animation_mode and (i != 0 or j != 1):
                     children_copy = deepcopy(children)
                     construct_copy = deepcopy(construct_tree)
 
                     children_copy[i][0].animation = 'moveBefore'
-                    children_copy[i][0].animatGrp = 6
+                    children_copy[i][0].animatGrp = 1
 
                     children_copy[j][0].animation = 'moveBefore'
-                    children_copy[j][0].animatGrp = 7
+                    children_copy[j][0].animatGrp = 2
 
                     construct_copy[1][0].animation = 'moveAfter'
-                    construct_copy[1][0].animatGrp = 6
+                    construct_copy[1][0].animatGrp = 1
 
                     construct_copy[2][0].animation = 'moveAfter'
-                    construct_copy[2][0].animatGrp = 7
+                    construct_copy[2][0].animatGrp = 2
 
                     animation_tree = construct_copy + children_copy
 

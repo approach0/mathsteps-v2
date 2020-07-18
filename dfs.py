@@ -19,32 +19,31 @@ def possible_next_steps(narr, axioms, state_value, animation_mode=False,
 
     for axiom_idx, axiom in enumerate(axioms):
         axiom.animation_mode = animation_mode
-        possible_applied_narrs = axiom.apply(narr)
-        #print(axiom.name(), len(possible_applied_narrs))
+        possible_applied_tuples = axiom.apply(narr)
 
         value_constrain_narrs = []
-        for applied_narr in possible_applied_narrs:
-            next_value = state_value(applied_narr)
+        for applied_narr, ani_narr in possible_applied_tuples:
+            value = state_value(applied_narr)
             if not axiom.allow_complication:
-                if ((axiom.strict_simplify and next_value <= cur_value) or
-                   next_value < cur_value):
+                if ((axiom.strict_simplify and value <= cur_value) or
+                   value < cur_value):
                     if debug:
                         rich.print('[grey50][[x]]', end=' ')
                         tex = expression.narr2tex(applied_narr)
                         print(axiom.name(), end=' ')
-                        rich.print(f'[light]{next_value:.2f}', end=' ')
+                        rich.print(f'[light]{value:.2f}', end=' ')
                         print(tex)
                     continue
-            value_constrain_narrs.append((applied_narr, axiom, axiom_idx, next_value))
+            value_constrain_narrs.append((applied_narr, ani_narr, axiom, axiom_idx, value))
 
         return_steps += value_constrain_narrs
 
         if fast_return and len(value_constrain_narrs) > 0: break
 
-    return_steps.sort(key=lambda x: (x[2], -x[3]))
+    return_steps.sort(key=lambda x: (x[-2], -x[-1]))
 
     if debug:
-        for i, (narr, axiom, axiom_idx, value) in enumerate(return_steps):
+        for i, (applied_narr, ani_narr, axiom, axiom_idx, value) in enumerate(return_steps):
             # print axiom name
             if i == 0:
                 rich.print(f'[bright_green][[✓]]', end=' ')
@@ -54,21 +53,22 @@ def possible_next_steps(narr, axioms, state_value, animation_mode=False,
             # print value
             rich.print(f'[light]{value:.2f}', end=' ')
             # print tex
-            tex = expression.narr2tex(narr)
+            tex = expression.narr2tex(applied_narr)
             print(tex)
         print()
 
+    # trim value from tuples
     return [s[:-1] for s in return_steps]
 
 
 def dfs(narr, axioms, debug=False, maxsteps=150, animation_mode=False, printTrim=False):
     any_err = None
     try:
-        next_steps = [(narr, Axiom(name='原式'), -1)]
+        next_steps = [(narr, None, Axiom(name='原式'), -1)]
         return_steps = []
         cnt = 0
         while len(next_steps) > 0:
-            narr, axiom, axiom_idx = next_steps[0]
+            narr, ani_narr, axiom, axiom_idx = next_steps[0]
 
             output_narr = deepcopy(narr)
             #print('[output narr]', narr)
@@ -84,7 +84,7 @@ def dfs(narr, axioms, debug=False, maxsteps=150, animation_mode=False, printTrim
                     expression.narr_prettyprint(narr)
                     print('[tex]', expression.narr2tex(narr))
 
-            return_steps.append((output_narr, axiom, axiom_idx))
+            return_steps.append((output_narr, ani_narr, axiom, axiom_idx))
             next_steps = possible_next_steps(narr, axioms, state.value_v1,
                 animation_mode=animation_mode, fast_return=True, debug=debug)
             if cnt > maxsteps:
@@ -161,13 +161,16 @@ def test(all_axioms):
         test_narr = expression.tex2narr(test)
 
         with timer:
-            steps, err = dfs(test_narr, all_axioms, debug=True, animation_mode=True, printTrim=False)
+            steps, err = dfs(test_narr, all_axioms, debug=True, animation_mode=False, printTrim=False)
             if err:
                 print('DFS error:', err)
 
-        for narr, a, ai in steps:
-            rich.print(f'[red]{a.name()}')
+        for narr, ani_narr, axiom, axiom_idx in steps:
+            rich.print(f'[red]{axiom.name()}')
             tex = expression.narr2tex(narr)
+            if ani_narr:
+                ani_tex = expression.narr2tex(ani_narr)
+                print('\t', ani_tex)
             print('\t', tex)
 
             #animation_json = mathjs.tex2json(tex)
