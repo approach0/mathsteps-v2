@@ -548,44 +548,59 @@ def replace_or_pass_children(narr, i, substitute):
     return narr
 
 
-def trim_animations(narr, top_root=True):
+def _trim_animations(narr, top_root=True, handle_single=False):
     root = narr[0]
     sign, token = root.get()
 
-    root.animation = None
+    root.animation = root.animation if (not handle_single and root.animation == 'removeOnly') else None
     root.animatGrp = None
 
     if top_root and token == 'REPLACE':
         narr[2][0].apply_sign(sign)
-        trim_animations(narr[2])
+        _trim_animations(narr[2])
         narr[:] = narr[2]
         return
 
     elif token in terminal_tokens():
         return
 
-    children = narr[1:]
-    for i, child in enumerate(children):
-        child_root = child[0]
-        child_sign, child_token = child_root.get()
+    loop_again = True
+    while loop_again:
+        loop_again = False
 
-        if child_token == 'REPLACE':
-            replace_by = child[2]
-            replace_by[0].apply_sign(child_sign)
-            replace_or_pass_children(narr, i, replace_by)
-            child = replace_by # for further trim
+        children = narr[1:]
+        for i, child in enumerate(children):
+            child_root = child[0]
+            child_sign, child_token = child_root.get()
 
-        elif child_root.animation in hole_animations():
-            narr[1 + i] = None
-            continue
+            if child_token == 'REPLACE':
+                replace_by = child[2]
+                replace_by[0].apply_sign(child_sign)
+                replace_or_pass_children(narr, i, replace_by)
+                child = replace_by # for further trim
 
-        trim_animations(child, top_root=False)
-        if len(child) == 0:
-            narr[1 + i] = None
+            elif child_root.animation == 'removeOnly' and handle_single:
+                if child[0][1] in terminal_tokens():
+                    narr[1 + i] = None
+                    continue
+                elif token == child_token and token == 'add':
+                    new_narr, _ = passchildren(narr[0], children)
+                    narr[:] = deepcopy(new_narr)
+                    loop_again = True
+                    break
 
-    # prune None children and if necessary, pass the children of single
-    # commutative operands to its grand father.
-    narr[:] = [x for x in narr if x is not None]
+            elif child_root.animation in hole_animations():
+                narr[1 + i] = None
+                continue
+
+            _trim_animations(child, top_root=False)
+            if len(child) == 0:
+                narr[1 + i] = None
+
+        # prune None children
+        narr[:] = [x for x in narr if x is not None]
+
+    # pass the children of single commutative operands to its grand father.
     if len(narr[1:]) == 0: # no child attached
         narr[:] = []
     elif len(narr[1:]) == 1: # single child attached
@@ -593,6 +608,10 @@ def trim_animations(narr, top_root=True):
             narr[:] = narr[1]
             narr[0].apply_sign(sign)
 
+
+def trim_animations(narr):
+    _trim_animations(narr, handle_single=False)
+    _trim_animations(narr, handle_single=True)
 
 def trim_animations_copy(narr):
     narr = deepcopy(narr)
@@ -649,7 +668,7 @@ if __name__ == '__main__':
         '`-a`[remove] x',
         '`a`[remove] + b',
         '`(\sqrt{2})`[removeOnly] + `c`[removeOnly]',
-        '`8`[moveBefore,1] \\times (`8`[moveAfter,1] \\times 7 \\times x + `8`[moveAfter,1] \\times 6)'
+        '`8`[moveBefore,1] \\times (`8`[moveAfter,1] \\times 7 \\times x + `8`[moveAfter,1] \\times 6)',
     ]
 
     for expr in test_expressions[-1:]:
@@ -665,6 +684,14 @@ if __name__ == '__main__':
             continue
 
         narr = tree2narr(tree)
+
+        #narr = [NarrRoot(1, 'add'),
+        #    [NarrRoot(1, 'add', animation='removeOnly'),
+        #        [NarrRoot(1, 'NUMBER'), 1.0],
+        #        [NarrRoot(1, 'NUMBER'), 3.0]
+        #    ],
+        #    [NarrRoot(1, 'NUMBER'), 4.0]
+        #]
 
         rich.print('[[origin narr]]', narr)
         trim_animations(narr)
