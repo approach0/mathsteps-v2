@@ -478,7 +478,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
     moves = [root]
     global manager
 
-    #render_steps([(narr0, None, -1)])
+    render_steps([(narr0, None, -1)])
 
     if nn_models is None and not force_single_thread:
         # prepare proxy structure for parallel processes
@@ -518,7 +518,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
 
             if False:
                 from axiom import Axiom
-                #render_steps([(narr, Axiom(), -1)] + steps, show_index=True)
+                render_steps([(narr, Axiom(), -1)] + steps, show_index=True)
                 choices = input('Limit choices: ')
                 choices = [i for i in map(lambda x: int(x), choices.split(','))]
                 rich.print(choices)
@@ -558,7 +558,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
 
             # construct steps to be returned
             final_steps = [(e, a, ai) for q, n, e, f, a, ai, c in moves]
-            #render_steps(final_steps)
+            render_steps(final_steps)
 
             visited.add(move_to_expr)
             #if debug: print('[visited]', visited)
@@ -630,7 +630,7 @@ if __name__ == '__main__':
             axiom_name = axiom.name() if axiom is not None else '原式'
             rich.print(f'step{j} {axiom_name} [blue]val={val:.2f}[/]', expr)
 
-        #render_steps(steps)
+        render_steps(steps)
         print(f'Test case: {i} / {len(testcases) - 1}')
 
         print('Enter to continue')

@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     #n_sample_times = 220
     n_sample_times = 440
-    always_use_MCTS = True
+    always_use_MCTS = False
 
     open('fallback.log', 'w')
 
@@ -56,6 +56,7 @@ if __name__ == '__main__':
         if not always_use_MCTS:
             # use DFS or mcts (as fallback) to generate steps
             steps, err = dfs(narr, basic_axioms, debug=True, maxsteps=150)
+            steps = [(n, a, ai) for n, an, a, ai in steps]
 
         if err or always_use_MCTS:
             with open('fallback.log', 'a') as fh:
@@ -68,7 +69,7 @@ if __name__ == '__main__':
         data = []
         for j in range(1, len(steps)):
             last_narr, _, _ = steps[j - 1]
-            narr, axiom, axiom_idx = steps[j]
+            narr, _, axiom, axiom_idx = steps[j]
 
             last_expr = expression.narr2tex(last_narr)
             expr = expression.narr2tex(narr)
