@@ -69,7 +69,7 @@ if __name__ == '__main__':
         data = []
         for j in range(1, len(steps)):
             last_narr, _, _ = steps[j - 1]
-            narr, _, axiom, axiom_idx = steps[j]
+            narr, axiom, axiom_idx = steps[j]
 
             last_expr = expression.narr2tex(last_narr)
             expr = expression.narr2tex(narr)
