@@ -210,12 +210,23 @@ if __name__ == '__main__':
             quit()
 
         ret_arr = []
-        for i, (narr, axiom, axiom_idx) in enumerate(steps):
+        for i, (narr, ani_narr, axiom, axiom_idx) in enumerate(steps):
             trim_narr = expression.trim_animations_copy(narr)
             trim_tex = expression.narr2tex(trim_narr)
 
             animate_tex = expression.narr2tex(narr)
             animate_json = mathjs.tex2json(animate_tex)
+
+            if ani_narr:
+                ani_tex = expression.narr2tex(ani_narr)
+                ani_json = mathjs.tex2json(ani_tex)
+                ret_arr.append({
+                    'tex': '\\text{transition step ...}',
+                    'animate_tex': ani_tex,
+                    'animate_json': ani_json,
+                    'axiom': '移项',
+                    'axiom_idx': -2
+                })
 
             ret_arr.append({
                 'tex': trim_tex,
