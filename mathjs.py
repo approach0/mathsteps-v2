@@ -335,16 +335,6 @@ def tex2json(tex, indent=None):
 def mathjs_fixhole(obj, father_obj=None, rank=0):
     Type = obj['mathjs']
 
-    # add binary animation range tag if one child is animated
-    if '变化' in obj:
-        ani_type = obj['变化']['类型']
-        if obj['变化']['范围'] == '单' and ani_type == 'ani-remove':
-            # @chenhaojun enforces this case
-            pass
-        elif ani_type not in ['ani-replace-before', 'ani-replace-after', 'ani-remove-denominator']:
-            father_obj['变化'] = deepcopy(obj['变化']) # copy meta-data
-            father_obj['变化']['范围'] = '左' if rank == 0 else '右'
-
     if Type == 'SymbolNode':
         children = []
     elif Type == 'ConstantNode':
@@ -355,12 +345,22 @@ def mathjs_fixhole(obj, father_obj=None, rank=0):
         children = [_ for _ in obj['args']]
 
     if '变化' in obj:
+        # firstly, limit specified range for single leaf
+        if len(children) == 0:
+            obj['变化']['范围'] = '单'
+
+        # secondly, add binary animation range tag if one child is animated
+        ani_type = obj['变化']['类型']
+        if obj['变化']['范围'] == '单' and ani_type == 'ani-remove':
+            # @chenhaojun enforces this case
+            pass
+        elif ani_type not in ['ani-replace-before', 'ani-replace-after', 'ani-remove-denominator']:
+            father_obj['变化'] = deepcopy(obj['变化']) # copy meta-data
+            father_obj['变化']['范围'] = '左' if rank == 0 else '右'
+
+        # then, fix ``replace node''
         if '替换为' in obj['变化']:
             mathjs_fixhole(obj['变化']['替换为'])
-
-    if len(children) == 0:
-        if '变化' in obj:
-            obj['变化']['范围'] = '单'
 
     for i, child in enumerate(children):
         mathjs_fixhole(child, father_obj=obj, rank=i)
@@ -387,7 +387,8 @@ if __name__ == '__main__':
         '`3`[remove] \\times \\frac{2}{`3`[removeDenom]}',
         '12 - `z`[add] = `z`[replace]{0}',
         'a + `-3`[add]',
-        'a - `-4`[add]'
+        'a - `-4`[add]',
+        '`0`[remove] - 7 + 10 - 3',
     ]
 
     for tex in test_expressions[-1:]:
