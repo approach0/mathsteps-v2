@@ -426,7 +426,7 @@ class Axiom:
             for (cl, cr), (i, j) in self._children_choose_two(children, is_commutative):
                 construct_tree = [root.copy(), cl, cr]
 
-                if self.animation_mode and (i != 0 or j != 1):
+                if self.animation_mode and (i > 1 or j > 1):
                     children_copy = deepcopy(children)
                     construct_copy = deepcopy(construct_tree)
 
