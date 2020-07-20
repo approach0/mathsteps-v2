@@ -11,6 +11,11 @@ Daemon is listening on port `3889`.
 $ cd ./demo
 $ npm install
 $ npm run dev
+$ cd ./deps
+$ (cd math-board-tester && npm install)
+$ cp ait-math-json2mathml.js ./math-board-tester/node_modules/ait-math/src/json2mathml.js
+$ ln -s `pwd`/ait-math-fix-runtime.sh ./math-board-tester/node_modules/ait-math/src/
+$ (cd ./math-board-tester/node_modules/ait-math/src/ && ./ait-math-fix-runtime.sh)
 ```
 which generates `./demo/dist` HTML files and starts a HTTP server listening at `19985`.
 
