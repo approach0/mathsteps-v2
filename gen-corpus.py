@@ -45,11 +45,14 @@ if __name__ == '__main__':
 
     #n_sample_times = 220
     n_sample_times = 440
-    always_use_MCTS = False
+    start = 72
+    always_use_MCTS = True
 
     open('fallback.log', 'w')
 
     for i, expr in enumerate(testcases[:]):
+        if i < 72: continue
+
         narr = expression.tex2narr(expr)
 
         err = None
