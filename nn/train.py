@@ -588,7 +588,7 @@ def train_rnn(all_data, bow):
                     value_avg_loss = value_train_eval.reset()
 
                     print()
-                    print(f'epoch {epoch}, batch #{batch}, len: {minlen}, {maxlen}')
+                    print(f'fold {fold_idx}, epoch {epoch}, batch #{batch}, len: {minlen}, {maxlen}')
                     print('[policy avg loss] %.1f' % policy_avg_loss)
                     print('[value avg loss] %.1f' % value_avg_loss)
 
@@ -601,7 +601,7 @@ def train_rnn(all_data, bow):
                     top_val, top_idx = top_val.squeeze(), top_idx.squeeze()
                     corrects = torch.sum(top_idx == p_batch).item()
                     test_accuracy = corrects / len(test_data)
-                    print('[value test accuracy] %.0f%%' % (test_accuracy * 100.))
+                    print('[policy test accuracy] %.0f%%' % (test_accuracy * 100.))
                     policy_train_history.append((policy_avg_loss, test_accuracy))
 
                     value_predicts, _ = value_network(x_batch)
