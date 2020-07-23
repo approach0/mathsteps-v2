@@ -519,7 +519,7 @@ def k_fold(data, k=5):
         yield i, a, b, train_data, test_data
 
 
-def train_rnn(all_train_data, bow):
+def train_rnn(all_data, bow):
     """
     训练函数
     """
@@ -527,7 +527,7 @@ def train_rnn(all_train_data, bow):
     #device = 'cpu'
     print('[training on]', device)
 
-    max_rule = max(all_train_data, key=lambda x: x[1])[1]
+    max_rule = max(all_data, key=lambda x: x[1])[1]
     print('[max rule]', max_rule)
 
     policy_network, policy_opt, policy_loss_fun = policy_network_configs(bow, max_rule, load_path=None)
@@ -542,15 +542,18 @@ def train_rnn(all_train_data, bow):
     policy_train_history = []
     value_train_history = []
 
+    # trim extreme lengthy sequence
+    #all_train_data = [d for d in all_train_data if len(d[0]) <= 50]
+
     try:
-        for fold_idx, fold_begin, fold_end, train_data, test_data in k_fold(all_train_data, k=10):
+        for fold_idx, fold_begin, fold_end, train_data, test_data in k_fold(all_data, k=100):
             print()
             rich.print(f'[[test fold #{fold_idx} from {fold_begin} to {fold_end}]]', len(train_data), len(test_data))
 
             print('[sort data]')
             train_data.sort(key=lambda x: len(x[0]), reverse=False)
 
-            for epoch, batch, train_batch in batch_generator(train_data, n_epoch=1000):
+            for epoch, batch, train_batch in batch_generator(train_data, n_epoch=600):
                 # batch data to tensors
                 x_batch, p_batch, v_batch = batch_tensors(train_batch, bow, device)
 
@@ -624,8 +627,8 @@ def train_rnn(all_train_data, bow):
 if __name__ == '__main__':
     print('[reading data]', end=' ')
     data = []
-    #for path in ['~/Desktop/output-MCTS-400', '~/Desktop/output-DFS-MCTS-r8000-fr800']:
-    for path in ['~/Desktop/output-MCTS-400']:
+    for path in ['~/Desktop/output-MCTS-400', '~/Desktop/output-DFS-MCTS-r8000-fr800']:
+    #for path in ['~/Desktop/output-MCTS-400']:
         path = path.replace("~", "/home/dm")
         data += read_data(path, endat=-1)
     print(len(data))
