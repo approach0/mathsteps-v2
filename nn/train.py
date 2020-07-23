@@ -11,9 +11,10 @@ import os
 import pickle
 import random
 import math
+import rich
 
 from lark import Lark, UnexpectedInput
-lark = Lark.open('../grammar.lark', rel_to=__file__, parser='lalr', debug=True)
+lark = Lark.open('../grammar.lark', rel_to=__file__, parser='lalr', debug=False)
 
 
 class RNN_model(nn.Module):
@@ -457,7 +458,7 @@ def value_network_configs(bow, load_path='model-value-nn.pt'):
     return model, opt, loss_fun
 
 
-def train_crf(train_data, test_data, bow):
+def train_crf(train_data, bow):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     #device = 'cpu'
     print('[training on]', device)
@@ -502,7 +503,23 @@ def train_crf(train_data, test_data, bow):
         torch.save(crf_graph, 'model-crf.pt')
 
 
-def train(train_data, test_data, bow):
+def k_fold(data, k=5):
+    random.shuffle(data)
+    L = len(data)
+    fold_sz = L // k
+    remain = L - k * fold_sz
+    fold_sz = [fold_sz] * k
+    for i in range(remain):
+        fold_sz[i] += 1
+    pos = 0
+    for i in range(k):
+        a, b = (pos, pos + fold_sz[i])
+        test_data = data[a:b]
+        train_data = data[:a] + data[b:]
+        yield i, a, b, train_data, test_data
+
+
+def train_rnn(all_train_data, bow):
     """
     训练函数
     """
@@ -510,7 +527,7 @@ def train(train_data, test_data, bow):
     #device = 'cpu'
     print('[training on]', device)
 
-    max_rule = max(train_data, key=lambda x: x[1])[1]
+    max_rule = max(all_train_data, key=lambda x: x[1])[1]
     print('[max rule]', max_rule)
 
     policy_network, policy_opt, policy_loss_fun = policy_network_configs(bow, max_rule, load_path=None)
@@ -519,9 +536,6 @@ def train(train_data, test_data, bow):
     value_network, value_opt, value_loss_fun = value_network_configs(bow, load_path=None)
     value_network = value_network.to(device)
 
-    print('[sort data]')
-    train_data.sort(key=lambda x: len(x[0]), reverse=False)
-
     policy_train_eval = TrainingEvaluator()
     value_train_eval = TrainingEvaluator()
 
@@ -529,63 +543,70 @@ def train(train_data, test_data, bow):
     value_train_history = []
 
     try:
-        for epoch, batch, train_batch in batch_generator(train_data, n_epoch=1000):
-            # batch data to tensors
-            x_batch, p_batch, v_batch = batch_tensors(train_batch, bow, device)
+        for fold_idx, fold_begin, fold_end, train_data, test_data in k_fold(all_train_data, k=10):
+            print()
+            rich.print(f'[[test fold #{fold_idx} from {fold_begin} to {fold_end}]]', len(train_data), len(test_data))
 
-            # feed policy network
-            policy_logits, _ = policy_network(x_batch)
-            logprob = F.log_softmax(policy_logits, dim=1) # [B, max_rule]
-            policy_loss = policy_loss_fun(logprob, p_batch)
+            print('[sort data]')
+            train_data.sort(key=lambda x: len(x[0]), reverse=False)
 
-            policy_opt.zero_grad()
-            policy_loss.backward()
-            policy_opt.step()
+            for epoch, batch, train_batch in batch_generator(train_data, n_epoch=1000):
+                # batch data to tensors
+                x_batch, p_batch, v_batch = batch_tensors(train_batch, bow, device)
 
-            # feed value network
-            value_predicts, _ = value_network(x_batch)
-            value_predicts = value_predicts.squeeze(1) # [B]
-            value_loss = value_loss_fun(value_predicts, v_batch)
-
-            value_opt.zero_grad()
-            value_loss.backward()
-            value_opt.step()
-
-            # print on-the-fly evaluation
-            policy_train_tick = policy_train_eval.tick(policy_loss.item())
-            value_train_tick = value_train_eval.tick(value_loss.item())
-
-            if policy_train_tick == 0 or value_train_tick == 0:
-
-                maxlen = max(map(lambda x: len(x), x_batch))
-                minlen = min(map(lambda x: len(x), x_batch))
-
-                policy_avg_loss = policy_train_eval.reset()
-                value_avg_loss = value_train_eval.reset()
-
-                print()
-                print(f'epoch {epoch}, batch #{batch}, len: {minlen}, {maxlen}')
-                print('[policy avg loss] %.1f' % policy_avg_loss)
-                print('[value avg loss] %.1f' % value_avg_loss)
-
-                # do test-data evaluation
-                x_batch, p_batch, v_batch = batch_tensors(test_data, bow, device)
-
+                # feed policy network
                 policy_logits, _ = policy_network(x_batch)
                 logprob = F.log_softmax(policy_logits, dim=1) # [B, max_rule]
-                top_val, top_idx = logprob.topk(1, dim=1)
-                top_val, top_idx = top_val.squeeze(), top_idx.squeeze()
-                corrects = torch.sum(top_idx == p_batch).item()
-                test_accuracy = corrects / len(test_data)
-                print('[value test accuracy] %.0f%%' % (test_accuracy * 100.))
-                policy_train_history.append((policy_avg_loss, test_accuracy))
+                policy_loss = policy_loss_fun(logprob, p_batch)
 
+                policy_opt.zero_grad()
+                policy_loss.backward()
+                policy_opt.step()
+
+                # feed value network
                 value_predicts, _ = value_network(x_batch)
-                value_predicts = value_predicts.squeeze(1).round()
-                sum_delta_abs = torch.sum(torch.abs(value_predicts - v_batch)).item()
-                avg_delta_abs = sum_delta_abs / len(test_data)
-                print('[value test avg delta] %.2f/each' % avg_delta_abs)
-                value_train_history.append((value_avg_loss, avg_delta_abs))
+                value_predicts = value_predicts.squeeze(1) # [B]
+                value_loss = value_loss_fun(value_predicts, v_batch)
+
+                value_opt.zero_grad()
+                value_loss.backward()
+                value_opt.step()
+
+                # print on-the-fly evaluation
+                policy_train_tick = policy_train_eval.tick(policy_loss.item())
+                value_train_tick = value_train_eval.tick(value_loss.item())
+
+                if policy_train_tick == 0 or value_train_tick == 0:
+
+                    maxlen = max(map(lambda x: len(x), x_batch))
+                    minlen = min(map(lambda x: len(x), x_batch))
+
+                    policy_avg_loss = policy_train_eval.reset()
+                    value_avg_loss = value_train_eval.reset()
+
+                    print()
+                    print(f'epoch {epoch}, batch #{batch}, len: {minlen}, {maxlen}')
+                    print('[policy avg loss] %.1f' % policy_avg_loss)
+                    print('[value avg loss] %.1f' % value_avg_loss)
+
+                    # do test-data evaluation
+                    x_batch, p_batch, v_batch = batch_tensors(test_data, bow, device)
+
+                    policy_logits, _ = policy_network(x_batch)
+                    logprob = F.log_softmax(policy_logits, dim=1) # [B, max_rule]
+                    top_val, top_idx = logprob.topk(1, dim=1)
+                    top_val, top_idx = top_val.squeeze(), top_idx.squeeze()
+                    corrects = torch.sum(top_idx == p_batch).item()
+                    test_accuracy = corrects / len(test_data)
+                    print('[value test accuracy] %.0f%%' % (test_accuracy * 100.))
+                    policy_train_history.append((policy_avg_loss, test_accuracy))
+
+                    value_predicts, _ = value_network(x_batch)
+                    value_predicts = value_predicts.squeeze(1).round()
+                    sum_delta_abs = torch.sum(torch.abs(value_predicts - v_batch)).item()
+                    avg_delta_abs = sum_delta_abs / len(test_data)
+                    print('[value test avg delta] %.2f/each' % avg_delta_abs)
+                    value_train_history.append((value_avg_loss, avg_delta_abs))
 
     except KeyboardInterrupt:
         print()
@@ -601,24 +622,17 @@ def train(train_data, test_data, bow):
 
 
 if __name__ == '__main__':
-    #print(tex2tokens("123213 + 32390.5 - 0.231212 - 1223723 + 4 - 9"))
-    #quit()
-
     print('[reading data]', end=' ')
-
     data = []
-    for path in ['~/Desktop/output-DFS', '~/Desktop/output-MCTS-110', '~/Desktop/output-MCTS-440']:
+    #for path in ['~/Desktop/output-MCTS-400', '~/Desktop/output-DFS-MCTS-r8000-fr800']:
+    for path in ['~/Desktop/output-MCTS-400']:
         path = path.replace("~", "/home/dm")
         data += read_data(path, endat=-1)
-
-    #print(len(data))
-    #quit()
+    print(len(data))
 
     bow = gen_bow(data)
 
     with open('bow.pkl', 'wb') as fh:
         pickle.dump(bow, fh)
 
-    train_data = data[100:]
-    test_data = data[0:100]
-    train(train_data, test_data, bow)
+    train_rnn(data, bow)
