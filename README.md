@@ -33,7 +33,7 @@ location /api/ {
         proxy_pass http://localhost:3889/;
 }
 ```
-to your `server` entry.
+to your `server` entry and restart `nginx` server.
 
 
 ## Demo Example
