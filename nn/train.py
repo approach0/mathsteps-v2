@@ -579,7 +579,7 @@ def train_rnn(train_data, test_data, bow):
         print('[sort by length]')
         train_data.sort(key=lambda x: len(x[0]), reverse=False)
 
-        for epoch, batch, train_batch in batch_generator(train_data, n_epoch=2):
+        for epoch, batch, train_batch in batch_generator(train_data, n_epoch=50):
             # batch data to tensors
             x_batch, p_batch, v_batch = batch_tensors(train_batch, bow, device)
 
@@ -659,7 +659,7 @@ if __name__ == '__main__':
     value_eval_results = []
     for train_data, test_data, fold_idx, _, _ in k_fold(data, k=n_fold):
         print()
-        rich.print(f'[[test fold #{fold_idx}/#{n_fold}]]', len(train_data), len(test_data))
+        rich.print(f'[[test fold {fold_idx}/{n_fold}]]', len(train_data), len(test_data))
         policy_test_accuracy, value_test_avg_delta = train_rnn(train_data, test_data, bow)
 
         policy_eval_results.append(policy_test_accuracy)
