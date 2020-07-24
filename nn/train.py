@@ -339,10 +339,14 @@ def batch_tensors(data_batch, bow, device):
     return x_batch, policy_batch, value_batch
 
 
-def batch_generator(data, n_epoch=10, batch_size=64):
+def batch_generator(data, n_epoch=1, batch_size=64, no_batch=False):
     """
     将数据分成指定 epoch 个数的训练 batch
     """
+    if no_batch:
+        yield 0, len(data), data
+        return
+
     M = len(data) // batch_size
     for epoch in range(n_epoch):
         idx = 0
@@ -372,7 +376,7 @@ class TrainingEvaluator:
     """
     训练过程局部统计类
     """
-    def __init__(self, eval_interval=100):
+    def __init__(self, eval_interval=200):
         self.acc_loss = 0
         self.eval_cnt = 0
         self.eval_interval = eval_interval
@@ -516,10 +520,36 @@ def k_fold(data, k=5):
         a, b = (pos, pos + fold_sz[i])
         test_data = data[a:b]
         train_data = data[:a] + data[b:]
-        yield i, a, b, train_data, test_data
+        yield train_data, test_data, i, a, b
 
 
-def train_rnn(all_data, bow):
+def evaluate(policy_network, value_network, test_data, bow, device):
+    policy_corrects = 0
+    sum_delta_abs = 0
+    for epoch, batch, test_batch in batch_generator(test_data, batch_size=1024):
+        x_batch, p_batch, v_batch = batch_tensors(test_batch, bow, device)
+
+        # evaluate policy network for this batch
+        policy_logits, _ = policy_network(x_batch)
+        logprob = F.log_softmax(policy_logits, dim=1) # [B, max_rule]
+        top_val, top_idx = logprob.topk(1, dim=1)
+        top_val, top_idx = top_val.squeeze(), top_idx.squeeze()
+        corrects = torch.sum(top_idx == p_batch).item()
+        policy_corrects += corrects
+
+        # evaluate value network for this batch
+        value_predicts, _ = value_network(x_batch)
+        value_predicts = value_predicts.squeeze(1).round()
+        sum_delta_abs += torch.sum(torch.abs(value_predicts - v_batch)).item()
+
+    test_accuracy = policy_corrects / len(test_data)
+    print('[policy test accuracy] %.1f%%' % (test_accuracy * 100.))
+    value_test_avg_delta = sum_delta_abs / len(test_data)
+    print('[value test avg delta] %.2f' % value_test_avg_delta)
+    return test_accuracy, value_test_avg_delta
+
+
+def train_rnn(train_data, test_data, bow):
     """
     训练函数
     """
@@ -527,7 +557,7 @@ def train_rnn(all_data, bow):
     #device = 'cpu'
     print('[training on]', device)
 
-    max_rule = max(all_data, key=lambda x: x[1])[1]
+    max_rule = max(train_data, key=lambda x: x[1])[1]
     print('[max rule]', max_rule)
 
     policy_network, policy_opt, policy_loss_fun = policy_network_configs(bow, max_rule, load_path=None)
@@ -536,80 +566,63 @@ def train_rnn(all_data, bow):
     value_network, value_opt, value_loss_fun = value_network_configs(bow, load_path=None)
     value_network = value_network.to(device)
 
+    policy_network.train()
+    value_network.train()
+
     policy_train_eval = TrainingEvaluator()
     value_train_eval = TrainingEvaluator()
 
     policy_train_history = []
     value_train_history = []
 
-    # trim extreme lengthy sequence
-    #all_train_data = [d for d in all_train_data if len(d[0]) <= 50]
-
     try:
-        for fold_idx, fold_begin, fold_end, train_data, test_data in k_fold(all_data, k=100):
-            print()
-            rich.print(f'[[test fold #{fold_idx} from {fold_begin} to {fold_end}]]', len(train_data), len(test_data))
+        print('[sort by length]')
+        train_data.sort(key=lambda x: len(x[0]), reverse=False)
 
-            print('[sort data]')
-            train_data.sort(key=lambda x: len(x[0]), reverse=False)
+        for epoch, batch, train_batch in batch_generator(train_data, n_epoch=2):
+            # batch data to tensors
+            x_batch, p_batch, v_batch = batch_tensors(train_batch, bow, device)
 
-            for epoch, batch, train_batch in batch_generator(train_data, n_epoch=600):
-                # batch data to tensors
-                x_batch, p_batch, v_batch = batch_tensors(train_batch, bow, device)
+            # feed policy network
+            policy_logits, _ = policy_network(x_batch)
+            logprob = F.log_softmax(policy_logits, dim=1) # [B, max_rule]
+            policy_loss = policy_loss_fun(logprob, p_batch)
 
-                # feed policy network
-                policy_logits, _ = policy_network(x_batch)
-                logprob = F.log_softmax(policy_logits, dim=1) # [B, max_rule]
-                policy_loss = policy_loss_fun(logprob, p_batch)
+            policy_opt.zero_grad()
+            policy_loss.backward()
+            policy_opt.step()
 
-                policy_opt.zero_grad()
-                policy_loss.backward()
-                policy_opt.step()
+            # feed value network
+            value_predicts, _ = value_network(x_batch)
+            value_predicts = value_predicts.squeeze(1) # [B]
+            value_loss = value_loss_fun(value_predicts, v_batch)
 
-                # feed value network
-                value_predicts, _ = value_network(x_batch)
-                value_predicts = value_predicts.squeeze(1) # [B]
-                value_loss = value_loss_fun(value_predicts, v_batch)
+            value_opt.zero_grad()
+            value_loss.backward()
+            value_opt.step()
 
-                value_opt.zero_grad()
-                value_loss.backward()
-                value_opt.step()
+            # print on-the-fly evaluation
+            policy_train_tick = policy_train_eval.tick(policy_loss.item())
+            value_train_tick = value_train_eval.tick(value_loss.item())
 
-                # print on-the-fly evaluation
-                policy_train_tick = policy_train_eval.tick(policy_loss.item())
-                value_train_tick = value_train_eval.tick(value_loss.item())
+            if policy_train_tick == 0 or value_train_tick == 0:
 
-                if policy_train_tick == 0 or value_train_tick == 0:
+                maxlen = max(map(lambda x: len(x), x_batch))
+                minlen = min(map(lambda x: len(x), x_batch))
 
-                    maxlen = max(map(lambda x: len(x), x_batch))
-                    minlen = min(map(lambda x: len(x), x_batch))
+                policy_avg_loss = policy_train_eval.reset()
+                value_avg_loss = value_train_eval.reset()
 
-                    policy_avg_loss = policy_train_eval.reset()
-                    value_avg_loss = value_train_eval.reset()
+                print()
+                print(f'fold {fold_idx}, epoch {epoch}, batch #{batch}, len: {minlen}, {maxlen}')
+                print('[policy avg loss] %.1f' % policy_avg_loss)
+                print('[value avg loss] %.1f' % value_avg_loss)
 
-                    print()
-                    print(f'fold {fold_idx}, epoch {epoch}, batch #{batch}, len: {minlen}, {maxlen}')
-                    print('[policy avg loss] %.1f' % policy_avg_loss)
-                    print('[value avg loss] %.1f' % value_avg_loss)
+                # on-the-fly test-data evaluation
+                policy_test_accuracy, value_test_avg_delta = evaluate(policy_network, value_network, test_data, bow, device)
 
-                    # do test-data evaluation
-                    x_batch, p_batch, v_batch = batch_tensors(test_data, bow, device)
-
-                    policy_logits, _ = policy_network(x_batch)
-                    logprob = F.log_softmax(policy_logits, dim=1) # [B, max_rule]
-                    top_val, top_idx = logprob.topk(1, dim=1)
-                    top_val, top_idx = top_val.squeeze(), top_idx.squeeze()
-                    corrects = torch.sum(top_idx == p_batch).item()
-                    test_accuracy = corrects / len(test_data)
-                    print('[policy test accuracy] %.0f%%' % (test_accuracy * 100.))
-                    policy_train_history.append((policy_avg_loss, test_accuracy))
-
-                    value_predicts, _ = value_network(x_batch)
-                    value_predicts = value_predicts.squeeze(1).round()
-                    sum_delta_abs = torch.sum(torch.abs(value_predicts - v_batch)).item()
-                    avg_delta_abs = sum_delta_abs / len(test_data)
-                    print('[value test avg delta] %.2f/each' % avg_delta_abs)
-                    value_train_history.append((value_avg_loss, avg_delta_abs))
+                policy_train_history.append((policy_avg_loss, policy_test_accuracy))
+                value_train_history.append((value_avg_loss, value_test_avg_delta))
 
     except KeyboardInterrupt:
         print()
@@ -622,6 +635,9 @@ def train_rnn(all_data, bow):
         print('saving models ...')
         torch.save(policy_network, 'model-policy-nn.pretrain.pt')
         torch.save(value_network, 'model-value-nn.pretrain.pt')
+
+        rich.print('[red]testdata evaluation of this fold:[/]')
+        return evaluate(policy_network, value_network, test_data, bow, device)
 
 
 if __name__ == '__main__':
@@ -638,4 +654,25 @@ if __name__ == '__main__':
     with open('bow.pkl', 'wb') as fh:
         pickle.dump(bow, fh)
 
-    train_rnn(data, bow)
+    n_fold = 10
+    policy_eval_results = []
+    value_eval_results = []
+    for train_data, test_data, fold_idx, _, _ in k_fold(data, k=n_fold):
+        print()
+        rich.print(f'[[test fold #{fold_idx}/#{n_fold}]]', len(train_data), len(test_data))
+        policy_test_accuracy, value_test_avg_delta = train_rnn(train_data, test_data, bow)
+
+        policy_eval_results.append(policy_test_accuracy)
+        value_eval_results.append(value_test_avg_delta)
+
+    #print(policy_eval_results)
+    #print(value_eval_results)
+    crossvalid_accuracy = sum(policy_eval_results) / len(policy_eval_results)
+    crossvalid_avg_delta = sum(value_eval_results) / len(value_eval_results)
+    rich.print('[red]policy cross-evaluation accuracy: %.1f%%[/]' % (crossvalid_accuracy * 100.))
+    rich.print('[red]value cross-evaluation delta: %.2f[/]' % crossvalid_avg_delta)
+
+    with open('test-policy-eval-results.pkl', 'wb') as fh:
+        pickle.dump(policy_eval_results, fh)
+    with open('test-value-eval-results.pkl', 'wb') as fh:
+        pickle.dump(value_eval_results, fh)
