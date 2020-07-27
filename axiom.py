@@ -603,17 +603,17 @@ class Axiom:
 
 
     def _onetime_apply(self, narr0, debug=False):
+        results = []
         if narr0[0][1] in expression.terminal_tokens():
-            return []
+            return results
 
         # apply at this level
         applied_narrs, ani_narrs = self._level_apply(narr0, debug=debug)
         if len(applied_narrs) > 0:
-            return zip(applied_narrs, ani_narrs)
+            results += zip(applied_narrs, ani_narrs)
 
         # apply to children recursively
         children = narr0[1:]
-        results = []
         for i, child in enumerate(children):
             applied_tuples = self._onetime_apply(child, debug=debug)
             for narr, ani_narr in applied_tuples:
@@ -627,9 +627,6 @@ class Axiom:
                     expression.replace_or_pass_children(new_ani_narr, i, ani_narr)
                 # append to results
                 results.append((new_res_narr, new_ani_narr))
-            # only apply once in this function
-            if len(results) > 0:
-                break
 
         return results
 
@@ -648,16 +645,15 @@ class Axiom:
 if __name__ == '__main__':
     import dynamic_axioms
     a = (
-        Axiom(name='负号乘进因子', recursive_apply=True, strict_simplify=True, disable=False)
-        .add_rule('-(x + *{1}) *{2} ', '(-x - *{1}) *{2}',
-        animation='`-(x + *{1})`[replace]{-x - *{1}} *{2}')
-
-        .add_test('-(3 - 2)x', '(-3 + 2) \\times x')
+        Axiom(name='带分式的展开', allow_complication=True)
+        .add_rule('# & \\frac{a}{b}', '#1 (v + \\frac{a}{b})', animation="`#1 & \\frac{a}{b}`[replace]{#1 (v + \\frac{a}{b})}")
     )
     #a = dynamic_axioms.calc_add
 
-    a.animation_mode = True
+    a.animation_mode = False
     print(a)
 
-    #a.test('2 + 7 + 8', debug=False, printNarr=False, printTrim=False)
-    a.test(debug=True, printNarr=True, printTrim=True)
+    a.test(
+        "(-3 - \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2\\frac{2}{15})",
+    debug=False, printNarr=False, printTrim=False)
+    #a.test(debug=True, printNarr=True, printTrim=True)

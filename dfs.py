@@ -151,6 +151,7 @@ def test(all_axioms):
         '2(a + b)',
         '(-7) + 10 + (-3) + 6 + (-6)',
         '-(3 - 2)x',
+        "(-3 - \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2\\frac{2}{15})",
     ]
 
     begin_from = 0
@@ -165,7 +166,7 @@ def test(all_axioms):
         test_narr = expression.tex2narr(test)
 
         with timer:
-            steps, err = dfs(test_narr, all_axioms, debug=True, animation_mode=True, printTrim=True)
+            steps, err = dfs(test_narr, all_axioms, debug=True, animation_mode=False, printTrim=False)
             if err:
                 print('DFS error:', err)
 
