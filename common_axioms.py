@@ -184,11 +184,16 @@ def common_axioms(full=False):
     if full:
         tmp_axiom = (
             Axiom(name='合并同类项', recursive_apply=True, allow_complication=True, root_sign_reduce=False, max_results=4)
-            .add_rule('#(x + x)', '2x')
-            .add_rule('#(-x - x)', '-2x')
-            .add_rule('#(#x # kx)', '(#2 1 #3 k) x')
-            .add_rule('#(#x # xk)', '(#2 1 #3 k) x')
-            .add_rule('#(#x *{1} # x *{2})', '(#2 *{1} #3 *{2}) x')
+            .add_rule('#(x + x)', '2x',
+            animation='`#1(x + x)`[replace]{2x}')
+            .add_rule('#(-x - x)', '-2x',
+            animation='`#1(-x - x)`[replace]{-2x}')
+            .add_rule('#(#x # kx)', '(#2 1 #3 k) x',
+            animation='`#1(#2 x #3 kx)`[replace]{(#2 1 #3 k) x}')
+            .add_rule('#(#x # xk)', '(#2 1 #3 k) x',
+            animation='`#1(#2 x #3 xk)`[replace]{(#2 1 #3 k) x}')
+            .add_rule('#(#x *{1} # x *{2})', '(#2 *{1} #3 *{2}) x',
+            animation='`#1(#2 x *{1} #3 x *{2})`[replace]{(#2 *{1} #3 *{2}) x}')
         )
     else:
         tmp_axiom = (
@@ -220,7 +225,8 @@ def common_axioms(full=False):
 
     axioms.append(
         Axiom(name='负号提出括号', strict_simplify=True, disable=(not full))
-        .add_rule('+(x + *{1})', '-(-x - *{1})')
+        .add_rule('+(x + *{1})', '-(-x - *{1})',
+        animation='`+(x + *{1})`[replace]{-(-x - *{1})}')
 
         .add_test("(1 + 2 + 3)")
         .add_test("(-a - b) x")
@@ -357,8 +363,7 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        #if axiom.name() in ['一的平方还是一']:
-        if len(axiom.animation) > 0:
+        if axiom.name() in ['合并同类项']:
             #import cProfile
             #cProfile.run('axiom.test(debug=False)')
             rich.print(f'[red]{axiom.name()}[/]')
