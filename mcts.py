@@ -31,7 +31,7 @@ def argmax(l):
     return max((x, i) for i, x in enumerate(l))[1]
 
 
-def children_weights(father, c_param=1.4, debug=False):
+def children_weights(father, c_param=2.0, debug=False):
     """
     得到节点所有儿子的 UCT 权重
     """

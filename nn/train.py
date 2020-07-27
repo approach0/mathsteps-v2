@@ -339,14 +339,10 @@ def batch_tensors(data_batch, bow, device):
     return x_batch, policy_batch, value_batch
 
 
-def batch_generator(data, n_epoch=1, batch_size=64, no_batch=False):
+def batch_generator(data, n_epoch=1, batch_size=64):
     """
     将数据分成指定 epoch 个数的训练 batch
     """
-    if no_batch:
-        yield 0, len(data), data
-        return
-
     M = len(data) // batch_size
     for epoch in range(n_epoch):
         idx = 0
@@ -507,6 +503,11 @@ def train_crf(train_data, bow):
         torch.save(crf_graph, 'model-crf.pt')
 
 
+def _2_split(data, k=500):
+    random.shuffle(data)
+    yield data[k:], data[:k], 0, k, 0, k
+
+
 def k_fold(data, k=5):
     random.shuffle(data)
     L = len(data)
@@ -520,13 +521,13 @@ def k_fold(data, k=5):
         a, b = (pos, pos + fold_sz[i])
         test_data = data[a:b]
         train_data = data[:a] + data[b:]
-        yield train_data, test_data, i, a, b
+        yield train_data, test_data, i, k, a, b
 
 
 def evaluate(policy_network, value_network, test_data, bow, device):
     policy_corrects = 0
     sum_delta_abs = 0
-    for epoch, batch, test_batch in batch_generator(test_data, batch_size=1024):
+    for epoch, batch, test_batch in batch_generator(test_data, batch_size=32):
         x_batch, p_batch, v_batch = batch_tensors(test_batch, bow, device)
 
         # evaluate policy network for this batch
@@ -606,7 +607,6 @@ def train_rnn(train_data, test_data, bow):
             value_train_tick = value_train_eval.tick(value_loss.item())
 
             if policy_train_tick == 0 or value_train_tick == 0:
-
                 maxlen = max(map(lambda x: len(x), x_batch))
                 minlen = min(map(lambda x: len(x), x_batch))
 
@@ -643,8 +643,7 @@ def train_rnn(train_data, test_data, bow):
 if __name__ == '__main__':
     print('[reading data]', end=' ')
     data = []
-    for path in ['~/Desktop/output-MCTS-400', '~/Desktop/output-DFS-MCTS-r8000-fr800']:
-    #for path in ['~/Desktop/output-MCTS-400']:
+    for path in ['~/Desktop/output-DFS-MCTS-r8000-fr800', '~/Desktop/output-MCTS-400']:
         path = path.replace("~", "/home/dm")
         data += read_data(path, endat=-1)
     print(len(data))
@@ -654,10 +653,11 @@ if __name__ == '__main__':
     with open('bow.pkl', 'wb') as fh:
         pickle.dump(bow, fh)
 
-    n_fold = 10
     policy_eval_results = []
     value_eval_results = []
-    for train_data, test_data, fold_idx, _, _ in k_fold(data, k=n_fold):
+
+    #for train_data, test_data, fold_idx, n_fold, _, _ in k_fold(data, k=10):
+    for train_data, test_data, fold_idx, n_fold, _, _ in _2_split(data, k=500):
         print()
         rich.print(f'[[test fold {fold_idx}/{n_fold}]]', len(train_data), len(test_data))
         policy_test_accuracy, value_test_avg_delta = train_rnn(train_data, test_data, bow)
