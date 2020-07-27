@@ -69,7 +69,7 @@ def common_axioms(full=False):
     )
 
     axioms.append(
-        Axiom(name='负数的平方是其相反数的平方')
+        Axiom(name='负数的平方是其相反数的平方', strict_simplify=(not full))
         .add_rule('#(-a)^{2}', '#1 a^{2}', animation='`#1 (-a)^{2}`[replace]{#1 a^{2}}')
 
         .add_test('(-3)^{2} - (6 \div (-\\frac{2}{3})^{2}) -  (-2)^{2}')

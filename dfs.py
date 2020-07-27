@@ -152,6 +152,7 @@ def test(all_axioms):
         '(-7) + 10 + (-3) + 6 + (-6)',
         '-(3 - 2)x',
         "(-3 - \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2\\frac{2}{15})",
+        "\\frac{1}{2} \\times 10.2 - (\\frac{5}{4} + 1 - 9 \\frac{1}{7})^{2}"
     ]
 
     begin_from = 0
