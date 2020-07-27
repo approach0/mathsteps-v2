@@ -6,6 +6,7 @@
 *.log
 *.pt
 *.pkl
+*.png
 dist/
 node_modules/
 output/

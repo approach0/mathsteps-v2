@@ -3,11 +3,11 @@ import pickle
 import sys
 sys.path.append('.')
 
-from nn_policy.train import RNN_model
-from nn_policy.train import BoW
-from nn_policy.train import batch_tensors
-from nn_policy.train import tex2tokens
-from nn_policy.train import policy_network_configs, value_network_configs
+from nn.train import RNN_model
+from nn.train import BoW
+from nn.train import batch_tensors
+from nn.train import tex2tokens
+from nn.train import policy_network_configs, value_network_configs
 import torch.nn.functional as F
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -96,11 +96,11 @@ if __name__ == '__main__':
 
     with torch.no_grad():
         tex = '12+(3 + 4)^{2} + 0'
-        tex = '21\\frac{2}{3}+(+3\\frac{1}{4})-(-\\frac{2}{3})-(+\\frac{1}{4})'
-        tex = '\left|-2-\\frac{1}{3}\\right|+\\frac{1}{2}'
-        tex = "1+2-3\cdot\div5-6+7+8\cdot\div10\div11"
-        tex = '\left|-10^{2}\\right|+[(-4)^{2}-(3+3^{2})\cdot 2]'
-        tex = '\\frac{-1}{\\frac{2}{3} \cdot \\frac{7}{10}}'
+        #tex = '21\\frac{2}{3}+(+3\\frac{1}{4})-(-\\frac{2}{3})-(+\\frac{1}{4})'
+        #tex = '\left|-2-\\frac{1}{3}\\right|+\\frac{1}{2}'
+        #tex = "1+2-3\cdot\div5-6+7+8\cdot\div10\div11"
+        #tex = '\left|-10^{2}\\right|+[(-4)^{2}-(3+3^{2})\cdot 2]'
+        #tex = '\\frac{-1}{\\frac{2}{3} \cdot \\frac{7}{10}}'
 
         with torch.no_grad():
             rules, rule_probs, alpha = predict_policy(tex, nn_models)

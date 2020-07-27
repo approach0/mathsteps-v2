@@ -20,8 +20,12 @@ def display_str__steps(expressions):
         return '\\\\ \\Rightarrow &'.join(expressions)
 
 
+def latex_text(s):
+    return '\\text{' + ' '.join(list(s)) + '}'
+
+
 def display_str__axioms(axioms):
-    expressions = [a.latex().replace('\n', '\\\\ & ') for a in axioms]
+    expressions = [latex_text(a.name()) for a in axioms]
     expressions[-1] += '\\end{align} '
     display_str = '\\begin{align} & ' + '\\\\ & \\\\ & '.join(expressions)
     return display_str
@@ -62,9 +66,8 @@ def render_steps(steps, output='./render-tex.html', show_index=False):
         display_str += '&' if i == 0 else '=&'
         display_str += tex
         if axiom_idx >= 0:
-            desc = axiom.name() + f' (规则 {axiom_idx})'
-            desc = ' '.join(list(desc))
-            display_str += ('\\qquad \\text{%s}' % desc)
+            text = axiom.name() + f' (规则 {axiom_idx})'
+            display_str += ('\\qquad %s' % latex_text(text))
         display_str += '\\\\'
 
     display_str += '\\end{align}'
