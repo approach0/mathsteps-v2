@@ -218,20 +218,19 @@ def common_axioms(full=False):
         .add_test('x - 3 \cdot x', '(1 - 3) \\times x')
     )
 
-    if full:
-        axioms.append(
-            Axiom(name='负号提出括号', strict_simplify=True)
-            .add_rule('+(x + *{1})', '-(-x - *{1})')
+    axioms.append(
+        Axiom(name='负号提出括号', strict_simplify=True, disable=(not full))
+        .add_rule('+(x + *{1})', '-(-x - *{1})')
 
-            .add_test("(1 + 2 + 3)")
-            .add_test("(-a - b) x")
-            .add_test("(-a + b)x")
-            .add_test("(-a - b - c) x")
-            .add_test('-3-\\frac{4}{17}')
-            .add_test('(-3-\\frac{4}{17}) x')
-            .add_test('(-3-\\frac{4}{17}) x + y')
-            .add_test("(a - b - c) x")
-        )
+        .add_test("(1 + 2 + 3)")
+        .add_test("(-a - b) x")
+        .add_test("(-a + b)x")
+        .add_test("(-a - b - c) x")
+        .add_test('-3-\\frac{4}{17}')
+        .add_test('(-3-\\frac{4}{17}) x')
+        .add_test('(-3-\\frac{4}{17}) x + y')
+        .add_test("(a - b - c) x")
+    )
 
     axioms.append(
         Axiom(name='嵌套分式的化简')
@@ -318,15 +317,13 @@ def common_axioms(full=False):
         .add_test('2(a + 3(b + c))')
     )
 
-    if full:
-        axioms.append(
-            Axiom(name='负号乘进括号', recursive_apply=True, strict_simplify=True)
-            .add_rule('-(x + *{1})', '-x - *{1}')
-            .add_rule('-(x + *{1}) *{2} ', '(-x - *{1}) *{2}')
+    axioms.append(
+        Axiom(name='负号乘进因子', recursive_apply=True, strict_simplify=True, disable=(not full))
+        .add_rule('-(x + *{1}) *{2} ', '(-x - *{1}) *{2}',
+        animation='`-(x + *{1})`[replace]{-x - *{1}} *{2}')
 
-            .add_test('-(3 - 2)', ['-3 + 2', '2 - 3'])
-            .add_test('-(3 - 2)x', '(-3 + 2) \\times x')
-        )
+        .add_test('-(3 - 2)x', '(-3 + 2) \\times x')
+    )
 
     axioms.append(dynamic_axioms.fraction_int_addition)
 

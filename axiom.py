@@ -12,7 +12,7 @@ import numpy as np
 
 class Axiom:
 
-    def __init__(self, name=None, max_results=10,
+    def __init__(self, name=None, max_results=10, disable=False,
         recursive_apply=False, root_sign_reduce=True, allow_complication=False, strict_simplify=False):
 
         self.rules = {}
@@ -26,6 +26,7 @@ class Axiom:
         self.recursive_apply = recursive_apply
         self.allow_complication = allow_complication
         self.strict_simplify = strict_simplify
+        self.disable = disable
         self._name = name
         self.tests = []
         self.max_results = max_results
@@ -634,6 +635,9 @@ class Axiom:
 
 
     def apply(self, narr, debug=False):
+        if self.disable:
+            return []
+
         if self.recursive_apply and not self.animation_mode:
             results = self._recursive_apply(narr, debug=debug)
             return [(r, None) for r in results]
@@ -643,14 +647,17 @@ class Axiom:
 
 if __name__ == '__main__':
     import dynamic_axioms
-    #a = (
-    #    Axiom(name='分母为一的分式化简')
-    #    .add_rule('#\\frac{k}{#1}', '#0 k', animation='`#1 \\frac{k}{#2 1}`[replace]{#0 k}')
-    #)
-    a = dynamic_axioms.calc_add
+    a = (
+        Axiom(name='负号乘进因子', recursive_apply=True, strict_simplify=True, disable=False)
+        .add_rule('-(x + *{1}) *{2} ', '(-x - *{1}) *{2}',
+        animation='`-(x + *{1})`[replace]{-x - *{1}} *{2}')
+
+        .add_test('-(3 - 2)x', '(-3 + 2) \\times x')
+    )
+    #a = dynamic_axioms.calc_add
 
     a.animation_mode = True
     print(a)
 
-    a.test('2 + 7 + 8', debug=False, printNarr=False, printTrim=False)
-    #a.test(debug=True, printNarr=True, printTrim=True)
+    #a.test('2 + 7 + 8', debug=False, printNarr=False, printTrim=False)
+    a.test(debug=True, printNarr=True, printTrim=True)

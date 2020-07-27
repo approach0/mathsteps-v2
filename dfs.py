@@ -150,6 +150,7 @@ def test(all_axioms):
         '2(a + b) + 3',
         '2(a + b)',
         '(-7) + 10 + (-3) + 6 + (-6)',
+        '-(3 - 2)x',
     ]
 
     begin_from = 0
@@ -193,9 +194,11 @@ def test(all_axioms):
 if __name__ == '__main__':
     if False:
         all_axioms = [
-            Axiom(name='平方差公式', allow_complication=True)
-            .add_rule('#(a + *{1})(a - *{1})', '#1( a^{2} - (*{1})^{2} )',
-            animation='`#1 (a + *{1})(a - *{1})`[replace]{#1( a^{2} - (*{1})^{2} )}')
+            Axiom(name='负号乘进因子', recursive_apply=True, strict_simplify=True, disable=False)
+            .add_rule('-(x + *{1}) *{2} ', '(-x - *{1}) *{2}',
+            animation='`-(x + *{1})`[replace]{-x - *{1}} *{2}')
+
+            .add_test('-(3 - 2)x', '(-3 + 2) \\times x')
         ]
 
     else:
