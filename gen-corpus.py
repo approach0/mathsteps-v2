@@ -33,23 +33,23 @@ if __name__ == '__main__':
     # test cases to generate steps
     testcases = []
 
-    #testcases += [
-    #    '\\frac{12a}{3a + a + 20a} - \\frac{1}{4}'
-    #]
+    testcases += [
+        '\\frac{12a}{3a + a + 20a} - \\frac{1}{4}'
+    ]
 
-    tmp, _ = test_cases_x3_rational()
+    tmp, _ = test_cases_wiki131278697()
     testcases += tmp
 
-    #tmp, _ = test_cases_wiki131278697()
+    #tmp, _ = test_cases_x3_rational()
     #testcases += tmp
 
-    testcases += test_case_from_log('./rational_8000.txt')
-    testcases += test_case_from_log('./full_random_800.txt')
+    #testcases += test_case_from_log('./rational_8000.txt')
+    #testcases += test_case_from_log('./full_random_800.txt')
 
     #n_sample_times = 220
     n_sample_times = 440
     start = 0
-    always_use_MCTS = False
+    always_use_MCTS = True
 
     open('fallback.log', 'w')
 
