@@ -1,6 +1,7 @@
 import torch
 import pickle
 import sys
+import time
 sys.path.append('.')
 
 from nn.train import RNN_model
@@ -65,6 +66,8 @@ def predict_policy(tex, nn_models, k=3):
     bow = nn_models.bow
     policy_network = nn_models.policy_network
     with torch.no_grad():
+        #time_start = time.time()
+
         # predict prolicy
         tokens = tex2tokens(tex)
         inputs, _, _ = batch_tensors([(tokens, 0, 0)], bow, device)
@@ -75,6 +78,10 @@ def predict_policy(tex, nn_models, k=3):
         top_vals, top_idx = probs.topk(k)
         rules = top_idx - 1
         rules, rule_probs = rules.cpu().numpy(), top_vals.cpu().numpy()
+
+        #time_end = time.time()
+        #time_elapsed = time_end - time_start
+        #print(f'[timer] {time_elapsed:.4f}s')
         return rules, rule_probs, alpha
 
 

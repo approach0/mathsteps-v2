@@ -11,9 +11,12 @@ import numpy as np
 from timer import Timer
 from render_math import render_steps
 
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+#from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 import multiprocessing as mp
-
+try:
+    mp.set_start_method('spawn')
+except RuntimeError:
+    pass
 manager = mp.Manager()
 
 from nn.train import BoW, RNN_model, tex2tokens, batch_tensors
@@ -359,7 +362,7 @@ def evaluate(
 def evaluate_parallel(
     node, all_axioms, steps, n_sample_times, sample_depth, visited,
     debug=False, nn_models=None, k=3, step_probs=None,
-    n_worker=11, n_samples_per_worker=2, use_thread=False):
+    n_worker=2, n_samples_per_worker=2, use_thread=False, manager=None):
     """
     采样函数（并行版本）：进行 n_sample_times 次采样
     """
@@ -376,22 +379,32 @@ def evaluate_parallel(
 
         job = [None] * n_worker
 
-        if use_thread:
-            with ThreadPoolExecutor(max_workers=n_worker) as executor:
-                for i in range(n_worker):
-                    job[i] = executor.submit(evaluate,
-                        node, all_axioms, steps, n_samples_per_worker, sample_depth, visited,
-                        debug=True, nn_models=nn_models, k=k, step_probs=step_probs,
-                        worker=i, lock=lock
-                    )
-        else:
-            with ProcessPoolExecutor(max_workers=n_worker) as executor:
-                for i in range(n_worker):
-                    job[i] = executor.submit(evaluate,
-                        node, all_axioms, steps, n_samples_per_worker, sample_depth, visited,
-                        debug=False, nn_models=nn_models, k=k, step_probs=step_probs,
-                        worker=i, lock=lock
-                    )
+        #if use_thread:
+        #    with ThreadPoolExecutor(max_workers=n_worker) as executor:
+        #        for i in range(n_worker):
+        #            job[i] = executor.submit(evaluate,
+        #                node, all_axioms, steps, n_samples_per_worker, sample_depth, visited,
+        #                debug=True, nn_models=nn_models, k=k, step_probs=step_probs,
+        #                worker=i, lock=lock
+        #            )
+        #else:
+        #    with ProcessPoolExecutor(max_workers=n_worker) as executor:
+        #        for i in range(n_worker):
+        #            job[i] = executor.submit(evaluate,
+        #                node, all_axioms, steps, n_samples_per_worker, sample_depth, visited,
+        #                debug=False, nn_models=nn_models, k=k, step_probs=step_probs,
+        #                worker=i, lock=lock
+        #            )
+
+        for i in range(n_worker):
+            job[i] = mp.Process(target=evaluate, args=(
+                node, all_axioms, steps, n_samples_per_worker, sample_depth, visited,
+                False, nn_models, k, step_probs,
+                i, lock
+            ))
+            job[i].start()
+        for j in job:
+            j.join()
 
 #def policy_fine_tuning(nn_models, expr, policy, debug=False, all_axioms=[]):
 #    """
@@ -529,7 +542,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
             evaluate_parallel(
                 node, all_axioms, steps, n_sample_times, sample_depth, visited,
                 debug=debug, nn_models=nn_models, k=k, step_probs=step_probs,
-                use_thread=(nn_models is not None)
+                use_thread=(nn_models is not None), manager=manager
             )
         else:
             evaluate(
@@ -573,7 +586,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
     return final_steps
 
 
-if __name__ == '__main__':
+def test():
     from common_axioms import common_axioms
     axioms = common_axioms(full=True)
 
@@ -605,9 +618,10 @@ if __name__ == '__main__':
 
     #nn_models = None
     nn_models = nn.NN_models('model-policy-nn.pretrain.pt', 'model-value-nn.pretrain.pt', 'bow.pkl')
+    nn_models.share_memory()
 
     debug = True
-    force_single_thread = True
+    force_single_thread = False
 
     timer = Timer()
     open(rollout_logfile, 'w')
@@ -615,7 +629,7 @@ if __name__ == '__main__':
     #for i, expr in enumerate(testcases[:]):
         narr = expression.tex2narr(expr)
 
-        n_sample_times = 44 if nn_models or force_single_thread else 440 # 330
+        n_sample_times = 44 if nn_models or force_single_thread else 440
 
         with timer:
             steps = mcts(narr, axioms,
@@ -633,3 +647,8 @@ if __name__ == '__main__':
 
         print('Enter to continue')
         input()
+
+if __name__ == '__main__':
+    #import cProfile
+    #cProfile.run('test()')
+    test()
