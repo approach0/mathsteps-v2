@@ -503,9 +503,9 @@ def train_crf(train_data, bow):
         torch.save(crf_graph, 'model-crf.pt')
 
 
-def _2_split(data, k=500):
+def _2_split(data, k=128):
     random.shuffle(data)
-    yield data[k:], data[:k], 0, k, 0, k
+    yield data[k:], data[:k], 0, 1, 0, k
 
 
 def k_fold(data, k=5):
@@ -643,7 +643,7 @@ def train_rnn(train_data, test_data, bow):
 if __name__ == '__main__':
     print('[reading data]', end=' ')
     data = []
-    for path in ['../output-DFS-MCTS-r8000-fr800-x3r', '../output-wiki-testcase']:
+    for path in ['../output-DFS-r8000-fr800-x3r', '../output-MCTS-wiki-testcase']:
         path = path.replace("~", "/home/dm")
         data += read_data(path, endat=-1)
     print(len(data))
@@ -656,8 +656,8 @@ if __name__ == '__main__':
     policy_eval_results = []
     value_eval_results = []
 
-    for train_data, test_data, fold_idx, n_fold, _, _ in k_fold(data, k=10):
-    #for train_data, test_data, fold_idx, n_fold, _, _ in _2_split(data, k=500):
+    #for train_data, test_data, fold_idx, n_fold, _, _ in k_fold(data, k=10):
+    for train_data, test_data, fold_idx, n_fold, _, _ in _2_split(data):
         print()
         rich.print(f'[[test fold {fold_idx}/{n_fold}]]', len(train_data), len(test_data))
         policy_test_accuracy, value_test_avg_delta = train_rnn(train_data, test_data, bow)
