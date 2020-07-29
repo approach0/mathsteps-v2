@@ -45,7 +45,7 @@ def visualize_alpha(alpha, tex, axiom_names):
     将 attention 向量输出到 HTML 可视化
     """
     tokens = tex2tokens(tex)
-    tokens = ['SOS'] + tokens
+    tokens = ['SOS'] + tokens + ['EOS']
     alpha = alpha.squeeze(2).squeeze(0).cpu().numpy()
     alpha = [a for a in alpha]
 
@@ -93,14 +93,14 @@ if __name__ == '__main__':
     nn_models = NN_models('model-policy-nn.pretrain.pt', 'model-value-nn.pretrain.pt', 'bow.pkl')
 
     with torch.no_grad():
-        #tex = '12+(3 + 4)^{2} + 0'
+        tex = '12+(3 + 4)^{2} + 0'
         #tex = '21\\frac{2}{3}+(+3\\frac{1}{4})-(-\\frac{2}{3})-(+\\frac{1}{4})'
         #tex = '\left|-2-\\frac{1}{3}\\right|+\\frac{1}{2}'
         #tex = "1+2-3\div5-6+7+8\div10\div11"
         #tex = '\left|-10^{2}\\right|+[(-4)^{2}-(3+3^{2})\cdot 2]'
-        tex = '\\frac{-1}{\\frac{2}{3} \cdot \\frac{7}{10}}'
-        tex = '-(-2-3)^{2}'
-        tex = '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}'
+        #tex = '\\frac{-1}{\\frac{2}{3} \cdot \\frac{7}{10}}'
+        #tex = '-(-2-3)^{2}'
+        #tex = '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}'
 
         with torch.no_grad():
             rules, rule_probs, alpha = predict_policy(tex, nn_models)
