@@ -40,7 +40,7 @@ class NN_models():
         print('Model loaded.')
 
 
-def visualize_alpha(alpha, tex, rule):
+def visualize_alpha(alpha, tex, axiom_names):
     """
     将 attention 向量输出到 HTML 可视化
     """
@@ -50,12 +50,7 @@ def visualize_alpha(alpha, tex, rule):
     alpha = [a for a in alpha]
 
     from render_math import render_attention
-    from common_axioms import common_axioms
-
-    axioms = common_axioms()
-    axiom = axioms[rule]
-
-    render_attention(tex, tokens, alpha, axiom)
+    render_attention(tex, tokens, alpha, axiom_names)
 
 
 def predict_policy(tex, nn_models, k=3):
@@ -92,23 +87,30 @@ def predict_value(tex, nn_models):
 
 
 if __name__ == '__main__':
+    from common_axioms import common_axioms
+    axioms = common_axioms()
+
     nn_models = NN_models('model-policy-nn.pretrain.pt', 'model-value-nn.pretrain.pt', 'bow.pkl')
 
     with torch.no_grad():
-        tex = '12+(3 + 4)^{2} + 0'
+        #tex = '12+(3 + 4)^{2} + 0'
         #tex = '21\\frac{2}{3}+(+3\\frac{1}{4})-(-\\frac{2}{3})-(+\\frac{1}{4})'
         #tex = '\left|-2-\\frac{1}{3}\\right|+\\frac{1}{2}'
-        #tex = "1+2-3\cdot\div5-6+7+8\cdot\div10\div11"
+        #tex = "1+2-3\div5-6+7+8\div10\div11"
         #tex = '\left|-10^{2}\\right|+[(-4)^{2}-(3+3^{2})\cdot 2]'
-        #tex = '\\frac{-1}{\\frac{2}{3} \cdot \\frac{7}{10}}'
+        tex = '\\frac{-1}{\\frac{2}{3} \cdot \\frac{7}{10}}'
+        tex = '-(-2-3)^{2}'
+        tex = '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}'
 
         with torch.no_grad():
             rules, rule_probs, alpha = predict_policy(tex, nn_models)
             value, _ = predict_value(tex, nn_models)
 
+            axiom_names = [axioms[rule].name() for rule in rules]
+
             print('[predict policy]')
-            print(rules)
+            print(axiom_names)
             print(rule_probs)
             print('[estimate value]', value, '=', round(value))
 
-            visualize_alpha(alpha, tex, rules[0])
+            visualize_alpha(alpha, tex, axiom_names)

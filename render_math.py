@@ -24,8 +24,8 @@ def latex_text(s):
     return '\\text{' + ' '.join(list(s)) + '}'
 
 
-def display_str__axioms(axioms):
-    expressions = [latex_text(a.name()) for a in axioms]
+def display_str__axioms(axiom_names):
+    expressions = [latex_text(a) for a in axiom_names]
     expressions[-1] += '\\end{align} '
     display_str = '\\begin{align} & ' + '\\\\ & \\\\ & '.join(expressions)
     return display_str
@@ -74,7 +74,7 @@ def render_steps(steps, output='./render-tex.html', show_index=False):
     output_html(output, display_str)
 
 
-def render_attention(tex, tokens, alpha, axiom, output='./render-tex.html'):
+def render_attention(tex, tokens, alpha, axiom_names, output='./render-tex.html'):
     """
     输出 Attention 的可视化 HTML 展示页面
     """
@@ -83,7 +83,7 @@ def render_attention(tex, tokens, alpha, axiom, output='./render-tex.html'):
     #print(alpha)
 
     display_str = display_str__steps([tex])
-    display_str += display_str__axioms([axiom])
+    display_str += display_str__axioms(axiom_names)
     display_str = display_str.replace('\\end{align}\\begin{align}',
         '\\\\ & \\\\ & \\\\')
     output_html(output, display_str)

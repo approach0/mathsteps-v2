@@ -327,7 +327,7 @@ def batch_tensors(data_batch, bow, device):
     """
     将数据 batch 转换成 tensor
     """
-    x_batch = [['SOS'] + tokens for tokens, _, _ in data_batch]
+    x_batch = [['SOS'] + tokens + ['EOS'] for tokens, _, _ in data_batch]
     x_batch = [[bow[t] for t in x] for x in x_batch]
     x_batch = [torch.tensor(x) for x in x_batch]
 
@@ -503,7 +503,7 @@ def train_crf(train_data, bow):
         torch.save(crf_graph, 'model-crf.pt')
 
 
-def _2_split(data, k=128):
+def _2_split(data, k=64):
     random.shuffle(data)
     yield data[k:], data[:k], 0, 1, 0, k
 
@@ -580,9 +580,13 @@ def train_rnn(train_data, test_data, bow):
         print('[sort by length]')
         train_data.sort(key=lambda x: len(x[0]), reverse=False)
 
-        for epoch, batch, train_batch in batch_generator(train_data, n_epoch=50):
+        for epoch, batch, train_batch in batch_generator(train_data, n_epoch=5):
             # batch data to tensors
             x_batch, p_batch, v_batch = batch_tensors(train_batch, bow, device)
+
+            #print(train_batch[-1])
+            #print('maxlen', max(map(lambda x: len(x[0]), train_batch)))
+            #print('shapes', [_ for _ in map(lambda x: x.shape, x_batch)])
 
             # feed policy network
             policy_logits, _ = policy_network(x_batch)
@@ -625,7 +629,9 @@ def train_rnn(train_data, test_data, bow):
                 value_train_history.append((value_avg_loss, value_test_avg_delta))
 
     except KeyboardInterrupt:
-        print()
+        print(e)
+    except Exception as err:
+        print(err)
     finally:
         with open('train-hist-policy.pkl', 'wb') as fh:
             pickle.dump(policy_train_history, fh)
@@ -644,6 +650,7 @@ if __name__ == '__main__':
     print('[reading data]', end=' ')
     data = []
     for path in ['../output-DFS-r8000-fr800-x3r', '../output-MCTS-wiki-testcase']:
+    #for path in ['../output-MCTS-wiki-testcase']:
         path = path.replace("~", "/home/dm")
         data += read_data(path, endat=-1)
     print(len(data))
