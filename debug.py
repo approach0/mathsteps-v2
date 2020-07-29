@@ -85,7 +85,7 @@ if __name__ == '__main__':
             # print choices
             rich.print(f'[bold red]current[/] [blue]{value:.2f}[/]:', end=" ")
             print(expression.narr2tex(narr))
-            expression.narr_prettyprint(narr)
+            #expression.narr_prettyprint(narr)
 
             reward, _ = reward_calc(values)
             print('\033[91m', end='')

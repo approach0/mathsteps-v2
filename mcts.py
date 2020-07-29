@@ -130,7 +130,7 @@ def move_policy(father, debug=False):
     return child, idx
 
 
-def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=False, lock=None):
+def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, lock=None):
     """
     结合 policy 网络预测的 prior 生成 steps 以及其每一种可能的概率
     """
@@ -144,10 +144,10 @@ def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=Fa
 
         rules = [r for r in rules.tolist() if r >= 0]
 
-        if trust_nn:
-            steps = possible_next_steps(narr, all_axioms, state_value, restrict_rules=rules)
-        else:
+        steps = possible_next_steps(narr, all_axioms, state_value, restrict_rules=rules)
+        if len(steps) == 0:
             steps = possible_next_steps(narr, all_axioms, state_value, restrict_rules=None)
+
         steps = [(n,a,ai) for n,_,a,ai in steps]
 
         # combine NN priors
@@ -259,7 +259,7 @@ def rollout(node, idx, all_axioms, n_times, visited,
             break
 
         steps, step_probs = policy_steps(
-            narr, all_axioms, k=k, debug=False, nn_models=nn_models, trust_nn=True, lock=lock
+            narr, all_axioms, k=k, debug=False, nn_models=nn_models, lock=lock
         )
 
         if len(steps) == 0:
@@ -381,7 +381,7 @@ def evaluate_parallel(
                 for i in range(n_worker):
                     job[i] = executor.submit(evaluate,
                         node, all_axioms, steps, n_samples_per_worker, sample_depth, visited,
-                        debug=False, nn_models=nn_models, k=k, step_probs=step_probs,
+                        debug=True, nn_models=nn_models, k=k, step_probs=step_probs,
                         worker=i, lock=lock
                     )
         else:
@@ -473,7 +473,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
     render_steps([(narr0, None, -1)])
 
     global manager
-    if nn_models is None and not force_single_thread:
+    if not force_single_thread:
         # prepare proxy structure for parallel processes
         root[6] = manager.list([])
         root = manager.list(root)
@@ -499,7 +499,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
             expression.narr_prettyprint(narr)
 
         steps, step_probs = policy_steps(
-            narr, all_axioms, k=k, debug=debug, nn_models=nn_models, trust_nn=False
+            narr, all_axioms, k=k, debug=debug, nn_models=nn_models
         )
 
         if debug:
