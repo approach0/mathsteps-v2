@@ -34,22 +34,52 @@ if __name__ == '__main__':
     testcases = []
 
     testcases += [
-        '\\frac{12a}{3a + a + 20a} - \\frac{1}{4}'
+        #'\\frac{12a}{3a + a + 20a} - \\frac{1}{4}',
+
+        "\\frac{-1}{\\frac{2}{3} \cdot \\frac{7}{10}}",
+        '1 + \\frac{7}{3}',
+        '4 -3 \\frac{1}{2}',
+        '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
+        '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
+        "25 \cdot 48 + 103 \cdot 25 - 25 \cdot 51",
+        "-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
+        '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
+        "(-18) \div ((2\\frac{1}{4}) \\times (1 - \\frac{3}{4}))",
+        "(-3 - \\frac{4}{17}) (14\\frac{13}{15}) - (3\\frac{4}{17}) (2 + \\frac{2}{15})",
+        "(3 + \\frac{4}{17}) (-14\\frac{13}{15} - \\frac{2}{15}) - 2 \\times 3 - 2 \\times \\frac{4}{17}",
+        "-(3 + \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3 + \\frac{4}{17}) \\times (2\\frac{2}{15})",
+        "\\frac{-1}{\\frac{2}{3} \cdot \\frac{7}{10}}",
+        "1 + 0 + 0 + 0 + 0",
+        '-3 \\frac{-2}{4}',
+        '\\frac{2}{3} \div \\frac{4}{5}',
+        '(\sqrt{2})^{2}',
+        '0+1+2',
+        '-\\frac{1}{-2} \div \\frac{-3}{4}',
+        '-\\frac{8}{-2}',
+        '-(-2-3)^{2}',
+        "\left| -(5+\\frac{1}{2})\\right| (\\frac{1}{3} - \\frac{1}{2}) \\frac{3}{11} \\div (1 - \\frac{1}{4})",
+        "2 + 7 + 8",
+        "(-3 - \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3\\frac{4}{17}) \\times (2\\frac{2}{15})",
+        "\\frac{1}{2} \\times 10.2 - (\\frac{5}{4} + 1 - 9 \\frac{1}{7})^{2}",
+
+        "-200.9 + 28 + 0.9 + (-8)",
+        "3+5\\times 6-6\div3",
+        "6 \div 3",
     ]
 
-    tmp, _ = test_cases_wiki131278697()
-    testcases += tmp
-
-    #tmp, _ = test_cases_x3_rational()
+    #tmp, _ = test_cases_wiki131278697()
     #testcases += tmp
 
-    #testcases += test_case_from_log('./rational_8000.txt')
-    #testcases += test_case_from_log('./full_random_800.txt')
+    tmp, _ = test_cases_x3_rational()
+    testcases += tmp
+
+    testcases += test_case_from_log('./rational_8000.txt')
+    testcases += test_case_from_log('./full_random_1000.txt')
 
     #n_sample_times = 220
     n_sample_times = 440
     start = 0
-    always_use_MCTS = True
+    always_use_MCTS = False
 
     open('fallback.log', 'w')
 
