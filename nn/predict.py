@@ -39,6 +39,11 @@ class NN_models():
         self.device = device
         print('Model loaded.')
 
+    def share_memory(self):
+        self.policy_network.share_memory()
+        self.value_network.share_memory()
+        return self
+
 
 def visualize_alpha(alpha, tex, axiom_names):
     """

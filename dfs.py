@@ -34,7 +34,9 @@ def possible_next_steps(narr, axioms, state_value, animation_mode=False,
                         rich.print(f'[light]{value:.2f}', end=' ')
                         print(tex)
                     continue
-            value_constrain_narrs.append((applied_narr, ani_narr, axiom, axiom_idx, value))
+
+            if not restrict_rules or axiom_idx in restrict_rules:
+                value_constrain_narrs.append((applied_narr, ani_narr, axiom, axiom_idx, value))
 
         return_steps += value_constrain_narrs
 

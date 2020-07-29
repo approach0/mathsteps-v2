@@ -11,18 +11,16 @@ import numpy as np
 from timer import Timer
 from render_math import render_steps
 
-#from nn_policy.train import BoW, RNN_model, tex2tokens, batch_tensors
-#from nn_policy.predict import NN_models
-#from nn_policy import predict as nn
-
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-import multiprocessing
-manager = multiprocessing.Manager()
+import multiprocessing as mp
 
+manager = mp.Manager()
+
+from nn.train import BoW, RNN_model, tex2tokens, batch_tensors
 import torch.nn.functional as F
+import nn.predict as nn
 
 rollout_logfile = 'rollout.log'
-
 
 def argmax(l):
     """
@@ -96,8 +94,13 @@ def expand(father, step, prior=0):
     narr, axiom, axiom_idx = step
 
     # actual append
+
     to_be_appended = [prior, 0, narr, father, axiom, axiom_idx, []]
-    if manager: to_be_appended = manager.list(to_be_appended)
+
+    if manager:
+        to_be_appended[6] = manager.list([])
+        to_be_appended = manager.list(to_be_appended)
+
     children.append(to_be_appended)
     father[6] = children
 
@@ -105,7 +108,6 @@ def expand(father, step, prior=0):
 
 
 def fully_expand(father, steps, prior_arr=None):
-    children = []
     while True:
         q, n, _, _, _, _, children = father
         if len(children) < len(steps): # not fully expanded
@@ -117,13 +119,10 @@ def fully_expand(father, steps, prior_arr=None):
             break
 
 
-def move_policy(father, steps, debug=False, prior_arr=None):
+def move_policy(father, debug=False):
     """
     选择儿子就节点中下一个 roll-out 的起点
-    未展开充分前进行展开操作，展开充分后通过 UCT 公式选择。
     """
-    fully_expand(father, steps, prior_arr=prior_arr)
-    # now choose the best child
     child, w, idx = best_child_of(father, debug=False)
     if debug:
         rich.print(f'[[best [yellow]child#{idx}[/]]]', end=" ")
@@ -131,14 +130,19 @@ def move_policy(father, steps, debug=False, prior_arr=None):
     return child, idx
 
 
-def policy_steps(narr, all_axioms, k=4, debug=False, nn_models=None, trust_nn=False):
+def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, trust_nn=False, lock=None):
     """
     结合 policy 网络预测的 prior 生成 steps 以及其每一种可能的概率
     """
     if nn_models:
         # get NN predictions
         expr = expression.narr2tex(narr)
+
+        if lock: lock.acquire()
         rules, probs, _ = nn.predict_policy(expr, nn_models, k=k)
+        if lock: lock.release()
+
+        rules = [r for r in rules.tolist() if r >= 0]
 
         if trust_nn:
             steps = possible_next_steps(narr, all_axioms, state_value, restrict_rules=rules)
@@ -147,7 +151,6 @@ def policy_steps(narr, all_axioms, k=4, debug=False, nn_models=None, trust_nn=Fa
         steps = [(n,a,ai) for n,_,a,ai in steps]
 
         # combine NN priors
-        rules = rules.tolist()
         base_prob = min(probs) / 2.0
         step_probs = [base_prob if ai not in rules else probs[rules.index(ai)] for s, a, ai in steps]
         step_probs = np.array(step_probs)
@@ -159,8 +162,7 @@ def policy_steps(narr, all_axioms, k=4, debug=False, nn_models=None, trust_nn=Fa
         if debug:
             for prob, (s,a,ai) in zip(step_probs, steps):
                 prob_percent = round(prob * 100, 2)
-                rich.print(f'axiom#[red]{ai}[/red] prob=[blue]{prob_percent}%[/blue]\n')
-                print(a, end='\n---\n')
+                rich.print(f'NN_predict: axiom#[red]{ai}[/red] {a.name()} prob=[blue]{prob_percent}%[/blue]')
                 print(expression.narr2tex(s))
                 print()
 
@@ -172,16 +174,20 @@ def policy_steps(narr, all_axioms, k=4, debug=False, nn_models=None, trust_nn=Fa
         return steps, [0 for _ in steps]
 
 
-def reward_calc(values, debug=False):
+def reward_calc(values, debug=False, relative_value=True):
     father_val = values[0]
     argmax_idx = argmax(values)
     best_value = values[argmax_idx]
 
     if best_value > father_val:
         path_complexity = abs(sum(values[1: argmax_idx + 1]))
-
-        value_reward = ((best_value - father_val) ** 2) / (argmax_idx + 1)
         complexity_reward = 10 / max(1, path_complexity)
+
+        if relative_value:
+            value_reward = ((best_value - father_val) ** 2) / (argmax_idx + 1)
+        else:
+            value_reward = 1000 / max(1, 1 - best_value)
+
         reward = value_reward + complexity_reward
 
         def normalize(x):
@@ -201,8 +207,8 @@ def reward_calc(values, debug=False):
             }
             print(json.dumps(reward_factors, indent=2))
 
-        no_reward_len = len(values) - (argmax_idx + 1)
-        return norm_reward, no_reward_len
+        rewardless_len = len(values) - (argmax_idx + 1)
+        return norm_reward, rewardless_len
     else:
         return 0, 0
 
@@ -211,8 +217,6 @@ def rollout(node, idx, all_axioms, n_times, visited,
             debug=False, nn_models=None, k=3, lock=None):
     """
     Monte-Carlo 树的 roll-out 操作
-    nn_models 未指定时，完全随机进行深度为 n_times 的 roll-out.
-    nn_models 指定时，通过神经网络指定 roll-out 选择节点的概率。
     """
     q, n, narr, father, axiom, axiom_idx, children = node
 
@@ -231,7 +235,15 @@ def rollout(node, idx, all_axioms, n_times, visited,
     while True:
         q, n, narr, father, axiom, axiom_idx, children = node
         expr = expression.narr2tex(narr)
-        expr_val = state_value(narr)
+
+        if nn_models:
+            # use NN to estimate the number of left-over steps
+            if lock: lock.acquire()
+            expr_val, _ = nn.predict_value(expr, nn_models)
+            if lock: lock.release()
+        else:
+            # use rule-based value function to indicate complexity
+            expr_val = state_value(narr)
 
         values.append(expr_val)
 
@@ -243,57 +255,33 @@ def rollout(node, idx, all_axioms, n_times, visited,
 
         if expr in visited:
             if debug: rich.print(f'[[roll-out]] [red]visited![/]')
-            if nn_models:
-                reward, no_reward_len = -1000, 0
-            else:
-                reward, no_reward_len = 0, 0
+            reward, rewardless_len = 0, 0
             break
 
         steps, step_probs = policy_steps(
-            narr, all_axioms, k=k, debug=False, nn_models=nn_models, trust_nn=True
+            narr, all_axioms, k=k, debug=False, nn_models=nn_models, trust_nn=True, lock=lock
         )
 
         if len(steps) == 0:
             if debug: print('[roll-out reach leaf]')
 
-            if nn_models:
-                reward, no_reward_len = reward_calc(values)
-            else:
-                reward, no_reward_len = reward_calc(values)
+            reward, rewardless_len = reward_calc(values, relative_value=(nn_models is None))
             break
 
         elif cnt >= n_times:
             if debug: print(f'[roll-out stop early (max times reached)]')
 
-            if nn_models:
-                # use NN to estimate the number of left-over steps
-                if lock: lock.acquire()
-                pred_val, _ = nn.predict_value(expr, nn_models)
-                if lock: lock.release()
-
-                if debug: print(f'[predict value]', pred_val)
-
-                #step_reward = 1000 / max(1, 1 - pred_val)
-                #reward = step_reward + 10 / max(1, path_complexity)
-                reward, no_reward_len = reward_calc(values)
-            else:
-                reward, no_reward_len = reward_calc(values)
+            reward, rewardless_len = reward_calc(values, relative_value=(nn_models is None))
             break
 
         # randomly select index
-        if nn_models:
-            rollout_idx = random.choices(
-                population = [_ for _ in range(len(steps))],
-                weights = step_probs,
-            )[0]
-        else:
-            rollout_idx = random.randint(0, len(steps) - 1)
+        rollout_idx = random.randint(0, len(steps) - 1)
 
         choices.append(rollout_idx + 1)
 
         # dive to deeper node specified by index
         if lock: lock.acquire()
-        fully_expand(node, steps)
+        fully_expand(node, steps, prior_arr=step_probs)
         _, _, _, _, _, _, children = node
         next_node = children[rollout_idx]
         if lock: lock.release()
@@ -310,17 +298,17 @@ def rollout(node, idx, all_axioms, n_times, visited,
         fh.write('\n')
     if lock: lock.release()
 
-    return node, reward, no_reward_len
+    return node, reward, rewardless_len
 
 
-def backprop(node, reward, no_reward_len):
+def backprop(node, reward, rewardless_len):
     """
     反向传播：通过 reward 更新 roll-out 路径上所有节点的统计数据
     """
     cnt = 0
     while node is not None:
         q, n, narr, father, axiom, axiom_idx, children = node
-        if cnt >= no_reward_len:
+        if cnt >= rewardless_len:
             node[0] = max(reward, node[0])
         node[1] += 1
         #print(f'[backprop q/n={node[0]:.3f}/{node[1]}]', expression.narr2tex(narr))
@@ -330,14 +318,17 @@ def backprop(node, reward, no_reward_len):
 
 def evaluate(
     node, all_axioms, steps, n_sample_times, sample_depth, visited,
-    debug=False, nn_models=None, k=0, step_probs=None, worker=0, lock=None):
+    debug=False, nn_models=None, k=3, step_probs=None,
+    worker=0, lock=None):
     """
     采样函数（顺序执行版）：进行 n_sample_times 次采样
     """
     for i in range(n_sample_times):
         if lock: lock.acquire()
-        child, idx = move_policy(node, steps, debug=debug, prior_arr=step_probs)
+        fully_expand(node, steps, prior_arr=step_probs)
         if lock: lock.release()
+
+        child, idx = move_policy(node, debug=debug)
 
         if debug:
         #if True:
@@ -350,7 +341,7 @@ def evaluate(
             #    print(expression.narr2tex(s))
             #    print()
 
-        bottom_node, reward, no_reward_len = rollout(
+        bottom_node, reward, rewardless_len = rollout(
             child, idx, all_axioms, sample_depth, visited,
             debug=debug, nn_models=nn_models, k=k, lock=lock
         )
@@ -361,17 +352,18 @@ def evaluate(
             print('\033[0m')
 
         if lock: lock.acquire()
-        backprop(bottom_node, reward, no_reward_len)
+        backprop(bottom_node, reward, rewardless_len)
         if lock: lock.release()
 
 
 def evaluate_parallel(
-    node, all_axioms, steps, n_sample_times, sample_depth, visited, k=0,
-    n_worker=11, batch_sz=2, debug=False, nn_models=None, use_thread=False):
+    node, all_axioms, steps, n_sample_times, sample_depth, visited,
+    debug=False, nn_models=None, k=3, step_probs=None,
+    n_worker=11, n_samples_per_worker=2, use_thread=False):
     """
     采样函数（并行版本）：进行 n_sample_times 次采样
     """
-    n_stages = n_sample_times // n_worker // batch_sz
+    n_stages = n_sample_times // n_worker // n_samples_per_worker
     lock = manager.Lock() if manager else None
 
     for b in range(n_stages):
@@ -379,7 +371,7 @@ def evaluate_parallel(
         if True:
             name = 'multi-thread' if use_thread else 'multi-process'
             rich.print(f"[red]{name} stage[/] {b + 1}th/{n_stages} with " +
-            f"{n_worker} workers, each {batch_sz}/{n_sample_times} samples")
+            f"{n_worker} workers, each {n_samples_per_worker}/{n_sample_times} samples")
             print_UCT(node, detailed=True)
 
         job = [None] * n_worker
@@ -388,17 +380,18 @@ def evaluate_parallel(
             with ThreadPoolExecutor(max_workers=n_worker) as executor:
                 for i in range(n_worker):
                     job[i] = executor.submit(evaluate,
-                        node, all_axioms, steps, batch_sz, sample_depth, visited,
-                        debug=False, nn_models=nn_models, k=k, worker=i, lock=lock
+                        node, all_axioms, steps, n_samples_per_worker, sample_depth, visited,
+                        debug=False, nn_models=nn_models, k=k, step_probs=step_probs,
+                        worker=i, lock=lock
                     )
         else:
             with ProcessPoolExecutor(max_workers=n_worker) as executor:
                 for i in range(n_worker):
                     job[i] = executor.submit(evaluate,
-                        node, all_axioms, steps, batch_sz, sample_depth, visited,
-                        debug=False, nn_models=nn_models, k=k, worker=i, lock=lock
+                        node, all_axioms, steps, n_samples_per_worker, sample_depth, visited,
+                        debug=False, nn_models=nn_models, k=k, step_probs=step_probs,
+                        worker=i, lock=lock
                     )
-
 
 #def policy_fine_tuning(nn_models, expr, policy, debug=False, all_axioms=[]):
 #    """
@@ -476,12 +469,13 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
     #       q  n   narr  father  axiom   axiomIdx  children
     root = [0, 1, narr0, None,  None,      -1,       []    ]
     moves = [root]
-    global manager
 
     render_steps([(narr0, None, -1)])
 
-    if nn_models is None and not force_single_thread:
+    global manager
+    if not force_single_thread:
         # prepare proxy structure for parallel processes
+        root[6] = manager.list([])
         root = manager.list(root)
         moves = [root]
     else:
@@ -534,7 +528,8 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
         if manager and not force_single_thread:
             evaluate_parallel(
                 node, all_axioms, steps, n_sample_times, sample_depth, visited,
-                debug=debug, nn_models=nn_models, k=k
+                debug=debug, nn_models=nn_models, k=k, step_probs=step_probs,
+                use_thread=(nn_models is not None)
             )
         else:
             evaluate(
@@ -607,9 +602,11 @@ if __name__ == '__main__':
         #"6 \div 3"
     ]
 
-    nn_models = None
+    #nn_models = None
+    nn_models = nn.NN_models('model-policy-nn.pretrain.pt', 'model-value-nn.pretrain.pt', 'bow.pkl')
+
     debug = True
-    force_single_thread = False
+    force_single_thread = True
 
     timer = Timer()
     open(rollout_logfile, 'w')
@@ -617,7 +614,7 @@ if __name__ == '__main__':
     #for i, expr in enumerate(testcases[:]):
         narr = expression.tex2narr(expr)
 
-        n_sample_times = 50 if nn_models or force_single_thread else 440
+        n_sample_times = 44 if nn_models or force_single_thread else 440 # 330
 
         with timer:
             steps = mcts(narr, axioms,

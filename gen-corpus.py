@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     #n_sample_times = 220
     n_sample_times = 440
-    start = 0
+    start = 483
     always_use_MCTS = False
 
     open('fallback.log', 'w')
