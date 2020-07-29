@@ -7,6 +7,9 @@ from dfs import possible_next_steps
 from render_math import render_steps
 from test_cases import test_cases_x3_rational, test_cases_wiki131278697
 
+from nn.train import BoW, RNN_model, tex2tokens, batch_tensors
+import nn.predict as nn
+
 def print_steps(steps):
     for i, (narr, ani_narr, axiom, axiomIdx) in enumerate(steps):
         tex = expression.narr2tex(narr)
@@ -17,6 +20,12 @@ def print_steps(steps):
             ani_tex = expression.narr2tex(ani_narr)
             print('\t', ani_tex)
         print('\t', tex)
+
+
+def nn_value(narr):
+    tex = expression.narr2tex(narr)
+    expr_val, _ = nn.predict_value(tex, nn_models)
+    return expr_val
 
 
 if __name__ == '__main__':
@@ -32,15 +41,17 @@ if __name__ == '__main__':
         from common_axioms import common_axioms
         all_axioms = common_axioms(full=True)
 
-    state_value = state.value_v2
-
     testcase = (
-        #"-x 0.391 - 629 - 2 x^{2} + y^{2} + \\frac{50x}{x+y} = 0"
-        #"- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})"
-        #"-200.9 + 28 + 0.9 + (-8)"
-        #"- x x"
-        "2 + 7 + 8"
+        "(-3 - \\frac{4}{17}) \\times (14 + \\frac{13}{15}) - (3 + \\frac{4}{17}) \\times (2 + \\frac{2}{15})"
     )
+
+    debug_NN = True
+
+    if debug_NN:
+        global nn_models
+        nn_models = nn.NN_models('model-policy-nn.pretrain.pt', 'model-value-nn.pretrain.pt', 'bow.pkl')
+
+    state_value = nn_value if debug_NN else state.value_v2
 
     try:
         narr = expression.tex2narr(testcase)
@@ -56,7 +67,17 @@ if __name__ == '__main__':
             # only used in animation_mode
             expression.trim_animations(narr)
 
-            next_steps = possible_next_steps(narr, all_axioms, state_value, debug=True, animation_mode=True)
+            if debug_NN:
+                rules, probs, _ = nn.predict_policy(testcase, nn_models, k=4)
+                rules = rules.tolist()
+
+                axiom_name_probs = [(all_axioms[r].name(), probs[i]) for i, r in enumerate(rules) if r >= 0]
+                rich.print('[cyan]model prediction:[/]', axiom_name_probs)
+
+                next_steps = possible_next_steps(narr, all_axioms, state_value, debug=True, restrict_rules=rules)
+            else:
+                next_steps = possible_next_steps(narr, all_axioms, state_value, debug=True)
+
 
             if len(next_steps) == 0:
                 break

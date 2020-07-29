@@ -473,7 +473,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
     render_steps([(narr0, None, -1)])
 
     global manager
-    if not force_single_thread:
+    if nn_models is None and not force_single_thread:
         # prepare proxy structure for parallel processes
         root[6] = manager.list([])
         root = manager.list(root)
@@ -596,6 +596,7 @@ if __name__ == '__main__':
 
         "-x 0.391 - 629 - 2 x^{2} + y^{2} + \\frac{50x}{x+y} = 0",
         "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
+        "(-3 - \\frac{4}{17}) \\times (14 + \\frac{13}{15}) - (3 + \\frac{4}{17}) \\times (2 + \\frac{2}{15})",
         #"-200.9 + 28 + 0.9 + (-8)",
         #"3+5\\times6-6\div3",
         #"\\frac{(-3)^{3}}{2 \\times \\frac{1}{4} (-\\frac{2}{3})^{2}} +4 -4 \\times\\frac{1}{3}",

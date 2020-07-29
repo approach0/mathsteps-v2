@@ -37,6 +37,13 @@ def possible_next_steps(narr, axioms, state_value, animation_mode=False,
 
             if not restrict_rules or axiom_idx in restrict_rules:
                 value_constrain_narrs.append((applied_narr, ani_narr, axiom, axiom_idx, value))
+            else:
+                if debug:
+                    rich.print('[grey50][[N]]', end=' ')
+                    tex = expression.narr2tex(applied_narr)
+                    print(axiom.name(), end=' ')
+                    rich.print(f'[light]{value:.2f}', end=' ')
+                    print(tex)
 
         return_steps += value_constrain_narrs
 
