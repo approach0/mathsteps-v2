@@ -144,6 +144,9 @@ def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, lock=None):
 
         rules = [r for r in rules.tolist() if r >= 0]
 
+        rich.print('[[restrict apply]]', end=" ")
+        rich.print([axioms[r].name() for r in rules])
+
         steps = possible_next_steps(narr, all_axioms, state_value, restrict_rules=rules)
         if len(steps) == 0:
             steps = possible_next_steps(narr, all_axioms, state_value, restrict_rules=None)
@@ -162,7 +165,7 @@ def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, lock=None):
         if debug:
             for prob, (s,a,ai) in zip(step_probs, steps):
                 prob_percent = round(prob * 100, 2)
-                rich.print(f'NN_predict: axiom#[red]{ai}[/red] {a.name()} prob=[blue]{prob_percent}%[/blue]')
+                rich.print(f'NN Policy: axiom#[red]{ai}[/red] {a.name()} prob=[blue]{prob_percent}%[/blue]')
                 print(expression.narr2tex(s))
                 print()
 
