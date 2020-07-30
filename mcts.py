@@ -16,11 +16,9 @@ import multiprocessing as mp
 
 manager = mp.Manager()
 
-from nn.train import BoW, RNN_model, tex2tokens, batch_tensors
-import torch.nn.functional as F
-import nn.predict as nn
-
 rollout_logfile = 'rollout.log'
+
+import requests
 
 def argmax(l):
     """
@@ -130,7 +128,18 @@ def move_policy(father, debug=False):
     return child, idx
 
 
-def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, lock=None):
+def nn_request(payload):
+    #payload = {
+    #    'req': 'value',
+    #    'tex': "(-3 - \\frac{4}{17}) \\times (14 + \\frac{13}{15}) - (3 + \\frac{4}{17}) \\times (2 + \\frac{2}{15})"
+    #}
+    r = requests.post("http://localhost:8009", json=payload)
+    j = r.json()
+    #print(j['value'])
+    return j
+
+
+def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=False, lock=None):
     """
     结合 policy 网络预测的 prior 生成 steps 以及其每一种可能的概率
     """
@@ -139,13 +148,13 @@ def policy_steps(narr, all_axioms, k=3, debug=False, nn_models=None, lock=None):
         expr = expression.narr2tex(narr)
 
         if lock: lock.acquire()
-        rules, probs, _ = nn.predict_policy(expr, nn_models, k=k)
+        j = nn_request({'req': 'rule', 'tex': expr})
+        rules, probs, = j['rules'], j['probs']
         if lock: lock.release()
 
-        rules = [r for r in rules.tolist() if r >= 0]
-
-        rich.print('[[restrict apply]]', end=" ")
-        rich.print([axioms[r].name() for r in rules])
+        if debug:
+            rich.print('[[restrict apply]]', end=" ")
+            rich.print([all_axioms[r].name() for r in rules])
 
         steps = possible_next_steps(narr, all_axioms, state_value, restrict_rules=rules)
         if len(steps) == 0:
@@ -217,7 +226,7 @@ def reward_calc(values, debug=False, relative_value=True):
 
 
 def rollout(node, idx, all_axioms, n_times, visited,
-            debug=False, nn_models=None, k=3, lock=None):
+            debug=False, nn_models=False, k=3, lock=None):
     """
     Monte-Carlo 树的 roll-out 操作
     """
@@ -242,7 +251,8 @@ def rollout(node, idx, all_axioms, n_times, visited,
         if nn_models:
             # use NN to estimate the number of left-over steps
             if lock: lock.acquire()
-            expr_val, _ = nn.predict_value(expr, nn_models)
+            j = nn_request({'req': 'value', 'tex': expr})
+            expr_val = j['value']
             if lock: lock.release()
         else:
             # use rule-based value function to indicate complexity
@@ -321,7 +331,7 @@ def backprop(node, reward, rewardless_len):
 
 def evaluate(
     node, all_axioms, steps, n_sample_times, sample_depth, visited,
-    debug=False, nn_models=None, k=3, step_probs=None,
+    debug=False, nn_models=False, k=3, step_probs=None,
     worker=0, lock=None):
     """
     采样函数（顺序执行版）：进行 n_sample_times 次采样
@@ -361,7 +371,7 @@ def evaluate(
 
 def evaluate_parallel(
     node, all_axioms, steps, n_sample_times, sample_depth, visited,
-    debug=False, nn_models=None, k=3, step_probs=None,
+    debug=False, nn_models=False, k=3, step_probs=None,
     n_worker=11, n_samples_per_worker=2, use_thread=False):
     """
     采样函数（并行版本）：进行 n_sample_times 次采样
@@ -468,7 +478,7 @@ def back_off_step(steps, debug=False):
 
 
 def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, k=3,
-         debug=False, nn_models=None, training=False, force_single_thread=False):
+         debug=False, nn_models=False, training=False, force_single_thread=False):
     #       q  n   narr  father  axiom   axiomIdx  children
     root = [0, 1, narr0, None,  None,      -1,       []    ]
     moves = [root]
@@ -531,8 +541,7 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
         if manager and not force_single_thread:
             evaluate_parallel(
                 node, all_axioms, steps, n_sample_times, sample_depth, visited,
-                debug=debug, nn_models=nn_models, k=k, step_probs=step_probs,
-                use_thread=(nn_models is not None)
+                debug=debug, nn_models=nn_models, k=k, step_probs=step_probs
             )
         else:
             evaluate(
@@ -576,46 +585,50 @@ def mcts(narr0, all_axioms, sample_depth=4, n_sample_times=200, n_maxsteps=100, 
     return final_steps
 
 
-if __name__ == '__main__':
+def test():
+    from test_cases import test_cases_x3_rational, test_cases_wiki131278697, test_case_from_log
+
     from common_axioms import common_axioms
     axioms = common_axioms(full=True)
 
     testcases = []
 
-    testcases += [
-        '\\frac{12a}{3a + a + 20a} - \\frac{1}{4}',
-        '1 + \\frac{7}{3}',
-        '4 -3 \\frac{1}{2}',
-        '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
-        '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
-        '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
-        'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
-        '1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0',
-        '-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0',
+    tmp, _ = test_cases_x3_rational()
+    testcases += tmp
 
-        # some tests for extracting common factors
-        "25 \cdot 48 + 103 \cdot 25 - 25 \cdot 51",
-        "-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
+    #testcases += [
+    #    '\\frac{12a}{3a + a + 20a} - \\frac{1}{4}',
+    #    '1 + \\frac{7}{3}',
+    #    '4 -3 \\frac{1}{2}',
+    #    '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}',
+    #    '\\frac{11}{2} (- \\frac{1}{6}) \\frac{3}{11} \\frac{4}{3}',
+    #    '(-3\\frac{1}{3})\div2\\frac{1}{3}\\times\\frac{7}{10}',
+    #    'a - x^{2} + x^{2} \\times 0.609 + 1 = 0',
+    #    '1.609 \\times x^{2} + x^{2} + x^{2} \\times 2 \\times x = 0',
+    #    '-x \\times 0.391 - 629 - x^{2} \\times 2 + y^{2} + x \\times \\frac{50}{x + y} = 0',
 
-        "-x 0.391 - 629 - 2 x^{2} + y^{2} + \\frac{50x}{x+y} = 0",
-        "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
-        "(-3 - \\frac{4}{17}) \\times (14 + \\frac{13}{15}) - (3 + \\frac{4}{17}) \\times (2 + \\frac{2}{15})",
-        #"-200.9 + 28 + 0.9 + (-8)",
-        #"3+5\\times6-6\div3",
-        #"\\frac{(-3)^{3}}{2 \\times \\frac{1}{4} (-\\frac{2}{3})^{2}} +4 -4 \\times\\frac{1}{3}",
-        #"6 \div 3"
-    ]
+    #    # some tests for extracting common factors
+    #    "25 \cdot 48 + 103 \cdot 25 - 25 \cdot 51",
+    #    "-13 \\times \\frac{2}{3} - 0.34 \\frac{2}{7} + \\frac{1}{3}(-13) - \\frac{5}{7} 0.34",
 
-    #nn_models = None
-    nn_models = nn.NN_models('model-policy-nn.pretrain.pt', 'model-value-nn.pretrain.pt', 'bow.pkl')
+    #    "-x 0.391 - 629 - 2 x^{2} + y^{2} + \\frac{50x}{x+y} = 0",
+    #    "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
+    #    "(-3 - \\frac{4}{17}) \\times (14 + \\frac{13}{15}) - (3 + \\frac{4}{17}) \\times (2 + \\frac{2}{15})",
+    #    #"-200.9 + 28 + 0.9 + (-8)",
+    #    #"3+5\\times6-6\div3",
+    #    #"\\frac{(-3)^{3}}{2 \\times \\frac{1}{4} (-\\frac{2}{3})^{2}} +4 -4 \\times\\frac{1}{3}",
+    #    #"6 \div 3"
+    #]
 
+    nn_models = True
     debug = True
-    force_single_thread = True
+    force_single_thread = False
 
+    n_steps = 0
     timer = Timer()
     open(rollout_logfile, 'w')
-    for i, expr in enumerate(testcases[-1:]):
-    #for i, expr in enumerate(testcases[:]):
+    #for i, expr in enumerate(testcases[-1:]):
+    for i, expr in enumerate(testcases[:]):
         narr = expression.tex2narr(expr)
 
         n_sample_times = 22 if nn_models or force_single_thread else 440
@@ -632,7 +645,15 @@ if __name__ == '__main__':
             rich.print(f'step{j} {axiom_name} [blue]val={val:.2f}[/]', expr)
 
         render_steps(steps)
+        n_steps += len(steps)
+        print(f'steps: {len(steps)}')
         print(f'Test case: {i} / {len(testcases) - 1}')
 
-        print('Enter to continue')
-        input()
+        #print('Enter to continue')
+        #input()
+
+    timer.show_stats(n_steps=n_steps)
+
+
+if __name__ == '__main__':
+    test()
