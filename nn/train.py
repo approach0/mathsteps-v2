@@ -649,8 +649,7 @@ def train_rnn(train_data, test_data, bow):
 if __name__ == '__main__':
     print('[reading data]', end=' ')
     data = []
-    for path in ['../output-DFS-r8000-fr800-x3r', '../output-MCTS-wiki-testcase']:
-    #for path in ['../output-MCTS-wiki-testcase']:
+    for path in ['../output-DFS-MCTS-r8000-fr800-x3r', '../output-MCTS-wiki-testcase']:
         path = path.replace("~", "/home/dm")
         data += read_data(path, endat=-1)
     print(len(data))

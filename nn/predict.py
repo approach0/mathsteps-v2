@@ -1,6 +1,7 @@
 import torch
 import pickle
 import sys
+import rich
 sys.path.append('.')
 
 from nn.train import RNN_model
@@ -91,21 +92,22 @@ def predict_value(tex, nn_models):
         return values[0].item(), alpha
 
 
-if __name__ == '__main__':
+def test():
     from common_axioms import common_axioms
     axioms = common_axioms()
 
     nn_models = NN_models('model-policy-nn.pretrain.pt', 'model-value-nn.pretrain.pt', 'bow.pkl')
 
     with torch.no_grad():
-        tex = '12+(3 + 4)^{2} + 0'
-        tex = '21\\frac{2}{3}+(+3\\frac{1}{4})-(-\\frac{2}{3})-(+\\frac{1}{4})'
-        tex = '\left|-2-\\frac{1}{3}\\right|+\\frac{1}{2}'
-        tex = "1+2-3\div5-6+7+8\div10\div11"
-        tex = '\left|-10^{2}\\right|+[(-4)^{2}-(3+3^{2})\cdot 2]'
-        tex = '\\frac{-1}{\\frac{2}{3} \cdot \\frac{7}{10}}'
-        tex = '-(-2-3)^{2}'
-        tex = '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}'
+        #tex = '12+(3 + 4)^{2} + 0'
+        #tex = '21\\frac{2}{3}+(+3\\frac{1}{4})-(-\\frac{2}{3})-(+\\frac{1}{4})'
+        #tex = '\left|-2-\\frac{1}{3}\\right|+\\frac{1}{2}'
+        #tex = "1+2-3\div5-6+7+8\div10\div11"
+        #tex = '\left|-10^{2}\\right|+[(-4)^{2}-(3+3^{2})\cdot 2]'
+        #tex = '\\frac{-1}{\\frac{2}{3} \cdot \\frac{7}{10}}'
+        #tex = '-(-2-3)^{2}'
+        #tex = '\\frac{(-3)^{3}}{2 \cdot \\frac{1}{4} \cdot (-\\frac{2}{3})^{2}} + 4 -4 \cdot \\frac{1}{3}'
+        tex = "(-3 - \\frac{4}{17}) \\times (14 + \\frac{13}{15}) - (3 + \\frac{4}{17}) \\times (2 + \\frac{2}{15})"
 
         with torch.no_grad():
             rules, rule_probs, alpha = predict_policy(tex, nn_models)
@@ -119,3 +121,85 @@ if __name__ == '__main__':
             print('[estimate value]', value, '=', round(value))
 
             visualize_alpha(alpha, tex, axiom_names)
+
+
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import json
+import traceback
+
+class Server(BaseHTTPRequestHandler):
+    def _set_header(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+
+    def do_GET(self):
+        self._set_header()
+        self.wfile.write(json.dumps({'hello': 'world'}).encode())
+
+    def do_POST(self):
+        length = int(self.headers.get('Content-Length'))
+        message = json.loads(self.rfile.read(length))
+
+        self._set_header()
+        try:
+            tex = message['tex']
+            req = message['req']
+
+            rich.print(f'[red][[{req}]][/]', end=" ")
+            print(tex)
+
+            with torch.no_grad():
+                nn_models = self.server.nn_models
+                axiom_names = self.server.axiom_names
+                if req == 'value':
+                    value, _ = predict_value(tex, nn_models)
+
+                    response = {
+                        'value': value
+                    }
+                elif req == 'rule':
+                    rules, rule_probs, alpha = predict_policy(tex, nn_models)
+                    rules = [r for r in rules.tolist() if r >= 0]
+                    axiom_names = [axiom_names[rule] for rule in rules]
+
+                    response = {
+                        'rules': rules,
+                        'probs': rule_probs.tolist(),
+                        'axiom_names': axiom_names
+                    }
+                else:
+                    raise Exception('unexpected req key')
+
+            rich.print(response)
+            self.wfile.write(json.dumps(response, ensure_ascii=False).encode())
+
+        except Exception as err:
+            error_message = traceback.format_exc()
+            print(error_message)
+            self.wfile.write(json.dumps({'error': str(error_message)}).encode())
+
+
+def daemon(port=8009):
+    from common_axioms import common_axioms
+    axioms = common_axioms()
+
+    serve_address = ('', port)
+    httpd = HTTPServer(serve_address, Server)
+
+    httpd.nn_models = NN_models('model-policy-nn.pretrain.pt', 'model-value-nn.pretrain.pt', 'bow.pkl')
+    httpd.axiom_names = [axioms[r].name() for r in range(len(axioms))]
+
+    print('Listening on port', port)
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        pass
+
+    print('\nclosing httpd...')
+    httpd.server_close()
+
+
+if __name__ == '__main__':
+    daemon()
+    #test()
