@@ -65,25 +65,27 @@ if __name__ == '__main__':
         "-200.9 + 28 + 0.9 + (-8)",
         "3+5\\times 6-6\div3",
         "6 \div 3",
+        "- (3\\frac{4}{17}) (2\\frac{2}{15}) - (7\\frac{4}{17}) (14 \\frac{13}{15}) - 4 (-14 \\frac{13}{15})",
     ]
 
     #tmp, _ = test_cases_wiki131278697()
     #testcases += tmp
 
-    tmp, _ = test_cases_x3_rational()
-    testcases += tmp
+    #tmp, _ = test_cases_x3_rational()
+    #testcases += tmp
 
-    testcases += test_case_from_log('./rational_8000.txt')
-    testcases += test_case_from_log('./full_random_1000.txt')
+    #testcases += test_case_from_log('./rational_8000.txt')
+    #testcases += test_case_from_log('./full_random_1000.txt')
 
     #n_sample_times = 220
     n_sample_times = 440
-    start = 483
-    always_use_MCTS = False
+    start = 0
+    always_use_MCTS = True
 
     open('fallback.log', 'w')
 
-    for i, expr in enumerate(testcases[:]):
+    for i, expr in enumerate(testcases[-1:]):
+    #for i, expr in enumerate(testcases[:]):
         if i < start: continue
 
         try:

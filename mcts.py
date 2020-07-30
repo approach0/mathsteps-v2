@@ -381,7 +381,7 @@ def evaluate_parallel(
                 for i in range(n_worker):
                     job[i] = executor.submit(evaluate,
                         node, all_axioms, steps, n_samples_per_worker, sample_depth, visited,
-                        debug=True, nn_models=nn_models, k=k, step_probs=step_probs,
+                        debug=False, nn_models=nn_models, k=k, step_probs=step_probs,
                         worker=i, lock=lock
                     )
         else:
@@ -615,7 +615,7 @@ if __name__ == '__main__':
     #for i, expr in enumerate(testcases[:]):
         narr = expression.tex2narr(expr)
 
-        n_sample_times = 44 if nn_models or force_single_thread else 440 # 330
+        n_sample_times = 22 if nn_models or force_single_thread else 440
 
         with timer:
             steps = mcts(narr, axioms,

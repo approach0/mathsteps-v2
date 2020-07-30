@@ -18,8 +18,17 @@ def possible_next_steps(narr, axioms, state_value, animation_mode=False,
         print(tex)
 
     for axiom_idx, axiom in enumerate(axioms):
+        if restrict_rules and axiom_idx not in restrict_rules:
+            if debug:
+                rich.print('[grey50][[N]]', end=' ')
+                print(axiom.name(), end=' ')
+                print(tex)
+            continue
+
         axiom.animation_mode = animation_mode
+        #print('restrict apply', [axioms[r].name() for r in restrict_rules if r >= 0])
         possible_applied_tuples = axiom.apply(narr)
+        #print('done apply', axiom.name())
 
         value_constrain_narrs = []
         for applied_narr, ani_narr in possible_applied_tuples:
@@ -35,15 +44,7 @@ def possible_next_steps(narr, axioms, state_value, animation_mode=False,
                         print(tex)
                     continue
 
-            if not restrict_rules or axiom_idx in restrict_rules:
-                value_constrain_narrs.append((applied_narr, ani_narr, axiom, axiom_idx, value))
-            else:
-                if debug:
-                    rich.print('[grey50][[N]]', end=' ')
-                    tex = expression.narr2tex(applied_narr)
-                    print(axiom.name(), end=' ')
-                    rich.print(f'[light]{value:.2f}', end=' ')
-                    print(tex)
+            value_constrain_narrs.append((applied_narr, ani_narr, axiom, axiom_idx, value))
 
         return_steps += value_constrain_narrs
 
