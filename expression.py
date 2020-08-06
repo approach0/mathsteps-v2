@@ -548,7 +548,7 @@ def replace_or_pass_children(narr, i, substitute):
     return narr
 
 
-def _trim_animations(narr, top_root=True, handle_single=False):
+def _trim_animations(narr, top_root=True, handle_single=False, debug=False):
     root = narr[0]
     sign, token = root.get()
 
@@ -557,7 +557,7 @@ def _trim_animations(narr, top_root=True, handle_single=False):
 
     if top_root and token == 'REPLACE':
         narr[2][0].apply_sign(sign)
-        _trim_animations(narr[2])
+        _trim_animations(narr[2], handle_single=handle_single, debug=debug)
         narr[:] = narr[2]
         return
 
@@ -588,12 +588,15 @@ def _trim_animations(narr, top_root=True, handle_single=False):
                     narr[:] = deepcopy(new_narr)
                     loop_again = True
                     break
+                else:
+                    # nothing to do, clear the animation flag
+                    child_root.animation = None
 
             elif child_root.animation in hole_animations():
                 narr[1 + i] = None
                 continue
 
-            _trim_animations(child, top_root=False)
+            _trim_animations(child, top_root=False, handle_single=handle_single, debug=debug)
             if len(child) == 0:
                 narr[1 + i] = None
 
@@ -669,12 +672,14 @@ if __name__ == '__main__':
         '`a`[remove] + b',
         '`(\sqrt{2})`[removeOnly] + `c`[removeOnly]',
         '`8`[moveBefore,1] \\times (`8`[moveAfter,1] \\times 7 \\times x + `8`[moveAfter,1] \\times 6)',
+        '\\frac{ `ab + c \\frac{1}{3}`[removeOnly]}{2}'
     ]
 
     for expr in test_expressions[-1:]:
     #for expr in test_expressions[:]:
         rich.print('[bold yellow]original:[/]', end=' ')
         print(expr, end="\n\n")
+
         tree = None
         try:
             tree = tex_parse(expr)

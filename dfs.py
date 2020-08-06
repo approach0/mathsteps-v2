@@ -139,6 +139,7 @@ def test(all_axioms):
         "-(3 + \\frac{4}{17}) \\times (14\\frac{13}{15}) - (3 + \\frac{4}{17}) \\times (2\\frac{2}{15})",
 
         "\\frac{-1}{\\frac{2}{3} \cdot \\frac{7}{10}}",
+        "\\frac{ 60 (1 - \\frac{2}{5}) + 3}{2}"
 
         ## some animation testcases
         #"1 + 0 + 0 + 0 + 0",
@@ -179,12 +180,15 @@ def test(all_axioms):
         test_narr = expression.tex2narr(test)
 
         with timer:
-            steps, err = dfs(test_narr, all_axioms, debug=True, animation_mode=False, printTrim=False)
+            steps, err = dfs(test_narr, all_axioms, debug=True, animation_mode=True, printTrim=False)
             if err:
                 print('DFS error:', err)
 
         for narr, ani_narr, axiom, axiom_idx in steps:
             rich.print(f'[red]{axiom.name()}')
+
+            narr = expression.trim_animations_copy(narr)
+
             tex = expression.narr2tex(narr)
             if ani_narr:
                 ani_tex = expression.narr2tex(ani_narr)

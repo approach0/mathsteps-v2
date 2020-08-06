@@ -321,6 +321,7 @@ def common_axioms(full=False):
         .add_test('3(a + b + c) + 1', '1 + 3 \\times a + 3 \\times b + 3 \\times c')
         .add_test('(a - b)(-2)', '-2 \\times a - 2 \\times (-b)')
         .add_test('2(a + 3(b + c))')
+        #.add_test('\\frac{60 \\times (1 - \\frac{2}{5}) + 3}{2}')
     )
 
     axioms.append(
@@ -363,11 +364,11 @@ if __name__ == '__main__':
     for i, axiom in enumerate(axioms):
         #print(f'#{i}', axiom, end="\n\n")
 
-        if axiom.name() in ['合并同类项']:
+        if axiom.name() in ['乘法分配率']:
             #import cProfile
             #cProfile.run('axiom.test(debug=False)')
             rich.print(f'[red]{axiom.name()}[/]')
             axiom.animation_mode = True
-            axiom.test(debug=False, printNarr=False, printTrim=False)
+            axiom.test(debug=False, printNarr=True, printTrim=True)
 
     print(f'total {len(axioms)} axioms.')
