@@ -14,39 +14,69 @@ struct expr_tr {
 	int val;
 };
 
-struct expr_tr *__possible_steps__(struct expr_tr *expr_tr, int *n_children)
+struct expr_tr **__possible_steps__(struct expr_tr *expr_tr, int *n_children)
 {
 	int c = expr_tr->val;
 	*n_children = (c % 5) + 1;
 
-	struct expr_tr *ret = malloc(*n_children * sizeof expr_tr);
-	for (int i = 0; i < *n_children; i++)
-		ret[i].val = c + 1 + i;
+	struct expr_tr **ret = malloc(*n_children * sizeof(uintptr_t));
+	for (int i = 0; i < *n_children; i++) {
+		ret[i] = malloc(sizeof(struct expr_tr));
+		ret[i]->val = c + 1 + i;
+	}
 
 	return ret;
 }
 
+void __print_expr__(struct expr_tr *expr_tr)
+{
+	printf("%d\n", expr_tr->val);
+}
+
 struct state {
-	_Atomic float    q;
-	_Atomic uint32_t n;
+	_Atomic float   q;
+	_Atomic int     n;
 
 	struct expr_tr *expr_tr;
 	struct state   *father;
 
-	_Atomic uint32_t        n_children;
+	_Atomic int     n_children;
 	struct state   *children;
 };
 
-struct state *state_new(struct expr_tr *expr_tr)
+void state_init(struct state *state, struct expr_tr *expr_tr)
 {
-	struct state *state = malloc(sizeof(struct state));
 	state->q = 0.f;
 	state->n = 0;
 	state->expr_tr = expr_tr;
 	state->father = NULL;
 	state->n_children = 0;
 	state->children = NULL;
-	return state;
+}
+
+void state_print(struct state *state, int level)
+{
+	for (int i = 0; i < level; i++)
+		printf("  ");
+
+	__print_expr__(state->expr_tr);
+
+	for (int i = 0; i < state->n_children; i++)
+		state_print(&state->children[i], level + 1);
+}
+
+void state_free(struct state *state)
+{
+	for (int i = 0; i < state->n_children; i++)
+		state_free(&state->children[i]);
+
+	if (state->children) {
+		printf("free children\n");
+		free(state->children);
+	}
+
+	printf("free tree\n");
+	free(state->expr_tr);
 }
 
 void state_fully_expand(struct state *state)
@@ -55,9 +85,16 @@ void state_fully_expand(struct state *state)
 		return;
 
 	int n_children;
-	struct expr_tr *steps = __possible_steps__(state->expr_tr, &n_children);
+	struct expr_tr **steps = __possible_steps__(state->expr_tr, &n_children);
 
-	printf("%d\n", n_children);
+	state->n_children = n_children;
+	state->children = malloc(n_children * sizeof(struct state));
+	for (int i = 0; i < n_children; i++)
+		state_init(&state->children[i], steps[i]);
+	printf("free steps\n");
+	free(steps);
+
+	state_print(state, 0);
 }
 
 void *worker(void *arg)
@@ -76,15 +113,17 @@ int main()
 	printf("Number of threads: %u\n", n_threads);
 	pthread_t threads[n_threads];
 
-	struct expr_tr root_tr = {123};
-	struct state *root = state_new(&root_tr);
+	struct expr_tr *root_tr = malloc(sizeof(struct expr_tr));
+	struct state root;
+	root_tr->val = 123;
+	state_init(&root, root_tr);
 
 	for (int i = 0; i < n_threads; i++)
-		pthread_create(threads + i, NULL, worker, root);
+		pthread_create(threads + i, NULL, worker, &root);
 
 	for (int i = 0; i < n_threads; i++)
 		pthread_join(threads[i], NULL);
 
-	free(root);
+	state_free(&root);
 	mhook_print_unfree();
 }
