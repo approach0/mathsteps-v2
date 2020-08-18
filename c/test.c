@@ -74,16 +74,16 @@ int main()
 	const int n_threads = 1;
 
 	printf("Number of threads: %u\n", n_threads);
-    pthread_t threads[n_threads];
+	pthread_t threads[n_threads];
 
 	struct expr_tr root_tr = {123};
 	struct state *root = state_new(&root_tr);
 
-    for (int i = 0; i < n_threads; i++)
-        pthread_create(threads + i, NULL, worker, root);
+	for (int i = 0; i < n_threads; i++)
+		pthread_create(threads + i, NULL, worker, root);
 
-    for (int i = 0; i < n_threads; i++)
-        pthread_join(threads[i], NULL);
+	for (int i = 0; i < n_threads; i++)
+		pthread_join(threads[i], NULL);
 
 	free(root);
 	mhook_print_unfree();
