@@ -4,6 +4,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <float.h>
+#include <math.h>
+#include <time.h>
 
 #include "mhook.h"
 
@@ -11,18 +14,18 @@
 	_type* _to = (_type*)(_from)
 
 struct expr_tr {
-	int val;
+	float val;
 };
 
 struct expr_tr **__possible_steps__(struct expr_tr *expr_tr, int *n_children)
 {
-	int c = expr_tr->val;
+	int c = (float)(expr_tr->val);
 	*n_children = (c % 5) + 1;
 
 	struct expr_tr **ret = malloc(*n_children * sizeof(uintptr_t));
 	for (int i = 0; i < *n_children; i++) {
 		ret[i] = malloc(sizeof(struct expr_tr));
-		ret[i]->val = c + 1 + i;
+		ret[i]->val = (float)((c + i) % 4);
 	}
 
 	return ret;
@@ -30,12 +33,12 @@ struct expr_tr **__possible_steps__(struct expr_tr *expr_tr, int *n_children)
 
 void __print_expr__(struct expr_tr *expr_tr)
 {
-	printf("%d\n", expr_tr->val);
+	printf("%.2f\n", expr_tr->val);
 }
 
 struct state {
 	_Atomic float   q;
-	_Atomic int     n;
+	_Atomic float   n;
 
 	struct expr_tr *expr_tr;
 	struct state   *father;
@@ -47,22 +50,26 @@ struct state {
 void state_init(struct state *state, struct expr_tr *expr_tr)
 {
 	state->q = 0.f;
-	state->n = 0;
+	state->n = 0.f;
 	state->expr_tr = expr_tr;
 	state->father = NULL;
 	state->n_children = 0;
 	state->children = NULL;
 }
 
-void state_print(struct state *state, int level)
+void state_print(struct state *state, int level, int print_all)
 {
 	for (int i = 0; i < level; i++)
 		printf("  ");
 
+	printf("q=%.2f, n=%.0f, ", state->q, state->n);
 	__print_expr__(state->expr_tr);
 
+	if (!print_all)
+		return;
+
 	for (int i = 0; i < state->n_children; i++)
-		state_print(&state->children[i], level + 1);
+		state_print(&state->children[i], level + 1, print_all);
 }
 
 void state_free(struct state *state)
@@ -70,12 +77,10 @@ void state_free(struct state *state)
 	for (int i = 0; i < state->n_children; i++)
 		state_free(&state->children[i]);
 
-	if (state->children) {
-		printf("free children\n");
+	if (state->n_children > 0) {
 		free(state->children);
 	}
 
-	printf("free tree\n");
 	free(state->expr_tr);
 }
 
@@ -89,19 +94,97 @@ void state_fully_expand(struct state *state)
 
 	state->n_children = n_children;
 	state->children = malloc(n_children * sizeof(struct state));
-	for (int i = 0; i < n_children; i++)
+	for (int i = 0; i < n_children; i++) {
 		state_init(&state->children[i], steps[i]);
-	printf("free steps\n");
+		state->children[i].father = state;
+	}
 	free(steps);
-
-	state_print(state, 0);
 }
 
-void *worker(void *arg)
+int state_best_child(struct state *state, float c_param)
+{
+	int n_children = state->n_children;
+	int best_idx = -1;
+	float N = state->n;
+	float best = -FLT_MAX;
+
+	for (int i = 0; i < n_children; i++) {
+		float q = state->children[i].q;
+		float n = state->children[i].n;
+		float uct = q + c_param * sqrtf(logf(N + 1.f) / (n + 1.f));
+
+		printf("uct[%d] = %.3f: ", i, uct);
+		state_print(&state->children[i], 0, 0);
+
+		if (uct > best) {
+			best_idx = i;
+			best = uct;
+		}
+	}
+
+	return best_idx;
+}
+
+void state_reward_backprop(struct state *state, float reward)
+{
+	while (state->father) {
+		state->n += 1.f;
+		if (state->q < reward) {
+			state->q = reward;
+		}
+		state = state->father;
+	}
+
+	printf("after backprop:\n");
+	state_print(state, 0, 1);
+}
+
+void state_rollout(struct state *state, int maxdepth)
+{
+	int cnt = 0;
+	while (cnt < maxdepth) {
+		printf("rollout: ");
+		state_print(state, 0, 0);
+
+		state_fully_expand(state);
+
+		int n_children = state->n_children;
+		if (n_children == 0)
+			break;
+
+		int child_idx = rand() % n_children;
+
+		state = &state->children[child_idx];
+		cnt++;
+	}
+
+	float reward = state->expr_tr->val;
+	printf("reward: %.2f\n", reward);
+
+	state_reward_backprop(state, reward);
+}
+
+void *sample(void *arg)
 {
 	PTR_CAST(root, struct state, arg);
+	int n_samples = 3;
 
 	state_fully_expand(root);
+
+	printf("fully expand: \n");
+	state_print(root, 0, 1);
+
+	for (int i = 0; i < n_samples; i++) {
+		printf("\nrollout root: ");
+		state_print(root, 0, 0);
+
+		int best_idx = state_best_child(root, 2.f);
+		if (best_idx < 0)
+			break;
+
+		struct state *best_child = &root->children[best_idx];
+		state_rollout(best_child, 4);
+	}
 }
 
 int main()
@@ -113,13 +196,15 @@ int main()
 	printf("Number of threads: %u\n", n_threads);
 	pthread_t threads[n_threads];
 
+	srand(time(NULL));
+
 	struct expr_tr *root_tr = malloc(sizeof(struct expr_tr));
 	struct state root;
-	root_tr->val = 123;
+	root_tr->val = 123.f;
 	state_init(&root, root_tr);
 
 	for (int i = 0; i < n_threads; i++)
-		pthread_create(threads + i, NULL, worker, &root);
+		pthread_create(threads + i, NULL, sample, &root);
 
 	for (int i = 0; i < n_threads; i++)
 		pthread_join(threads[i], NULL);
