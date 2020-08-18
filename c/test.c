@@ -189,7 +189,7 @@ void *sample(void *arg)
 
 int main()
 {
-    const int n_processors = sysconf(_SC_NPROCESSORS_ONLN);
+	const int n_processors = sysconf(_SC_NPROCESSORS_ONLN);
 	//const int n_threads = n_processors - 1;
 	const int n_threads = 1;
 
