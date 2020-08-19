@@ -132,15 +132,20 @@ int state_best_child(struct state *state, float c_param, int debug)
 	return best_idx;
 }
 
-struct state *state_reward_backprop(struct state *state, float reward)
+struct state *state_reward_backprop(struct state *state, float reward, pthread_mutex_t *lock)
 {
 	while (state->father) {
+		/* atomic increment */
 		float _n = atomic_load(&state->n);
-		atomic_compare_exchange_weak(&state->n, &_n, _n + 1.f);
+		while(!atomic_compare_exchange_weak(&state->n, &_n, _n + 1.f));
 
-		if (state->q < reward) {
+		/* atomic max-update */
+		pthread_mutex_lock(lock);
+		if (state->q < reward)
 			state->q = reward;
-		}
+		pthread_mutex_unlock(lock);
+
+		/* backtrace until root */
 		state = state->father;
 	}
 
@@ -172,8 +177,8 @@ void state_rollout(struct state *state, int maxdepth, pthread_mutex_t *lock, int
 	if (debug)
 		printf("reward: %.2f\n", reward);
 
-	//struct state *root = state_reward_backprop(state, reward);
-	//(void)root;
+	struct state *root = state_reward_backprop(state, reward, lock);
+	(void)root;
 
 	//printf("after backprop:\n");
 	//state_print(root, 0, 1);
