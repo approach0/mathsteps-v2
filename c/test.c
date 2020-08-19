@@ -49,8 +49,8 @@ struct state {
 
 void state_init(struct state *state, struct expr_tr *expr_tr)
 {
-	state->q = 0.f;
-	state->n = 0.f;
+	state->q = ATOMIC_VAR_INIT(0.f);
+	state->n = ATOMIC_VAR_INIT(0.f);
 	state->expr_tr = expr_tr;
 	state->father = NULL;
 	state->n_children = 0;
@@ -135,7 +135,9 @@ int state_best_child(struct state *state, float c_param, int debug)
 struct state *state_reward_backprop(struct state *state, float reward)
 {
 	while (state->father) {
-		state->n += 1.f;
+		float _n = atomic_load(&state->n);
+		atomic_compare_exchange_weak(&state->n, &_n, _n + 1.f);
+
 		if (state->q < reward) {
 			state->q = reward;
 		}
@@ -170,8 +172,9 @@ void state_rollout(struct state *state, int maxdepth, pthread_mutex_t *lock, int
 	if (debug)
 		printf("reward: %.2f\n", reward);
 
-	struct state *root = state_reward_backprop(state, reward);
-	(void)root;
+	//struct state *root = state_reward_backprop(state, reward);
+	//(void)root;
+
 	//printf("after backprop:\n");
 	//state_print(root, 0, 1);
 }
@@ -210,8 +213,7 @@ void *sample_worker(void *_args)
 			break; /* leaf */
 
 		struct state *best_child = &root->children[best_idx];
-		break;
-		//state_rollout(best_child, max_depth, lock, debug);
+		state_rollout(best_child, max_depth, lock, debug);
 	}
 }
 
@@ -238,7 +240,7 @@ void mcts(struct state *root, int n_threads, int sample_times, int maxsteps, int
 	pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 	while ((cnt++) < maxsteps) {
-		printf("\n[current] ");
+		printf("\n[current cnt=%d/%d] ", cnt, maxsteps);
 		state_print(cur, 0, 0);
 
 		struct sample_args args = {
