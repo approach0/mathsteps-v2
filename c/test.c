@@ -84,10 +84,13 @@ void state_free(struct state *state)
 	free(state->expr_tr);
 }
 
-void state_fully_expand(struct state *state)
+void state_fully_expand(struct state *state, pthread_mutex_t *lock)
 {
-	if (state->n_children != 0)
+	pthread_mutex_lock(lock);
+	if (state->n_children != 0) {
+		pthread_mutex_unlock(lock);
 		return;
+	}
 
 	int n_children;
 	struct expr_tr **steps = __possible_steps__(state->expr_tr, &n_children);
@@ -98,6 +101,8 @@ void state_fully_expand(struct state *state)
 		state_init(&state->children[i], steps[i]);
 		state->children[i].father = state;
 	}
+
+	pthread_mutex_unlock(lock);
 	free(steps);
 }
 
@@ -140,7 +145,7 @@ struct state *state_reward_backprop(struct state *state, float reward)
 	return state;
 }
 
-void state_rollout(struct state *state, int maxdepth, int debug)
+void state_rollout(struct state *state, int maxdepth, pthread_mutex_t *lock, int debug)
 {
 	int cnt = 0;
 	while (cnt < maxdepth) {
@@ -149,7 +154,7 @@ void state_rollout(struct state *state, int maxdepth, int debug)
 			state_print(state, 0, 0);
 		}
 
-		state_fully_expand(state);
+		state_fully_expand(state, lock);
 
 		int n_children = state->n_children;
 		if (n_children == 0)
@@ -177,6 +182,8 @@ struct sample_args {
 	int n_threads;
 	int worker_ID;
 	int debug;
+	pthread_mutex_t *lock;
+	int max_depth;
 };
 
 void *sample_worker(void *_args)
@@ -186,8 +193,10 @@ void *sample_worker(void *_args)
 	int n_samples = args->n_samples;
 	int worker_ID = args->worker_ID;
 	int debug = args->debug;
+	pthread_mutex_t *lock = args->lock;
+	int max_depth = args->max_depth;
 
-	state_fully_expand(root);
+	state_fully_expand(root, lock);
 
 	for (int i = 0; i < n_samples; i++) {
 		if (debug) {
@@ -201,7 +210,8 @@ void *sample_worker(void *_args)
 			break; /* leaf */
 
 		struct state *best_child = &root->children[best_idx];
-		state_rollout(best_child, 4, debug);
+		break;
+		//state_rollout(best_child, max_depth, lock, debug);
 	}
 }
 
@@ -209,7 +219,7 @@ void sample(struct sample_args args)
 {
 	const int n_threads = args.n_threads;
 
-	printf("Number of threads: %u\n", n_threads);
+	printf("Sampling (number of threads: %u)\n", n_threads);
 	pthread_t threads[n_threads];
 
 	for (int i = 0; i < n_threads; i++) {
@@ -221,16 +231,25 @@ void sample(struct sample_args args)
 		pthread_join(threads[i], NULL);
 }
 
-void mcts(struct state *root, int n_threads, int sample_times, int maxsteps)
+void mcts(struct state *root, int n_threads, int sample_times, int maxsteps, int max_depth)
 {
 	struct state *cur = root;
 	int cnt = 0;
+	pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 	while ((cnt++) < maxsteps) {
 		printf("\n[current] ");
 		state_print(cur, 0, 0);
 
-		struct sample_args args = {cur, sample_times, n_threads, 0, n_threads == 1};
+		struct sample_args args = {
+			cur,
+			sample_times,
+			n_threads,
+			0,
+			n_threads == 1,
+			&mutex,
+			max_depth
+		};
 		sample(args);
 
 		printf("\n[after sampling]\n");
@@ -256,7 +275,7 @@ int main()
 
 	const int n_processors = sysconf(_SC_NPROCESSORS_ONLN);
 	const int n_threads = n_processors - 1;
-	mcts(&root, 1, 3, 10);
+	mcts(&root, n_threads, 3, 10, 4);
 
 	state_free(&root);
 	mhook_print_unfree();
