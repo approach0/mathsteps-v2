@@ -25,7 +25,7 @@ struct expr_tr **__possible_steps__(struct expr_tr *expr_tr, int *n_children)
 	struct expr_tr **ret = malloc(*n_children * sizeof(uintptr_t));
 	for (int i = 0; i < *n_children; i++) {
 		ret[i] = malloc(sizeof(struct expr_tr));
-		ret[i]->val = (float)((c + i) % 4);
+		ret[i]->val = (float)((c + i) % 4 + 1.f) + rand() / (float)RAND_MAX;
 	}
 
 	return ret;
@@ -125,7 +125,7 @@ int state_best_child(struct state *state, float c_param)
 	return best_idx;
 }
 
-void state_reward_backprop(struct state *state, float reward)
+struct state *state_reward_backprop(struct state *state, float reward)
 {
 	while (state->father) {
 		state->n += 1.f;
@@ -135,15 +135,14 @@ void state_reward_backprop(struct state *state, float reward)
 		state = state->father;
 	}
 
-	printf("after backprop:\n");
-	state_print(state, 0, 1);
+	return state;
 }
 
 void state_rollout(struct state *state, int maxdepth)
 {
 	int cnt = 0;
 	while (cnt < maxdepth) {
-		printf("rollout: ");
+		printf("step#%d rollout: ", cnt);
 		state_print(state, 0, 0);
 
 		state_fully_expand(state);
@@ -161,13 +160,24 @@ void state_rollout(struct state *state, int maxdepth)
 	float reward = state->expr_tr->val;
 	printf("reward: %.2f\n", reward);
 
-	state_reward_backprop(state, reward);
+	struct state *root = state_reward_backprop(state, reward);
+	//printf("after backprop:\n");
+	//state_print(root, 0, 1);
 }
 
-void *sample(void *arg)
+struct sample_args {
+	struct state *root;
+	int n_samples;
+	int n_threads;
+	int worker_ID;
+};
+
+void *sample_worker(void *_args)
 {
-	PTR_CAST(root, struct state, arg);
-	int n_samples = 3;
+	PTR_CAST(args, struct sample_args, _args);
+	struct state *root = args->root;
+	int n_samples = args->n_samples;
+	int worker_ID = args->worker_ID;
 
 	state_fully_expand(root);
 
@@ -175,7 +185,8 @@ void *sample(void *arg)
 	state_print(root, 0, 1);
 
 	for (int i = 0; i < n_samples; i++) {
-		printf("\nrollout root: ");
+		printf("\n");
+		printf("Woker#%d sample#%d rollout root: ", worker_ID, i);
 		state_print(root, 0, 0);
 
 		int best_idx = state_best_child(root, 2.f);
@@ -187,14 +198,26 @@ void *sample(void *arg)
 	}
 }
 
+void sample(struct sample_args args)
+{
+	const int n_threads = args.n_threads;
+
+	printf("Number of threads: %u\n", n_threads);
+	pthread_t threads[n_threads];
+
+	for (int i = 0; i < n_threads; i++) {
+		args.worker_ID = i;
+		pthread_create(threads + i, NULL, sample_worker, &args);
+	}
+
+	for (int i = 0; i < n_threads; i++)
+		pthread_join(threads[i], NULL);
+}
+
 int main()
 {
 	const int n_processors = sysconf(_SC_NPROCESSORS_ONLN);
 	//const int n_threads = n_processors - 1;
-	const int n_threads = 1;
-
-	printf("Number of threads: %u\n", n_threads);
-	pthread_t threads[n_threads];
 
 	srand(time(NULL));
 
@@ -203,11 +226,11 @@ int main()
 	root_tr->val = 123.f;
 	state_init(&root, root_tr);
 
-	for (int i = 0; i < n_threads; i++)
-		pthread_create(threads + i, NULL, sample, &root);
+	struct sample_args args = {&root, 3, 1};
+	sample(args);
 
-	for (int i = 0; i < n_threads; i++)
-		pthread_join(threads[i], NULL);
+	printf("after sampling:\n");
+	state_print(&root, 0, 1);
 
 	state_free(&root);
 	mhook_print_unfree();
