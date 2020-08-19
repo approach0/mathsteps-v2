@@ -212,7 +212,7 @@ void sample(struct sample_args args)
 		pthread_join(threads[i], NULL);
 }
 
-void mcts(struct state *root)
+void mcts(struct state *root, int n_threads)
 {
 	struct state *cur = root;
 	int cnt = 0, maxsteps = 10;
@@ -221,7 +221,7 @@ void mcts(struct state *root)
 		printf("\n[current] ");
 		state_print(cur, 0, 0);
 
-		struct sample_args args = {cur, 3, 1};
+		struct sample_args args = {cur, 3, n_threads};
 		sample(args);
 
 		printf("\n[after sampling]\n");
@@ -238,9 +238,6 @@ void mcts(struct state *root)
 
 int main()
 {
-	const int n_processors = sysconf(_SC_NPROCESSORS_ONLN);
-	//const int n_threads = n_processors - 1;
-
 	srand(time(NULL));
 
 	struct expr_tr *root_tr = malloc(sizeof(struct expr_tr));
@@ -248,7 +245,9 @@ int main()
 	root_tr->val = 123.f;
 	state_init(&root, root_tr);
 
-	mcts(&root);
+	const int n_processors = sysconf(_SC_NPROCESSORS_ONLN);
+	const int n_threads = n_processors - 1;
+	mcts(&root, 1);
 
 	state_free(&root);
 	mhook_print_unfree();
