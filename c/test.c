@@ -101,7 +101,7 @@ void state_fully_expand(struct state *state)
 	free(steps);
 }
 
-int state_best_child(struct state *state, float c_param)
+int state_best_child(struct state *state, float c_param, int debug)
 {
 	int n_children = state->n_children;
 	int best_idx = -1;
@@ -113,8 +113,10 @@ int state_best_child(struct state *state, float c_param)
 		float n = state->children[i].n;
 		float uct = q + c_param * sqrtf(logf(N + 1.f) / (n + 1.f));
 
-		printf("uct[%d] = %.3f: ", i, uct);
-		state_print(&state->children[i], 0, 0);
+		if (debug) {
+			printf("uct[%d] = %.3f: ", i, uct);
+			state_print(&state->children[i], 0, 0);
+		}
 
 		if (uct > best) {
 			best_idx = i;
@@ -138,12 +140,14 @@ struct state *state_reward_backprop(struct state *state, float reward)
 	return state;
 }
 
-void state_rollout(struct state *state, int maxdepth)
+void state_rollout(struct state *state, int maxdepth, int debug)
 {
 	int cnt = 0;
 	while (cnt < maxdepth) {
-		printf("step#%d rollout: ", cnt);
-		state_print(state, 0, 0);
+		if (debug) {
+			printf("step#%d rollout: ", cnt);
+			state_print(state, 0, 0);
+		}
 
 		state_fully_expand(state);
 
@@ -158,7 +162,8 @@ void state_rollout(struct state *state, int maxdepth)
 	}
 
 	float reward = state->expr_tr->val;
-	printf("reward: %.2f\n", reward);
+	if (debug)
+		printf("reward: %.2f\n", reward);
 
 	struct state *root = state_reward_backprop(state, reward);
 	(void)root;
@@ -171,6 +176,7 @@ struct sample_args {
 	int n_samples;
 	int n_threads;
 	int worker_ID;
+	int debug;
 };
 
 void *sample_worker(void *_args)
@@ -179,20 +185,23 @@ void *sample_worker(void *_args)
 	struct state *root = args->root;
 	int n_samples = args->n_samples;
 	int worker_ID = args->worker_ID;
+	int debug = args->debug;
 
 	state_fully_expand(root);
 
 	for (int i = 0; i < n_samples; i++) {
-		printf("\n");
-		printf("Woker#%d sample#%d rollout root: ", worker_ID, i);
-		state_print(root, 0, 0);
+		if (debug) {
+			printf("\n");
+			printf("Woker#%d sample#%d rollout root: ", worker_ID, i);
+			state_print(root, 0, 0);
+		}
 
-		int best_idx = state_best_child(root, 2.f);
+		int best_idx = state_best_child(root, 2.f, debug);
 		if (best_idx < 0)
 			break; /* leaf */
 
 		struct state *best_child = &root->children[best_idx];
-		state_rollout(best_child, 4);
+		state_rollout(best_child, 4, debug);
 	}
 }
 
@@ -221,14 +230,14 @@ void mcts(struct state *root, int n_threads, int sample_times, int maxsteps)
 		printf("\n[current] ");
 		state_print(cur, 0, 0);
 
-		struct sample_args args = {cur, sample_times, n_threads};
+		struct sample_args args = {cur, sample_times, n_threads, 0, n_threads == 1};
 		sample(args);
 
 		printf("\n[after sampling]\n");
 		state_print(cur, 0, 1);
 
 		printf("\n[moving to best child]\n");
-		int best_idx = state_best_child(cur, 0);
+		int best_idx = state_best_child(cur, 0, 0);
 		if (best_idx < 0)
 			break; /* leaf */
 
@@ -247,7 +256,7 @@ int main()
 
 	const int n_processors = sysconf(_SC_NPROCESSORS_ONLN);
 	const int n_threads = n_processors - 1;
-	mcts(&root, 3, 1, 10);
+	mcts(&root, 1, 3, 10);
 
 	state_free(&root);
 	mhook_print_unfree();
