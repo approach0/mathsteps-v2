@@ -36,6 +36,9 @@ void __print_expr__(struct expr_tr *expr_tr)
 	printf("%.2f\n", expr_tr->val);
 }
 
+/*
+ * MCTS parallel sampling
+ */
 struct state {
 	_Atomic float   q;
 	_Atomic float   n;
@@ -45,6 +48,16 @@ struct state {
 
 	_Atomic int     n_children;
 	struct state   *children;
+};
+
+struct sample_args {
+	struct state *root;
+	int n_samples;
+	int n_threads;
+	int worker_ID;
+	int debug;
+	pthread_mutex_t *lock;
+	int max_depth;
 };
 
 void state_init(struct state *state, struct expr_tr *expr_tr)
@@ -184,16 +197,6 @@ void state_rollout(struct state *state, int maxdepth, pthread_mutex_t *lock, int
 	//state_print(root, 0, 1);
 }
 
-struct sample_args {
-	struct state *root;
-	int n_samples;
-	int n_threads;
-	int worker_ID;
-	int debug;
-	pthread_mutex_t *lock;
-	int max_depth;
-};
-
 void *sample_worker(void *_args)
 {
 	PTR_CAST(args, struct sample_args, _args);
@@ -282,7 +285,7 @@ int main()
 
 	const int n_processors = sysconf(_SC_NPROCESSORS_ONLN);
 	const int n_threads = n_processors - 1;
-	mcts(&root, n_threads, 3, 10, 4);
+	mcts(&root, n_threads, 440, 10, 4);
 
 	state_free(&root);
 	mhook_print_unfree();
