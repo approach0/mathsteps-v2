@@ -46,8 +46,9 @@ struct state {
 	struct expr_tr *expr_tr;
 	struct state   *father;
 
-	_Atomic int     n_children;
+	int             n_children;
 	struct state   *children;
+	pthread_mutex_t lock;
 };
 
 struct sample_args {
@@ -56,7 +57,6 @@ struct sample_args {
 	int n_threads;
 	int worker_ID;
 	int debug;
-	pthread_mutex_t *lock;
 	int max_depth;
 };
 
@@ -68,6 +68,7 @@ void state_init(struct state *state, struct expr_tr *expr_tr)
 	state->father = NULL;
 	state->n_children = 0;
 	state->children = NULL;
+	pthread_mutex_init(&state->lock, NULL);
 }
 
 void state_print(struct state *state, int level, int print_all)
@@ -95,13 +96,14 @@ void state_free(struct state *state)
 	}
 
 	free(state->expr_tr);
+	pthread_mutex_destroy(&state->lock);
 }
 
-void state_fully_expand(struct state *state, pthread_mutex_t *lock)
+void state_fully_expand(struct state *state)
 {
-	pthread_mutex_lock(lock);
+	pthread_mutex_lock(&state->lock);
 	if (state->n_children != 0) {
-		pthread_mutex_unlock(lock);
+		pthread_mutex_unlock(&state->lock);
 		return;
 	}
 
@@ -115,7 +117,7 @@ void state_fully_expand(struct state *state, pthread_mutex_t *lock)
 		state->children[i].father = state;
 	}
 
-	pthread_mutex_unlock(lock);
+	pthread_mutex_unlock(&state->lock);
 	free(steps);
 }
 
@@ -145,7 +147,7 @@ int state_best_child(struct state *state, float c_param, int debug)
 	return best_idx;
 }
 
-struct state *state_reward_backprop(struct state *state, float reward, pthread_mutex_t *lock)
+struct state *state_reward_backprop(struct state *state, float reward)
 {
 	while (state->father) {
 		/* atomic increment */
@@ -153,10 +155,10 @@ struct state *state_reward_backprop(struct state *state, float reward, pthread_m
 		while(!atomic_compare_exchange_weak(&state->n, &_n, _n + 1.f));
 
 		/* atomic max-update */
-		pthread_mutex_lock(lock);
+		pthread_mutex_lock(&state->lock);
 		if (state->q < reward)
 			state->q = reward;
-		pthread_mutex_unlock(lock);
+		pthread_mutex_unlock(&state->lock);
 
 		/* backtrace until root */
 		state = state->father;
@@ -165,7 +167,7 @@ struct state *state_reward_backprop(struct state *state, float reward, pthread_m
 	return state;
 }
 
-void state_rollout(struct state *state, int maxdepth, pthread_mutex_t *lock, int debug)
+void state_rollout(struct state *state, int maxdepth, int debug)
 {
 	int cnt = 0;
 	while (cnt < maxdepth) {
@@ -174,7 +176,7 @@ void state_rollout(struct state *state, int maxdepth, pthread_mutex_t *lock, int
 			state_print(state, 0, 0);
 		}
 
-		state_fully_expand(state, lock);
+		state_fully_expand(state);
 
 		int n_children = state->n_children;
 		if (n_children == 0)
@@ -190,7 +192,7 @@ void state_rollout(struct state *state, int maxdepth, pthread_mutex_t *lock, int
 	if (debug)
 		printf("reward: %.2f\n", reward);
 
-	struct state *root = state_reward_backprop(state, reward, lock);
+	struct state *root = state_reward_backprop(state, reward);
 	(void)root;
 
 	//printf("after backprop:\n");
@@ -204,10 +206,9 @@ void *sample_worker(void *_args)
 	int n_samples = args->n_samples;
 	int worker_ID = args->worker_ID;
 	int debug = args->debug;
-	pthread_mutex_t *lock = args->lock;
 	int max_depth = args->max_depth;
 
-	state_fully_expand(root, lock);
+	state_fully_expand(root);
 
 	for (int i = 0; i < n_samples; i++) {
 		if (debug) {
@@ -221,7 +222,7 @@ void *sample_worker(void *_args)
 			break; /* leaf */
 
 		struct state *best_child = &root->children[best_idx];
-		state_rollout(best_child, max_depth, lock, debug);
+		state_rollout(best_child, max_depth, debug);
 	}
 }
 
@@ -245,7 +246,6 @@ void mcts(struct state *root, int n_threads, int sample_times, int maxsteps, int
 {
 	struct state *cur = root;
 	int cnt = 0;
-	pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 	while ((cnt++) < maxsteps) {
 		printf("\n[current cnt=%d/%d] ", cnt, maxsteps);
@@ -257,7 +257,6 @@ void mcts(struct state *root, int n_threads, int sample_times, int maxsteps, int
 			n_threads,
 			0,
 			n_threads == 1,
-			&mutex,
 			max_depth
 		};
 		sample(args);
