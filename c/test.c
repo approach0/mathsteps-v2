@@ -212,16 +212,16 @@ void sample(struct sample_args args)
 		pthread_join(threads[i], NULL);
 }
 
-void mcts(struct state *root, int n_threads)
+void mcts(struct state *root, int n_threads, int sample_times, int maxsteps)
 {
 	struct state *cur = root;
-	int cnt = 0, maxsteps = 10;
+	int cnt = 0;
 
 	while ((cnt++) < maxsteps) {
 		printf("\n[current] ");
 		state_print(cur, 0, 0);
 
-		struct sample_args args = {cur, 3, n_threads};
+		struct sample_args args = {cur, sample_times, n_threads};
 		sample(args);
 
 		printf("\n[after sampling]\n");
@@ -247,7 +247,7 @@ int main()
 
 	const int n_processors = sysconf(_SC_NPROCESSORS_ONLN);
 	const int n_threads = n_processors - 1;
-	mcts(&root, 1);
+	mcts(&root, 3, 1, 10);
 
 	state_free(&root);
 	mhook_print_unfree();
