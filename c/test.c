@@ -161,6 +161,7 @@ void state_rollout(struct state *state, int maxdepth)
 	printf("reward: %.2f\n", reward);
 
 	struct state *root = state_reward_backprop(state, reward);
+	(void)root;
 	//printf("after backprop:\n");
 	//state_print(root, 0, 1);
 }
@@ -181,9 +182,6 @@ void *sample_worker(void *_args)
 
 	state_fully_expand(root);
 
-	printf("fully expand: \n");
-	state_print(root, 0, 1);
-
 	for (int i = 0; i < n_samples; i++) {
 		printf("\n");
 		printf("Woker#%d sample#%d rollout root: ", worker_ID, i);
@@ -191,7 +189,7 @@ void *sample_worker(void *_args)
 
 		int best_idx = state_best_child(root, 2.f);
 		if (best_idx < 0)
-			break;
+			break; /* leaf */
 
 		struct state *best_child = &root->children[best_idx];
 		state_rollout(best_child, 4);
@@ -214,6 +212,30 @@ void sample(struct sample_args args)
 		pthread_join(threads[i], NULL);
 }
 
+void mcts(struct state *root)
+{
+	struct state *cur = root;
+	int cnt = 0, maxsteps = 10;
+
+	while ((cnt++) < maxsteps) {
+		printf("\n[current] ");
+		state_print(cur, 0, 0);
+
+		struct sample_args args = {cur, 3, 1};
+		sample(args);
+
+		printf("\n[after sampling]\n");
+		state_print(cur, 0, 1);
+
+		printf("\n[moving to best child]\n");
+		int best_idx = state_best_child(cur, 0);
+		if (best_idx < 0)
+			break; /* leaf */
+
+		cur = &cur->children[best_idx];
+	}
+}
+
 int main()
 {
 	const int n_processors = sysconf(_SC_NPROCESSORS_ONLN);
@@ -226,11 +248,7 @@ int main()
 	root_tr->val = 123.f;
 	state_init(&root, root_tr);
 
-	struct sample_args args = {&root, 3, 1};
-	sample(args);
-
-	printf("after sampling:\n");
-	state_print(&root, 0, 1);
+	mcts(&root);
 
 	state_free(&root);
 	mhook_print_unfree();
