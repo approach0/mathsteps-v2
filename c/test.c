@@ -125,12 +125,13 @@ int state_best_child(struct state *state, float c_param, int debug)
 {
 	int n_children = state->n_children;
 	int best_idx = -1;
-	float N = state->n;
+	float N = atomic_load(&state->n);
 	float best = -FLT_MAX;
 
 	for (int i = 0; i < n_children; i++) {
-		float q = state->children[i].q;
-		float n = state->children[i].n;
+		struct state *child = state->children + i;
+		float q = atomic_load(&child->q);
+		float n = atomic_load(&child->n);
 		float uct = q + c_param * sqrtf(logf(N + 1.f) / (n + 1.f));
 
 		if (debug) {
