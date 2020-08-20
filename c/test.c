@@ -155,10 +155,10 @@ struct state *state_reward_backprop(struct state *state, float reward)
 		while(!atomic_compare_exchange_weak(&state->n, &_n, _n + 1.f));
 
 		/* atomic max-update */
-		pthread_mutex_lock(&state->lock);
-		if (state->q < reward)
-			state->q = reward;
-		pthread_mutex_unlock(&state->lock);
+		float update, _q = atomic_load(&state->q);
+		do {
+			update = (_q < reward) ? reward : _q;
+		} while (!atomic_compare_exchange_weak(&state->q, &_q, update));
 
 		/* backtrace until root */
 		state = state->father;
