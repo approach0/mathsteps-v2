@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "optr.h"
+#include "mhook.h"
 
 struct optr_node *optr_alloc(int type)
 {
@@ -37,6 +38,7 @@ void __optr_print(struct optr_node *nd, int level, int *depth_flags)
 			break;
 		case DEPTH_ALMOST_END:
 			printf(" └──");
+			depth_flags[i] = DEPTH_END;
 			break;
 		default:
 			fprintf(stderr, "invalid depth flag.\n");
@@ -56,9 +58,6 @@ void __optr_print(struct optr_node *nd, int level, int *depth_flags)
 		}
 
 		__optr_print(c, level + 1, depth_flags);
-
-		if (depth_flags[level] == DEPTH_ALMOST_END)
-			depth_flags[level] = DEPTH_END;
 	}
 }
 
@@ -68,6 +67,15 @@ void optr_print(struct optr_node *root)
 	__optr_print(root, 0, depth_flags);
 }
 
+void optr_release(struct optr_node *root)
+{
+	for (int i = 0; i < root->n_children; i++) {
+		struct optr_node *c = root->children[i];
+		optr_release(c);
+	}
+
+	free(root);
+}
 
 //struct optr_node *optr_pass_children(struct optr_node *, struct optr_node *);
 
@@ -77,14 +85,21 @@ int main()
 	struct optr_node *nodes[] = {
 		optr_alloc(OPTR_NODE_VAR),
 		optr_alloc(OPTR_NODE_NUM),
-		optr_alloc(OPTR_NODE_TOKEN)
+		optr_alloc(OPTR_NODE_TOKEN),
+		optr_alloc(OPTR_NODE_TOKEN),
+		optr_alloc(OPTR_NODE_NUM)
 	};
 
 	optr_attach(root, nodes[1]);
 	optr_attach(root, nodes[2]);
 	optr_attach(nodes[1], nodes[0]);
+	optr_attach(nodes[1], nodes[3]);
+	optr_attach(nodes[2], nodes[4]);
 
 	optr_print(root);
 
+	optr_release(root);
+
+	mhook_print_unfree();
 	return 0;
 }
