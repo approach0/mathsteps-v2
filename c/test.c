@@ -39,6 +39,11 @@ void __print_expr__(struct expr_tr *expr_tr)
 /*
  * MCTS parallel sampling
  */
+struct attach {
+	int             n_children;
+	struct state   *children;
+};
+
 struct state {
 	_Atomic float   q;
 	_Atomic float   n;
@@ -46,9 +51,7 @@ struct state {
 	struct expr_tr *expr_tr;
 	struct state   *father;
 
-	int             n_children;
-	struct state   *children;
-	pthread_mutex_t lock;
+	_Atomic struct attach attach;
 };
 
 struct sample_args {
@@ -66,9 +69,8 @@ void state_init(struct state *state, struct expr_tr *expr_tr)
 	state->n = ATOMIC_VAR_INIT(0.f);
 	state->expr_tr = expr_tr;
 	state->father = NULL;
-	state->n_children = 0;
-	state->children = NULL;
-	pthread_mutex_init(&state->lock, NULL);
+	struct attach attach_init = {0};
+	state->attach = ATOMIC_VAR_INIT(attach_init);
 }
 
 void state_print(struct state *state, int level, int print_all)
@@ -82,61 +84,64 @@ void state_print(struct state *state, int level, int print_all)
 	if (!print_all)
 		return;
 
-	for (int i = 0; i < state->n_children; i++)
-		state_print(&state->children[i], level + 1, print_all);
+	struct attach at = atomic_load(&state->attach);
+	for (int i = 0; i < at.n_children; i++)
+		state_print(&at.children[i], level + 1, print_all);
 }
 
 void state_free(struct state *state)
 {
-	for (int i = 0; i < state->n_children; i++)
-		state_free(&state->children[i]);
+	struct attach at = atomic_load(&state->attach);
+	for (int i = 0; i < at.n_children; i++)
+		state_free(&at.children[i]);
 
-	if (state->n_children > 0) {
-		free(state->children);
+	if (at.n_children > 0) {
+		free(at.children);
 	}
 
 	free(state->expr_tr);
-	pthread_mutex_destroy(&state->lock);
 }
 
-void state_fully_expand(struct state *state)
+void state_fully_expand__lockfree(struct state *state)
 {
-	pthread_mutex_lock(&state->lock);
-	if (state->n_children != 0) {
-		pthread_mutex_unlock(&state->lock);
+	struct attach reg = atomic_load(&state->attach);
+	if (reg.n_children != 0) {
 		return;
 	}
 
 	int n_children;
 	struct expr_tr **steps = __possible_steps__(state->expr_tr, &n_children);
+	struct attach tmp;
 
-	state->n_children = n_children;
-	state->children = malloc(n_children * sizeof(struct state));
+	tmp.n_children = n_children;
+	tmp.children = malloc(n_children * sizeof(struct state));
 	for (int i = 0; i < n_children; i++) {
-		state_init(&state->children[i], steps[i]);
-		state->children[i].father = state;
+		state_init(&tmp.children[i], steps[i]);
+		tmp.children[i].father = state;
 	}
 
-	pthread_mutex_unlock(&state->lock);
+	if (!atomic_compare_exchange_weak(&state->attach, &reg, tmp)) {
+		free(tmp.children);
+	}
 	free(steps);
 }
 
 int state_best_child(struct state *state, float c_param, int debug)
 {
-	int n_children = state->n_children;
+	struct attach at = atomic_load(&state->attach);
 	int best_idx = -1;
 	float N = atomic_load(&state->n);
 	float best = -FLT_MAX;
 
-	for (int i = 0; i < n_children; i++) {
-		struct state *child = state->children + i;
+	for (int i = 0; i < at.n_children; i++) {
+		struct state *child = at.children + i;
 		float q = atomic_load(&child->q);
 		float n = atomic_load(&child->n);
 		float uct = q + c_param * sqrtf(logf(N + 1.f) / (n + 1.f));
 
 		if (debug) {
 			printf("uct[%d] = %.3f: ", i, uct);
-			state_print(&state->children[i], 0, 0);
+			state_print(&at.children[i], 0, 0);
 		}
 
 		if (uct > best) {
@@ -177,15 +182,15 @@ void state_rollout(struct state *state, int maxdepth, int debug)
 			state_print(state, 0, 0);
 		}
 
-		state_fully_expand(state);
+		state_fully_expand__lockfree(state);
 
-		int n_children = state->n_children;
-		if (n_children == 0)
+		struct attach at = atomic_load(&state->attach);
+		if (at.n_children == 0)
 			break;
 
-		int child_idx = rand() % n_children;
+		int child_idx = rand() % at.n_children;
 
-		state = &state->children[child_idx];
+		state = &at.children[child_idx];
 		cnt++;
 	}
 
@@ -209,7 +214,7 @@ void *sample_worker(void *_args)
 	int debug = args->debug;
 	int max_depth = args->max_depth;
 
-	state_fully_expand(root);
+	state_fully_expand__lockfree(root);
 
 	for (int i = 0; i < n_samples; i++) {
 		if (debug) {
@@ -222,7 +227,8 @@ void *sample_worker(void *_args)
 		if (best_idx < 0)
 			break; /* leaf */
 
-		struct state *best_child = &root->children[best_idx];
+		struct attach at = atomic_load(&root->attach);
+		struct state *best_child = &at.children[best_idx];
 		state_rollout(best_child, max_depth, debug);
 	}
 }
@@ -270,7 +276,8 @@ void mcts(struct state *root, int n_threads, int sample_times, int maxsteps, int
 		if (best_idx < 0)
 			break; /* leaf */
 
-		cur = &cur->children[best_idx];
+		struct attach at = atomic_load(&cur->attach);
+		cur = &at.children[best_idx];
 	}
 }
 
@@ -284,7 +291,7 @@ int main()
 	state_init(&root, root_tr);
 
 	const int n_processors = sysconf(_SC_NPROCESSORS_ONLN);
-	const int n_threads = n_processors - 1;
+	int n_threads = n_processors - 1;
 	mcts(&root, n_threads, 440, 10, 4);
 
 	state_free(&root);
