@@ -121,6 +121,8 @@ void state_fully_expand__lockfree(struct state *state)
 	}
 
 	if (!atomic_compare_exchange_weak(&state->attach, &reg, tmp)) {
+		for (int i = 0; i < n_children; i++)
+			free(steps[i]);
 		free(tmp.children);
 	}
 	free(steps);
