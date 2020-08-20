@@ -263,13 +263,13 @@ void mcts(struct state *root, int n_threads, int sample_times, int maxsteps, int
 			sample_times,
 			n_threads,
 			0,
-			n_threads == 1,
+			0, //n_threads == 1,
 			max_depth
 		};
 		sample(args);
 
-		printf("\n[after sampling]\n");
-		state_print(cur, 0, 1);
+		//printf("\n[after sampling]\n");
+		//state_print(cur, 0, 1);
 
 		printf("\n[moving to best child]\n");
 		int best_idx = state_best_child(cur, 0, 0);
