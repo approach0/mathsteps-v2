@@ -12,4 +12,4 @@ all:
 
 clean:
 	rm -f *.o *.out
-	rm -f *.tab.[ch] lex.yy.c *.dot y.output
+	rm -f *.tab.[ch] lex.yy.[ch] *.dot y.output
