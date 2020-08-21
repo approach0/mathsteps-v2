@@ -91,7 +91,7 @@ struct optr_node *optr_pass_children(struct optr_node *rot, struct optr_node *su
 	return rot;
 }
 
-int main()
+int _main()
 {
 	struct optr_node *root = optr_alloc(OPTR_NODE_VAR);
 	struct optr_node *root2 = optr_alloc(OPTR_NODE_TOKEN);
