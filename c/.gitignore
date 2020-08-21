@@ -1,2 +1,5 @@
 *.out
 *.o
+y.tab.[ch]
+y.output
+lex.yy.c

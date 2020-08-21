@@ -2,8 +2,9 @@ MHOOK_FLAGS := -Wl,--wrap,malloc -Wl,--wrap,free \
 -Wl,--wrap,realloc -Wl,--wrap,calloc -Wl,--wrap,strdup
 
 all:
-	#bison -v -d --report=itemset grammar.y -o y.tab.c
-	#flex lexer.l
+	bison -v -d --report=itemset grammar.y -o y.tab.c
+	flex lexer.l
+
 	gcc -std=c11 -c test.c mhook.c optr.c
 	gcc $(MHOOK_FLAGS) mhook.o optr.o -o test-optr.out
 	gcc $(MHOOK_FLAGS) mhook.o test.o -lpthread -lm -latomic

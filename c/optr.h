@@ -12,7 +12,7 @@ struct optr_node {
 	union {
 		char  var;
 		float num;
-		int token;
+		char token;
 	};
 
 	int n_children;

@@ -1,13 +1,15 @@
+%option reentrant bison-bridge
+
 %{
 #include "y.tab.h"
 
 %}
 
 %%
-"+"      { return ADD; }
+"+"      { return _ADD; }
  /* "-"      { return "-"; } */
-\\times  { return TIMES; }
-\\cdot   { return TIMES; }
+\\times  { return _TIMES; }
+\\cdot   { return _TIMES; }
 
  /* \\div    { return "D"; }
 \\frac   { return "F"; }
