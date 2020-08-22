@@ -105,5 +105,6 @@ atom: NUM {
 int yyerror(void *scanner, struct optr_node **root, const char *msg)
 {
 	fprintf(stderr, "%s\n", msg);
+	*root = NULL;
 	return 0;
 }
