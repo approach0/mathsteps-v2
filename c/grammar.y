@@ -4,7 +4,7 @@
 
 #include "optr.h"
 
-int yyerror(void *, const char*);
+int yyerror(void*, struct optr_node**, const char*);
 
 #define YYPARSE_PARAM yyscan_t scanner
 #define YYLEX_PARAM scanner
@@ -26,6 +26,7 @@ int yyerror(void *, const char*);
 
 %lex-param {void *scanner}
 %parse-param {void *scanner}
+%parse-param {struct optr_node **root}
 /*
  * Above statements will change yyparse() and yylex() from no arguments to these:
  * yyparse(yyscan_t *scanner)
@@ -48,7 +49,10 @@ int yyerror(void *, const char*);
 %left _TIMES
 
 %%
-doc: sum
+doc: sum {
+	*root = $1;
+}
+;
 
 sum: %prec _NULL_REDUCE {
 	$$ = NULL;
@@ -98,7 +102,7 @@ atom: NUM {
 ;
 %%
 
-int yyerror(void *scanner, const char *msg)
+int yyerror(void *scanner, struct optr_node **root, const char *msg)
 {
 	fprintf(stderr, "%s\n", msg);
 	return 0;

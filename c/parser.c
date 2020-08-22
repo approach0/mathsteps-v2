@@ -13,7 +13,13 @@ int main()
 	YY_BUFFER_STATE buf = NULL;
 
 	buf = yy_scan_string("1 + 2", scanner);
-	yyparse(scanner);
+
+	struct optr_node *root;
+	yyparse(scanner, &root);
+	printf("p=%p\n", root);
+
+	optr_print(root);
+	optr_release(root);
 
 	yy_delete_buffer(buf, scanner);
 	yylex_destroy(scanner);
