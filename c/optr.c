@@ -12,9 +12,40 @@ struct optr_node *optr_alloc(int type)
 	return nd;
 }
 
+void optr_release(struct optr_node *root)
+{
+	for (int i = 0; i < root->n_children; i++) {
+		struct optr_node *c = root->children[i];
+		optr_release(c);
+	}
+
+	free(root);
+}
+
 struct optr_node *optr_attach(struct optr_node *f, struct optr_node *s)
 {
-	f->children[f->n_children ++] = s;
+	if (f->n_children + 1 < MAX_OPTR_NUM_CHILDREN)
+		f->children[f->n_children ++] = s;
+	else
+		optr_release(s);
+
+	return f;
+}
+
+void __print_node(struct optr_node *nd)
+{
+	switch (nd->type) {
+	case OPTR_NODE_VAR:
+		printf(" %c", nd->var);
+		break;
+	case OPTR_NODE_NUM:
+		printf(" %g", nd->num);
+		break;
+	case OPTR_NODE_TOKEN:
+		printf("`%c`", nd->token);
+		break;
+	}
+	printf("\n");
 }
 
 void __optr_print(struct optr_node *nd, int level, int *depth_flags)
@@ -46,7 +77,7 @@ void __optr_print(struct optr_node *nd, int level, int *depth_flags)
 		}
 	}
 
-	printf("[%d]\n", nd->type);
+	__print_node(nd);
 
 	for (int i = 0; i < nd->n_children; i++) {
 		struct optr_node *c = nd->children[i];
@@ -67,23 +98,14 @@ void optr_print(struct optr_node *root)
 	__optr_print(root, 0, depth_flags);
 }
 
-void optr_release(struct optr_node *root)
-{
-	for (int i = 0; i < root->n_children; i++) {
-		struct optr_node *c = root->children[i];
-		optr_release(c);
-	}
-
-	free(root);
-}
-
 struct optr_node *optr_pass_children(struct optr_node *rot, struct optr_node *sub)
 {
 	if (rot == NULL || sub == NULL)
 		return NULL;
 
 	for (int i = 0; i < sub->n_children; i++) {
-		rot->children[rot->n_children ++] = sub->children[i];
+		if (rot->n_children + 1 < MAX_OPTR_NUM_CHILDREN)
+			rot->children[rot->n_children ++] = sub->children[i];
 	}
 
 	sub->n_children = 0;

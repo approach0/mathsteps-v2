@@ -64,8 +64,16 @@ sum: %prec _NULL_REDUCE {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
 	op->token = '+';
 
-	optr_attach(op, $1);
-	optr_attach(op, $3);
+	if ($1->token == '+')
+		optr_pass_children(op, $1);
+	else
+		optr_attach(op, $1);
+
+	if ($3->token == '+')
+		optr_pass_children(op, $3);
+	else
+		optr_attach(op, $3);
+
 	$$ = op;
 }
 ;
@@ -104,7 +112,7 @@ atom: NUM {
 
 int yyerror(void *scanner, struct optr_node **root, const char *msg)
 {
-	fprintf(stderr, "%s\n", msg);
+	fprintf(stderr, "[Error] %s\n", msg);
 	*root = NULL;
 	return 0;
 }
