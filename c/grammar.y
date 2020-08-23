@@ -35,6 +35,7 @@ int yyerror(void*, struct optr_node**, const char*);
 
 %token _EOL
 %token <nd> NUM
+%token <nd> VAR
 %token _ADD
 %token _TIMES
 
@@ -105,6 +106,9 @@ factor: atom {
 ;
 
 atom: NUM {
+	$$ = $1;
+}
+| VAR {
 	$$ = $1;
 }
 ;
