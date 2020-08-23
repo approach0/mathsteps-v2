@@ -8,6 +8,12 @@ int yyerror(void*, struct optr_node**, const char*);
 
 #define YYPARSE_PARAM yyscan_t scanner
 #define YYLEX_PARAM scanner
+
+#define COMM_ATTACH(_root, _child) \
+	if (_child->token == _root->token) \
+		optr_pass_children(_root, _child); \
+	else \
+		optr_attach(_root, _child);
 %}
 
 %union {
@@ -65,16 +71,8 @@ sum: %prec _NULL_REDUCE {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
 	op->token = '+';
 
-	if ($1->token == '+')
-		optr_pass_children(op, $1);
-	else
-		optr_attach(op, $1);
-
-	if ($3->token == '+')
-		optr_pass_children(op, $3);
-	else
-		optr_attach(op, $3);
-
+	COMM_ATTACH(op, $1);
+	COMM_ATTACH(op, $3);
 	$$ = op;
 }
 ;
@@ -86,16 +84,16 @@ product: factor {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
 	op->token = '*';
 
-	optr_attach(op, $1);
-	optr_attach(op, $2);
+	COMM_ATTACH(op, $1);
+	COMM_ATTACH(op, $2);
 	$$ = op;
 }
 | product _TIMES factor {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
 	op->token = '*';
 
-	optr_attach(op, $1);
-	optr_attach(op, $3);
+	COMM_ATTACH(op, $1);
+	COMM_ATTACH(op, $3);
 	$$ = op;
 }
 ;
