@@ -12,9 +12,10 @@ int main()
 	
 	YY_BUFFER_STATE buf = NULL;
 
+	char test[] = "(-3)";
 	//char test[] = "0 - (1 + 2)";
 	//char test[] = "2(-3)(-4)";
-	char test[] = "-(-2(-3)) 5";
+	//char test[] = "-(-2(-3)) 5";
 
 	//char test[] = "a[c \\div 2b] = -(-5 + 1 - 3.14) + A \\times x - 2ax";
 	//char test[] = "a^{1 + 2}";

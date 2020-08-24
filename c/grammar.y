@@ -89,12 +89,11 @@ sum: %prec _NULL_REDUCE {
 	$$ = $1;
 }
 | sum _ADD term {
-	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
-	op->token = mbc2wc("+");
-
-	COMM_ATTACH(op, $1);
-
 	if (NULL != $1) {
+		struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
+		op->token = mbc2wc("+");
+
+		COMM_ATTACH(op, $1);
 		COMM_ATTACH(op, $3);
 		$$ = op;
 	} else {
@@ -102,14 +101,13 @@ sum: %prec _NULL_REDUCE {
 	}
 }
 | sum _MINUS term {
-	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
-	op->token = mbc2wc("+");
-
-	COMM_ATTACH(op, $1);
-
 	if ($3) $3->sign *= -1.f;
 
 	if (NULL != $1) {
+		struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
+		op->token = mbc2wc("+");
+
+		COMM_ATTACH(op, $1);
 		COMM_ATTACH(op, $3);
 		$$ = op;
 	} else {
