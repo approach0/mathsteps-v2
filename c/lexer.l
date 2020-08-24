@@ -22,16 +22,19 @@
 "+"      { return _ADD; }
 "-"      { return _MINUS; }
 \\times  { return _TIMES; }
-\\cdot   { return _TIMES; }
+\\cdot   { return _CDOT; }
 \\div    { return _DIV; }
+"^"      { return _SUP; }
+"_"      { return _SUB; }
 
- /* \\frac   { return "F"; }
+"{"      { return _L_TEX; }
+"}"      { return _R_TEX; }
 
+\\frac   { return _FRAC; }
+
+ /*
 "("|"["  { return "("; }
 ")"|"]"  { return ")"; }
-
-"{"      { return "{"; }
-"}"      { return "}"; }
  */
 
 [0-9]+\.[0-9]+ { float num; sscanf(yytext, "%f", &num); RET_NUM(num); }

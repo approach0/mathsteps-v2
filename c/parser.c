@@ -12,7 +12,11 @@ int main()
 	
 	YY_BUFFER_STATE buf = NULL;
 
-	buf = yy_scan_string("ac \\div 2b = -5 + 1 - 3.14 + A \\times x - 2ax", scanner);
+	//char test[] = "ac \\div 2b = -5 + 1 - 3.14 + A \\times x - 2ax";
+	//char test[] = "a^{1 + 2}";
+	char test[] = "\\frac 12 a";
+
+	buf = yy_scan_string(test, scanner);
 
 	struct optr_node *root;
 	yyparse(scanner, &root);

@@ -51,7 +51,8 @@ int yyerror(void*, struct optr_node**, const char*);
 %token _ADD
 %token _MINUS
 %token _DIV
-%token _TIMES
+%right _SUP _SUB
+%token _TIMES _CDOT
 
 %start start
 %type <nd> doc
@@ -63,7 +64,10 @@ int yyerror(void*, struct optr_node**, const char*);
 
 %left _NULL_REDUCE
 %left _ADD _MINUS
-%left _TIMES
+%left _TIMES _CDOT
+
+%right _FRAC
+%nonassoc _L_TEX _R_TEX
 
 %%
 start: doc {
@@ -141,10 +145,41 @@ product: factor {
 	COMM_ATTACH(op, $3);
 	$$ = op;
 }
+| product _CDOT factor {
+	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
+	op->token = '*';
+
+	COMM_ATTACH(op, $1);
+	COMM_ATTACH(op, $3);
+	$$ = op;
+}
 ;
 
 factor: atom {
 	$$ = $1;
+}
+| atom _SUP atom {
+	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
+	op->token = '^';
+
+	COMM_ATTACH(op, $1);
+	COMM_ATTACH(op, $3);
+	$$ = op;
+}
+| atom _SUB atom {
+	/* TODO */
+	if ($3)
+		optr_release($$);
+
+	$$ = $1;
+}
+| _FRAC atom atom {
+	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
+	op->token = '/';
+
+	optr_attach(op, $2);
+	optr_attach(op, $3);
+	$$ = op;
 }
 ;
 
@@ -153,6 +188,9 @@ atom: NUM {
 }
 | VAR {
 	$$ = $1;
+}
+| _L_TEX sum _R_TEX {
+	$$ = $2;
 }
 ;
 %%
