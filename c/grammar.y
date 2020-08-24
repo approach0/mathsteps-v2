@@ -5,6 +5,7 @@
 #include "optr.h"
 
 int yyerror(void*, struct optr_node**, const char*);
+wchar_t mbc2wc(const char*);
 
 #define YYPARSE_PARAM yyscan_t scanner
 #define YYLEX_PARAM scanner
@@ -82,7 +83,7 @@ doc: sum {
 }
 | sum _EQ sum {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
-	op->token = '=';
+	op->token = mbc2wc("=");
 
 	optr_attach(op, $1);
 	optr_attach(op, $3);
@@ -98,7 +99,7 @@ sum: %prec _NULL_REDUCE {
 }
 | sum _ADD term {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
-	op->token = '+';
+	op->token = mbc2wc("+");
 
 	COMM_ATTACH(op, $1);
 	COMM_ATTACH(op, $3);
@@ -106,7 +107,7 @@ sum: %prec _NULL_REDUCE {
 }
 | sum _MINUS term {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
-	op->token = '+';
+	op->token = mbc2wc("+");
 
 	COMM_ATTACH(op, $1);
 	COMM_ATTACH(op, $3);
@@ -120,7 +121,7 @@ term: product {
 }
 | term _DIV product {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
-	op->token = '/';
+	op->token = mbc2wc("÷");
 
 	optr_attach(op, $1);
 	optr_attach(op, $3);
@@ -133,7 +134,7 @@ product: factor {
 }
 | product factor {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
-	op->token = '*';
+	op->token = mbc2wc("×");
 
 	COMM_ATTACH(op, $1);
 	COMM_ATTACH(op, $2);
@@ -141,7 +142,7 @@ product: factor {
 }
 | product _TIMES factor {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
-	op->token = '*';
+	op->token = mbc2wc("×");
 
 	COMM_ATTACH(op, $1);
 	COMM_ATTACH(op, $3);
@@ -149,7 +150,7 @@ product: factor {
 }
 | product _CDOT factor {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
-	op->token = '*';
+	op->token = mbc2wc("×");
 
 	COMM_ATTACH(op, $1);
 	COMM_ATTACH(op, $3);
@@ -162,7 +163,7 @@ factor: atom {
 }
 | atom _SUP atom {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
-	op->token = '^';
+	op->token = mbc2wc("^");
 
 	COMM_ATTACH(op, $1);
 	COMM_ATTACH(op, $3);
@@ -177,7 +178,7 @@ factor: atom {
 }
 | _FRAC atom atom {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
-	op->token = '/';
+	op->token = mbc2wc("/");
 
 	optr_attach(op, $2);
 	optr_attach(op, $3);
@@ -200,7 +201,7 @@ atom: NUM {
 }
 | _SQRT atom {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
-	op->token = 's';
+	op->token = mbc2wc("√");
 	optr_attach(op, $2);
 	$$ = op;
 }
@@ -212,6 +213,15 @@ int yyerror(void *scanner, struct optr_node **root, const char *msg)
 	fprintf(stderr, "[Error] %s\n", msg);
 	*root = NULL;
 	return 0;
+}
+
+#include <locale.h>
+wchar_t mbc2wc(const char *mb)
+{
+	static wchar_t retstr[2];
+	setlocale(LC_ALL, "en_US.UTF-8");
+	mbstowcs(retstr, mb, 2);
+	return retstr[0];
 }
 /*
      | "(" sum ")"                        -> grp

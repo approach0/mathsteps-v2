@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <locale.h>
 
 #include "optr.h"
 #include "mhook.h"
@@ -42,6 +43,10 @@ void __print_node(struct optr_node *nd)
 	if (nd->sign < 0)
 		printf(" -");
 
+	#define W 4
+	char    dst[W + 1] = {0};
+	wchar_t src[2] = {0};
+
 	switch (nd->type) {
 	case OPTR_NODE_VAR:
 		printf("%c", nd->var);
@@ -50,7 +55,10 @@ void __print_node(struct optr_node *nd)
 		printf("%g", nd->num);
 		break;
 	case OPTR_NODE_TOKEN:
-		printf("`%c`", nd->token);
+		src[0] = nd->token;
+		setlocale(LC_ALL, "en_US.UTF-8");
+		wcstombs(dst, src, W);
+		printf("`%s'", dst);
 		break;
 	}
 

@@ -10,9 +10,9 @@ enum optr_node_type {
 struct optr_node {
 	int type;
 	union {
-		char  var;
-		float num;
-		char  token;
+		int      var;
+		float    num;
+		wchar_t  token;
 	};
 	float sign;
 	int is_wildcards;
