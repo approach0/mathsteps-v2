@@ -10,10 +10,15 @@ int yyerror(void*, struct optr_node**, const char*);
 #define YYLEX_PARAM scanner
 
 #define COMM_ATTACH(_root, _child) \
-	if (_child->token == _root->token) \
-		optr_pass_children(_root, _child); \
-	else \
-		optr_attach(_root, _child);
+	if (NULL != _child) { \
+		if (_child->token == _root->token) \
+			optr_pass_children(_root, _child); \
+		else \
+			optr_attach(_root, _child); \
+	} do {} while (0)
+
+#define REVERSE_SIGN(_nd) \
+	if (_nd) _nd->sign *= -1.f; do {} while (0)
 %}
 
 %union {
@@ -43,6 +48,7 @@ int yyerror(void*, struct optr_node**, const char*);
 %token <nd> NUM
 %token <nd> VAR
 %token _ADD
+%token _MINUS
 %token _TIMES
 
 %start doc
@@ -52,7 +58,7 @@ int yyerror(void*, struct optr_node**, const char*);
 %type <nd> atom
 
 %left _NULL_REDUCE
-%left _ADD
+%left _ADD _MINUS
 %left _TIMES
 
 %%
@@ -73,6 +79,15 @@ sum: %prec _NULL_REDUCE {
 
 	COMM_ATTACH(op, $1);
 	COMM_ATTACH(op, $3);
+	$$ = op;
+}
+| sum _MINUS product {
+	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
+	op->token = '+';
+
+	COMM_ATTACH(op, $1);
+	COMM_ATTACH(op, $3);
+	REVERSE_SIGN($3);
 	$$ = op;
 }
 ;

@@ -7,7 +7,8 @@
 
 #define RET_NUM(_n) \
 	yylval->nd = optr_alloc(OPTR_NODE_NUM); \
-	yylval->nd->num = _n; \
+	yylval->nd->num = (_n >= 0) ? _n : -_n; \
+	yylval->nd->sign = (_n >= 0) ? 1.f : -1.f; \
 	return NUM;
 
 #define RET_VAR(_c) \
@@ -18,7 +19,7 @@
 
 %%
 "+"      { return _ADD; }
- /* "-"      { return "-"; } */
+"-"      { return _MINUS; }
 \\times  { return _TIMES; }
 \\cdot   { return _TIMES; }
 

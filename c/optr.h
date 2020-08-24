@@ -14,6 +14,7 @@ struct optr_node {
 		float num;
 		char token;
 	};
+	float sign;
 
 	int n_children;
 	struct optr_node *children[MAX_OPTR_NUM_CHILDREN];

@@ -8,6 +8,7 @@ struct optr_node *optr_alloc(int type)
 {
 	struct optr_node *nd = malloc(sizeof(struct optr_node));
 	nd->type = type;
+	nd->sign = +1.f;
 	nd->n_children = 0;
 	return nd;
 }
@@ -24,6 +25,9 @@ void optr_release(struct optr_node *root)
 
 struct optr_node *optr_attach(struct optr_node *f, struct optr_node *s)
 {
+	if (s == NULL)
+		return f;
+
 	if (f->n_children + 1 < MAX_OPTR_NUM_CHILDREN)
 		f->children[f->n_children ++] = s;
 	else
@@ -34,12 +38,15 @@ struct optr_node *optr_attach(struct optr_node *f, struct optr_node *s)
 
 void __print_node(struct optr_node *nd)
 {
+	if (nd->sign < 0)
+		printf(" -");
+
 	switch (nd->type) {
 	case OPTR_NODE_VAR:
-		printf(" %c", nd->var);
+		printf("%c", nd->var);
 		break;
 	case OPTR_NODE_NUM:
-		printf(" %g", nd->num);
+		printf("%g", nd->num);
 		break;
 	case OPTR_NODE_TOKEN:
 		printf("`%c`", nd->token);
@@ -95,13 +102,19 @@ void __optr_print(struct optr_node *nd, int level, int *depth_flags)
 void optr_print(struct optr_node *root)
 {
 	int depth_flags[MAX_OPTR_PRINT_DEPTH] = {0};
+
+	if (root == NULL) {
+		printf("(empty optr)\n");
+		return;
+	}
+
 	__optr_print(root, 0, depth_flags);
 }
 
 struct optr_node *optr_pass_children(struct optr_node *rot, struct optr_node *sub)
 {
-	if (rot == NULL || sub == NULL)
-		return NULL;
+	if (sub == NULL)
+		return rot;
 
 	for (int i = 0; i < sub->n_children; i++) {
 		if (rot->n_children + 1 < MAX_OPTR_NUM_CHILDREN)
