@@ -1,6 +1,9 @@
 #define MAX_OPTR_NUM_CHILDREN 128
 #define MAX_OPTR_PRINT_DEPTH  128
 
+#define TOK_ADD_HEX   0x2b
+#define TOK_TIMES_HEX 0xd7
+
 enum optr_node_type {
 	OPTR_NODE_VAR,
 	OPTR_NODE_NUM,

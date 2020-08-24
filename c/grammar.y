@@ -14,9 +14,6 @@ wchar_t mbc2wc(const char*);
 		else \
 			optr_attach(_root, _child); \
 	} do {} while (0)
-
-#define REVERSE_SIGN(_nd) \
-	if (_nd) _nd->sign *= -1.f; do {} while (0)
 %}
 
 %union {
@@ -101,8 +98,13 @@ sum: %prec _NULL_REDUCE {
 	op->token = mbc2wc("+");
 
 	COMM_ATTACH(op, $1);
-	COMM_ATTACH(op, $3);
-	$$ = op;
+
+	if (NULL != $1) {
+		COMM_ATTACH(op, $3);
+		$$ = op;
+	} else {
+		$$ = $3;
+	}
 }
 | sum _MINUS term {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
@@ -110,10 +112,14 @@ sum: %prec _NULL_REDUCE {
 
 	COMM_ATTACH(op, $1);
 
-	REVERSE_SIGN($3);
-	COMM_ATTACH(op, $3);
+	if ($3) $3->sign *= -1.f;
 
-	$$ = op;
+	if (NULL != $1) {
+		COMM_ATTACH(op, $3);
+		$$ = op;
+	} else {
+		$$ = $3;
+	}
 }
 ;
 
@@ -228,10 +234,7 @@ wchar_t mbc2wc(const char *mb)
 	static wchar_t retstr[2];
 	setlocale(LC_ALL, "en_US.UTF-8");
 	mbstowcs(retstr, mb, 2);
+
+	//printf("mb=%s ==> 0x%x\n", mb, retstr[0]);
 	return retstr[0];
 }
-/*
-     | "(" sum ")"                        -> grp
-     | "[" sum "]"                        -> grp
-     | "\\left" "|" sum "\\right" "|"     -> abs
-*/

@@ -124,14 +124,44 @@ void optr_print(struct optr_node *root)
 	__optr_print(root, 0, depth_flags);
 }
 
+/*
+ *  Pass grand-children to root if children and root have the same operator.
+ *  Otherwise, attach children to root (only reduce signs).
+
+ *      root (+)
+ *    /   ^           <—— *
+ *  ...  children (+)     |
+ *        |               *
+ *       grand-children _/
+ */
 struct optr_node *optr_pass_children(struct optr_node *rot, struct optr_node *sub)
 {
 	if (sub == NULL)
 		return rot;
 
 	for (int i = 0; i < sub->n_children; i++) {
-		if (rot->n_children + 1 < MAX_OPTR_NUM_CHILDREN)
-			rot->children[rot->n_children ++] = sub->children[i];
+		if (rot->n_children + 1 >= MAX_OPTR_NUM_CHILDREN)
+			break;
+
+		struct optr_node *grand = sub->children[i];
+		if (sub->type == OPTR_NODE_TOKEN) {
+			switch (sub->token) {
+			case TOK_ADD_HEX:
+				/* distribute sign */
+				grand->sign *= sub->sign;
+				break;
+			case TOK_TIMES_HEX:
+				/* reduce sign */
+				rot->sign *= (sub->sign * grand->sign);
+				grand->sign = 1.f;
+				break;
+			default:
+				;
+			}
+		}
+
+		/* pass child */
+		rot->children[rot->n_children ++] = grand;
 	}
 
 	sub->n_children = 0;
