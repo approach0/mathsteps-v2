@@ -7,9 +7,6 @@
 int yyerror(void*, struct optr_node**, const char*);
 wchar_t mbc2wc(const char*);
 
-#define YYPARSE_PARAM yyscan_t scanner
-#define YYLEX_PARAM scanner
-
 #define COMM_ATTACH(_root, _child) \
 	if (NULL != _child) { \
 		if (_child->token == _root->token) \
@@ -112,8 +109,10 @@ sum: %prec _NULL_REDUCE {
 	op->token = mbc2wc("+");
 
 	COMM_ATTACH(op, $1);
-	COMM_ATTACH(op, $3);
+
 	REVERSE_SIGN($3);
+	COMM_ATTACH(op, $3);
+
 	$$ = op;
 }
 ;
