@@ -53,6 +53,8 @@ int yyerror(void*, struct optr_node**, const char*);
 %token _DIV
 %right _SUP _SUB
 %token _TIMES _CDOT
+%token _STAR
+%token _SQRT
 
 %start start
 %type <nd> doc
@@ -192,6 +194,16 @@ atom: NUM {
 | _L_TEX sum _R_TEX {
 	$$ = $2;
 }
+| _STAR _L_TEX NUM _R_TEX {
+	$3->is_wildcards = 1;
+	$$ = $3;
+}
+| _SQRT atom {
+	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
+	op->token = 's';
+	optr_attach(op, $2);
+	$$ = op;
+}
 ;
 %%
 
@@ -201,3 +213,8 @@ int yyerror(void *scanner, struct optr_node **root, const char *msg)
 	*root = NULL;
 	return 0;
 }
+/*
+     | "(" sum ")"                        -> grp
+     | "[" sum "]"                        -> grp
+     | "\\left" "|" sum "\\right" "|"     -> abs
+*/

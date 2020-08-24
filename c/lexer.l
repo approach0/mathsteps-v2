@@ -31,7 +31,9 @@
 "}"      { return _R_TEX; }
 
 \\frac   { return _FRAC; }
+\\sqrt   { return _SQRT; }
 
+"*"      { return _STAR; }
  /*
 "("|"["  { return "("; }
 ")"|"]"  { return ")"; }

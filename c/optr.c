@@ -9,6 +9,7 @@ struct optr_node *optr_alloc(int type)
 	struct optr_node *nd = malloc(sizeof(struct optr_node));
 	nd->type = type;
 	nd->sign = +1.f;
+	nd->is_wildcards = 0;
 	nd->n_children = 0;
 	return nd;
 }
@@ -52,6 +53,10 @@ void __print_node(struct optr_node *nd)
 		printf("`%c`", nd->token);
 		break;
 	}
+
+	if (nd->is_wildcards)
+		printf(" (wildcards)");
+
 	printf("\n");
 }
 

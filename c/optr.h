@@ -12,9 +12,10 @@ struct optr_node {
 	union {
 		char  var;
 		float num;
-		char token;
+		char  token;
 	};
 	float sign;
+	int is_wildcards;
 
 	int n_children;
 	struct optr_node *children[MAX_OPTR_NUM_CHILDREN];
