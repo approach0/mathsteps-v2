@@ -62,6 +62,7 @@ wchar_t mbc2wc(const char*);
 %nonassoc _L_BRACE        _R_BRACE
 %nonassoc _L_PARENTHESIS  _R_PARENTHESIS
 %nonassoc _L_BRACKET      _R_BRACKET
+%nonassoc _L_BAR          _R_BAR
 
 %%
 start: doc {
@@ -210,6 +211,12 @@ atom: NUM {
 }
 | _L_BRACKET sum _R_BRACKET {
 	$$ = $2;
+}
+| _L_BAR sum _R_BAR {
+	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
+	op->token = mbc2wc("ǁ");
+	optr_attach(op, $2);
+	$$ = op;
 }
 ;
 %%

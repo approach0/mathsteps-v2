@@ -12,7 +12,6 @@ int main()
 	
 	YY_BUFFER_STATE buf = NULL;
 
-	char test[] = "(-3)";
 	//char test[] = "0 - (1 + 2)";
 	//char test[] = "2(-3)(-4)";
 	//char test[] = "-(-2(-3)) 5";
@@ -22,6 +21,8 @@ int main()
 	//char test[] = "\\frac 12 a";
 	//char test[] = "12 + x *{12}";
 	//char test[] = "\\sqrt 12 + 3";
+	//char test[] = "\\sqrt 12 + 3";
+	char test[] = "\\left | 1 - 2\\right|";
 
 	printf("TeX: %s\n", test);
 	buf = yy_scan_string(test, scanner);

@@ -18,28 +18,31 @@
 %}
 
 %%
-"="      { return _EQ; }
-"+"      { return _ADD; }
-"-"      { return _MINUS; }
-\\times  { return _TIMES; }
-\\cdot   { return _CDOT; }
-\\div    { return _DIV; }
-"^"      { return _SUP; }
-"_"      { return _SUB; }
+"="            { return _EQ; }
+"+"            { return _ADD; }
+"-"            { return _MINUS; }
+\\times        { return _TIMES; }
+\\cdot         { return _CDOT; }
+\\div          { return _DIV; }
+"^"            { return _SUP; }
+"_"            { return _SUB; }
 
-"{"      { return _L_BRACE; }
-"}"      { return _R_BRACE; }
+"{"            { return _L_BRACE; }
+"}"            { return _R_BRACE; }
 
-\\frac   { return _FRAC; }
-\\sqrt   { return _SQRT; }
+\\frac         { return _FRAC; }
+\\sqrt         { return _SQRT; }
 
-"*"      { return _STAR; }
+"*"            { return _STAR; }
 
-"("      { return _L_PARENTHESIS; }
-")"      { return _R_PARENTHESIS; }
+"("            { return _L_PARENTHESIS; }
+")"            { return _R_PARENTHESIS; }
 
-"["      { return _L_BRACKET; }
-"]"      { return _R_BRACKET; }
+"["            { return _L_BRACKET; }
+"]"            { return _R_BRACKET; }
+
+\\left[ ]*\|   { return _L_BAR; }
+\\right[ ]*\|  { return _R_BAR; }
 
 [0-9]+\.[0-9]+ { float num; sscanf(yytext, "%f", &num); RET_NUM(num); }
 [0-9]+         { int num; sscanf(yytext, "%d", &num); RET_NUM(num); }
