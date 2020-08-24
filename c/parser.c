@@ -4,13 +4,37 @@
 #include "optr.h"
 #include "mhook.h"
 
-int main()
+void *parser_new_scanner(void)
 {
 	yyscan_t scanner;
 	if (yylex_init(&scanner))
-		return 1;
+		return NULL;
 	
-	YY_BUFFER_STATE buf = NULL;
+	return scanner;
+}
+
+struct optr_node *parser_parse(void *scanner, const char *tex)
+{
+	YY_BUFFER_STATE buf = yy_scan_string(tex, scanner);
+
+	struct optr_node *root;
+	yyparse(scanner, &root);
+
+	yy_delete_buffer(buf, scanner);
+	return root;
+}
+
+void parser_dele_scanner(void *scanner)
+{
+	yylex_destroy(scanner);
+}
+
+int main()
+{
+	struct optr_node *root;
+	void *scanner = parser_new_scanner();
+	if (NULL == scanner)
+		return 1;
 
 	//char test[] = "0 - (1 + 2)";
 	//char test[] = "2(-3)(-4)";
@@ -22,22 +46,26 @@ int main()
 	//char test[] = "12 + x *{12}";
 	//char test[] = "\\sqrt 12 + 3";
 	//char test[] = "\\sqrt 12 + 3";
-	char test[] = "\\left | 1 - 2\\right|";
+	char test[] = "\\left | 1 - 2 \\right|";
 
 	printf("TeX: %s\n", test);
-	buf = yy_scan_string(test, scanner);
-
-	struct optr_node *root;
-	yyparse(scanner, &root);
+	root = parser_parse(scanner, test);
 
 	if (root) {
 		optr_print(root);
 		optr_release(root);
 	}
 
-	yy_delete_buffer(buf, scanner);
-	yylex_destroy(scanner);
+	strcpy(test, "1 + 2 - 3");
+	printf("TeX: %s\n", test);
+	root = parser_parse(scanner, test);
 
+	if (root) {
+		optr_print(root);
+		optr_release(root);
+	}
+
+	parser_dele_scanner(scanner);
 	mhook_print_unfree();
 	return 0;
 }
