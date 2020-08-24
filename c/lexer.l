@@ -27,17 +27,19 @@
 "^"      { return _SUP; }
 "_"      { return _SUB; }
 
-"{"      { return _L_TEX; }
-"}"      { return _R_TEX; }
+"{"      { return _L_BRACE; }
+"}"      { return _R_BRACE; }
 
 \\frac   { return _FRAC; }
 \\sqrt   { return _SQRT; }
 
 "*"      { return _STAR; }
- /*
-"("|"["  { return "("; }
-")"|"]"  { return ")"; }
- */
+
+"("      { return _L_PARENTHESIS; }
+")"      { return _R_PARENTHESIS; }
+
+"["      { return _L_BRACKET; }
+"]"      { return _R_BRACKET; }
 
 [0-9]+\.[0-9]+ { float num; sscanf(yytext, "%f", &num); RET_NUM(num); }
 [0-9]+         { int num; sscanf(yytext, "%d", &num); RET_NUM(num); }

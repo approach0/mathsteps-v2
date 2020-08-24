@@ -70,7 +70,9 @@ wchar_t mbc2wc(const char*);
 %left _TIMES _CDOT
 
 %right _FRAC
-%nonassoc _L_TEX _R_TEX
+%nonassoc _L_BRACE        _R_BRACE
+%nonassoc _L_PARENTHESIS  _R_PARENTHESIS
+%nonassoc _L_BRACKET      _R_BRACKET
 
 %%
 start: doc {
@@ -192,10 +194,10 @@ atom: NUM {
 | VAR {
 	$$ = $1;
 }
-| _L_TEX sum _R_TEX {
+| _L_BRACE sum _R_BRACE {
 	$$ = $2;
 }
-| _STAR _L_TEX NUM _R_TEX {
+| _STAR _L_BRACE NUM _R_BRACE {
 	$3->is_wildcards = 1;
 	$$ = $3;
 }
@@ -204,6 +206,12 @@ atom: NUM {
 	op->token = mbc2wc("√");
 	optr_attach(op, $2);
 	$$ = op;
+}
+| _L_PARENTHESIS sum _R_PARENTHESIS {
+	$$ = $2;
+}
+| _L_BRACKET sum _R_BRACKET {
+	$$ = $2;
 }
 ;
 %%
