@@ -23,9 +23,9 @@
 "-"      { return _MINUS; }
 \\times  { return _TIMES; }
 \\cdot   { return _TIMES; }
+\\div    { return _DIV; }
 
- /* \\div    { return "D"; }
-\\frac   { return "F"; }
+ /* \\frac   { return "F"; }
 
 "("|"["  { return "("; }
 ")"|"]"  { return ")"; }

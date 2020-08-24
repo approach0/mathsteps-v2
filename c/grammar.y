@@ -50,11 +50,13 @@ int yyerror(void*, struct optr_node**, const char*);
 %token _EQ
 %token _ADD
 %token _MINUS
+%token _DIV
 %token _TIMES
 
 %start start
 %type <nd> doc
 %type <nd> sum
+%type <nd> term
 %type <nd> product
 %type <nd> factor
 %type <nd> atom
@@ -85,10 +87,10 @@ doc: sum {
 sum: %prec _NULL_REDUCE {
 	$$ = NULL;
 }
-| product {
+| term {
 	$$ = $1;
 }
-| sum _ADD product {
+| sum _ADD term {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
 	op->token = '+';
 
@@ -96,13 +98,26 @@ sum: %prec _NULL_REDUCE {
 	COMM_ATTACH(op, $3);
 	$$ = op;
 }
-| sum _MINUS product {
+| sum _MINUS term {
 	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
 	op->token = '+';
 
 	COMM_ATTACH(op, $1);
 	COMM_ATTACH(op, $3);
 	REVERSE_SIGN($3);
+	$$ = op;
+}
+;
+
+term: product {
+	$$ = $1;
+}
+| term _DIV product {
+	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
+	op->token = '/';
+
+	optr_attach(op, $1);
+	optr_attach(op, $3);
 	$$ = op;
 }
 ;
