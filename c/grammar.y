@@ -47,11 +47,13 @@ int yyerror(void*, struct optr_node**, const char*);
 %token _EOL
 %token <nd> NUM
 %token <nd> VAR
+%token _EQ
 %token _ADD
 %token _MINUS
 %token _TIMES
 
-%start doc
+%start start
+%type <nd> doc
 %type <nd> sum
 %type <nd> product
 %type <nd> factor
@@ -62,8 +64,21 @@ int yyerror(void*, struct optr_node**, const char*);
 %left _TIMES
 
 %%
-doc: sum {
+start: doc {
 	*root = $1;
+}
+;
+
+doc: sum {
+	$$ = $1;
+}
+| sum _EQ sum {
+	struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
+	op->token = '=';
+
+	optr_attach(op, $1);
+	optr_attach(op, $3);
+	$$ = op;
 }
 ;
 

@@ -12,7 +12,7 @@ int main()
 	
 	YY_BUFFER_STATE buf = NULL;
 
-	buf = yy_scan_string("-5 + 1 - 3.14 + A \\times x - 2ax", scanner);
+	buf = yy_scan_string("0 = -5 + 1 - 3.14 + A \\times x - 2ax", scanner);
 
 	struct optr_node *root;
 	yyparse(scanner, &root);

@@ -18,6 +18,7 @@
 %}
 
 %%
+"="      { return _EQ; }
 "+"      { return _ADD; }
 "-"      { return _MINUS; }
 \\times  { return _TIMES; }
