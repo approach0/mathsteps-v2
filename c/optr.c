@@ -31,7 +31,7 @@ struct optr_node *optr_attach(struct optr_node *f, struct optr_node *s)
 		return f;
 
 	if (f->n_children + 1 < MAX_OPTR_NUM_CHILDREN)
-		f->children[f->n_children ++] = s;
+		f->children[f->n_children++] = s;
 	else
 		optr_release(s);
 
@@ -139,12 +139,19 @@ struct optr_node *optr_pass_children(struct optr_node *rot, struct optr_node *su
 	if (sub == NULL)
 		return rot;
 
-	for (int i = 0; i < sub->n_children; i++) {
-		if (rot->n_children + 1 >= MAX_OPTR_NUM_CHILDREN)
-			break;
+	if (rot->type == OPTR_NODE_TOKEN &&
+		sub->type == OPTR_NODE_TOKEN &&
+		rot->token == sub->token) {
 
-		struct optr_node *grand = sub->children[i];
-		if (sub->type == OPTR_NODE_TOKEN) {
+		if (rot->token == TOK_TIMES_HEX)
+			/* initialize by the sign of multiplication node bing destroyed */
+			rot->sign *= sub->sign;
+
+		for (int i = 0; i < sub->n_children; i++) {
+			if (rot->n_children + 1 >= MAX_OPTR_NUM_CHILDREN)
+				break;
+
+			struct optr_node *grand = sub->children[i];
 			switch (sub->token) {
 			case TOK_ADD_HEX:
 				/* distribute sign */
@@ -152,20 +159,31 @@ struct optr_node *optr_pass_children(struct optr_node *rot, struct optr_node *su
 				break;
 			case TOK_TIMES_HEX:
 				/* reduce sign */
-				rot->sign *= (sub->sign * grand->sign);
+				rot->sign *= grand->sign;
 				grand->sign = 1.f;
 				break;
 			default:
 				;
 			}
+
+			/* pass grand-child */
+			optr_attach(rot, grand);
 		}
 
+		/* release single `sub' operator node */
+		sub->n_children = 0;
+		optr_release(sub);
+
+	} else {
 		/* pass child */
-		rot->children[rot->n_children ++] = grand;
+		if (rot->token == TOK_TIMES_HEX && sub->sign < 0) {
+			rot->sign *= sub->sign;
+			sub->sign = 1.f;
+		}
+
+		optr_attach(rot, sub);
 	}
 
-	sub->n_children = 0;
-	optr_release(sub);
 	return rot;
 }
 

@@ -8,12 +8,7 @@ int yyerror(void*, struct optr_node**, const char*);
 wchar_t mbc2wc(const char*);
 
 #define COMM_ATTACH(_root, _child) \
-	if (NULL != _child) { \
-		if (_child->token == _root->token) \
-			optr_pass_children(_root, _child); \
-		else \
-			optr_attach(_root, _child); \
-	} do {} while (0)
+	optr_pass_children(_root, _child)
 %}
 
 %union {
