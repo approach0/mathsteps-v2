@@ -1,9 +1,9 @@
-MHOOK_FLAGS := -Wl,--wrap,malloc -Wl,--wrap,free \
+MHOOK_LDFLAGS := -Wl,--wrap,malloc -Wl,--wrap,free \
 -Wl,--wrap,realloc -Wl,--wrap,calloc -Wl,--wrap,strdup
 
 CC := gcc
-CFLAGS := $(MHOOK_FLAGS)
-LDFLAGS := -lfl -lpthread -lm -latomic
+CFLAGS :=
+LDFLAGS := $(MHOOK_LDFLAGS) -lfl -lpthread -lm -latomic
 
 TEST_SRCS := $(wildcard test-*.c)
 TEST_BINS := $(TEST_SRCS:.c=.out)
