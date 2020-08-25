@@ -127,6 +127,28 @@ struct optr_node **test_alpha_equiv(struct optr_node *e1, struct optr_node *e2)
 	}
 }
 
+void alpha_map_print(struct optr_node *map[])
+{
+	for (int i = 0; i < 26 * 2 * 2; i++) {
+		struct optr_node *nd;
+		if ((nd = map[i])) {
+			printf("[%d] => \n", i);
+			optr_print(nd);
+		}
+	}
+}
+
+void alpha_map_free(struct optr_node *map[])
+{
+	for (int i = 0; i < 26 * 2 * 2; i++) {
+		struct optr_node *nd;
+		if ((nd = map[i]) && i >= 26 * 2)
+			free(map[i]);
+	}
+
+	free(map);
+}
+
 int main()
 {
 	void *scanner = parser_new_scanner();
@@ -145,19 +167,8 @@ int main()
 		struct optr_node **map = test_alpha_equiv(root1, root2);
 		printf("alpha equiv = %d\n", (map != NULL));
 
-#define DEBUG
-		for (int i = 0; i < 26 * 2 * 2; i++) {
-			struct optr_node *nd;
-			if ((nd = map[i])) {
-#ifdef DEBUG
-				printf("[%d] => \n", i);
-				optr_print(nd);
-#endif
-				if (i >= 26 * 2)
-					free(map[i]);
-			}
-		}
-		free(map);
+		alpha_map_print(map);
+		alpha_map_free(map);
 
 		optr_release(root1);
 		optr_release(root2);
