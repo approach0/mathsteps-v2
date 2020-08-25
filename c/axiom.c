@@ -58,6 +58,30 @@ int alphabet_order(int var, int is_wildcards)
 	}
 }
 
+struct optr_node *shallow_copy(struct optr_node *src)
+{
+	struct optr_node *dest = optr_alloc(OPTR_NODE_TOKEN);
+	*dest = *src;
+	dest->n_children = 0;
+	return dest;
+}
+
+struct optr_node *deep_copy(struct optr_node *src)
+{
+	if (src->type == OPTR_NODE_VAR || src->type == OPTR_NODE_NUM)
+		return shallow_copy(src);
+
+	struct optr_node *copy_root = shallow_copy(src);
+	for (int i = 0; i < src->n_children; i++) {
+		struct optr_node *child = src->children[i];
+		struct optr_node *copy_child = deep_copy(child);
+
+		optr_attach(copy_root, copy_child);
+	}
+
+	return copy_root;
+}
+
 int __test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, struct optr_node *map[])
 {
 	int   type1 = e1->type, type2 = e2->type;
@@ -95,9 +119,7 @@ int __test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, struct optr_n
 		if (c1->is_wildcards) {
 			int key = alphabet_order(c1->var, 1);
 			/* allocate placeholder operator */
-			struct optr_node *placeholder = optr_alloc(OPTR_NODE_TOKEN);
-			*placeholder = *e2;
-			placeholder->n_children = 0;
+			struct optr_node *placeholder = shallow_copy(e2);
 
 			for (int j = i; j < e2->n_children; j++)
 				optr_attach(placeholder, e2->children[j]);
@@ -154,16 +176,17 @@ struct optr_node *rewrite_by_alpha(struct optr_node *root, struct optr_node *map
 	float sign = root->sign;
 	if (root->type == OPTR_NODE_VAR) {
 		int key = alphabet_order(root->var, root->is_wildcards);
-		struct optr_node *subst = map[key];
+		struct optr_node *subst = map[key] ? map[key] : root;
+		subst = deep_copy(subst);
 
 		subst->sign *= sign;
 		return subst;
 
 	} else if (root->type == OPTR_NODE_NUM) {
-		return root;
+		return shallow_copy(root);
 	}
 
-	struct optr_node *new_tr = optr_alloc(OPTR_NODE_TOKEN);
+	struct optr_node *new_tr = shallow_copy(root);
 	for (int i = 0; i < root->n_children; i++) {
 		struct optr_node *child = root->children[i];
 		struct optr_node *subst = rewrite_by_alpha(child, map);
@@ -194,10 +217,15 @@ int main()
 		printf("alpha equiv = %d\n", (map != NULL));
 
 		alpha_map_print(map);
+
+		struct optr_node *root3 = rewrite_by_alpha(root1, map);
+		optr_print(root3);
+
 		alpha_map_free(map);
 
 		optr_release(root1);
 		optr_release(root2);
+		optr_release(root3);
 	}
 
 	parser_dele_scanner(scanner);

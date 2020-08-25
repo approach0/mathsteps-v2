@@ -49,10 +49,10 @@ void __print_node(struct optr_node *nd)
 
 	switch (nd->type) {
 	case OPTR_NODE_VAR:
-		printf("%c", nd->var);
+		printf(" %c", nd->var);
 		break;
 	case OPTR_NODE_NUM:
-		printf("%g", nd->num);
+		printf(" %g", nd->num);
 		break;
 	case OPTR_NODE_TOKEN:
 		src[0] = nd->token;
