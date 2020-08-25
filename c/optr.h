@@ -1,3 +1,5 @@
+#pragma once
+
 #define MAX_OPTR_NUM_CHILDREN 128
 #define MAX_OPTR_PRINT_DEPTH  128
 

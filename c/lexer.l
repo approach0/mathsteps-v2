@@ -5,6 +5,8 @@
 #include "y.tab.h"
 #include "optr.h"
 
+int fileno(FILE *stream); /* for fileno() in C-std11 used by lex.yy.c */
+
 #define RET_NUM(_n) \
 	yylval->nd = optr_alloc(OPTR_NODE_NUM); \
 	yylval->nd->num = (_n >= 0) ? _n : -_n; \

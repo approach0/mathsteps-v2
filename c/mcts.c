@@ -1,68 +1,16 @@
 #include <pthread.h>
 #include <stdint.h>
-#include <stdatomic.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <float.h>
 #include <math.h>
-#include <time.h>
-
-#include "mhook.h"
+#include "mcts.h"
 
 #define PTR_CAST(_to, _type, _from) \
 	_type* _to = (_type*)(_from)
 
-struct expr_tr {
-	float val;
-};
-
-struct expr_tr **__possible_steps__(struct expr_tr *expr_tr, int *n_children)
-{
-	int c = (float)(expr_tr->val);
-	*n_children = (c % 5) + 1;
-
-	struct expr_tr **ret = malloc(*n_children * sizeof(uintptr_t));
-	for (int i = 0; i < *n_children; i++) {
-		ret[i] = malloc(sizeof(struct expr_tr));
-		ret[i]->val = (float)((c + i) % 4 + 1.f) + rand() / (float)RAND_MAX;
-	}
-
-	return ret;
-}
-
-void __print_expr__(struct expr_tr *expr_tr)
-{
-	printf("%.2f\n", expr_tr->val);
-}
-
 /*
  * MCTS parallel sampling
  */
-struct attach {
-	int             n_children;
-	struct state   *children;
-};
-
-struct state {
-	_Atomic float   q;
-	_Atomic float   n;
-
-	struct expr_tr *expr_tr;
-	struct state   *father;
-
-	_Atomic struct attach attach;
-};
-
-struct sample_args {
-	struct state *root;
-	int n_samples;
-	int n_threads;
-	int worker_ID;
-	int debug;
-	int max_depth;
-};
-
 void state_init(struct state *state, struct expr_tr *expr_tr)
 {
 	state->q = ATOMIC_VAR_INIT(0.f);
@@ -281,21 +229,4 @@ void mcts(struct state *root, int n_threads, int sample_times, int maxsteps, int
 		struct attach at = atomic_load(&cur->attach);
 		cur = &at.children[best_idx];
 	}
-}
-
-int main()
-{
-	srand(time(NULL));
-
-	struct expr_tr *root_tr = malloc(sizeof(struct expr_tr));
-	struct state root;
-	root_tr->val = 123.f;
-	state_init(&root, root_tr);
-
-	const int n_processors = sysconf(_SC_NPROCESSORS_ONLN);
-	int n_threads = n_processors - 1;
-	mcts(&root, n_threads, 440, 10, 4);
-
-	state_free(&root);
-	mhook_print_unfree();
 }

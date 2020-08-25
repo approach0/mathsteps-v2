@@ -1,3 +1,4 @@
+#pragma once
 #include "optr.h"
 
 void             *parser_new_scanner();
