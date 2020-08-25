@@ -132,9 +132,9 @@ void optr_print(struct optr_node *root)
  *  Otherwise, attach children to root (only reduce signs).
 
  *      root (+)
- *    /   ^           <—— *
+ *    /   ^           <——-.
  *  ...  children (+)     |
- *        |               *
+ *        |               .
  *       grand-children _/
  */
 struct optr_node *optr_pass_children(struct optr_node *rot, struct optr_node *sub)

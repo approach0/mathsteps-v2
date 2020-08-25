@@ -191,7 +191,7 @@ struct optr_node *rewrite_by_alpha(struct optr_node *root, struct optr_node *map
 		struct optr_node *child = root->children[i];
 		struct optr_node *subst = rewrite_by_alpha(child, map);
 
-		optr_attach(new_tr, subst);
+		optr_pass_children(new_tr, subst);
 	}
 
 	return new_tr;
