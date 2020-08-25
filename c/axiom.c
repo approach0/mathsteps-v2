@@ -58,7 +58,7 @@ int alphabet_order(int var, int is_wildcards)
 	}
 }
 
-int __test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, struct optr_node *map)
+int __test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, struct optr_node *map[])
 {
 	float type1 = e1->type, type2 = e2->type;
 	float sign1 = e1->sign, sign2 = e2->sign;
@@ -107,7 +107,20 @@ int __test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, struct optr_n
 int test_alpha_equiv(struct optr_node *e1, struct optr_node *e2)
 {
 	struct optr_node *map[26 * 2 * 2] = {0};
-	return __test_alpha_equiv(e1, e2, map);
+
+	int is_equiv = __test_alpha_equiv(e1, e2, map);
+
+#define DEBUG
+#ifdef DEBUG
+	for (int i = 0; i < 26 * 2 * 2; i++) {
+		struct optr_node *nd;
+		if ((nd = map[i])) {
+			printf("[%d] => \n", i);
+			optr_print(nd);
+		}
+	}
+#endif
+	return is_equiv;
 }
 
 int main()
@@ -115,15 +128,18 @@ int main()
 	void *scanner = parser_new_scanner();
 
 	struct optr_node *root1, *root2;
-	root1 = parser_parse(scanner, "a + 1 + 0");
-	root2 = parser_parse(scanner, "a + b + 0");
+	root1 = parser_parse(scanner, "a + b + 0");
+	root2 = parser_parse(scanner, "a + 1 + 0");
 
 	if (root1 && root2) {
 		optr_print(root1);
 		optr_print(root2);
 
-		int res = test_optr_identical(root1, root2);
-		printf("res=%d\n", res);
+		//int res = test_optr_identical(root1, root2);
+		//printf("res=%d\n", res);
+
+		int alpha = test_alpha_equiv(root1, root2);
+		printf("alpha = %d\n", alpha);
 
 		optr_release(root1);
 		optr_release(root2);
