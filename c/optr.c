@@ -60,6 +60,9 @@ void __print_node(struct optr_node *nd)
 		wcstombs(dst, src, W);
 		printf("`%s'", dst);
 		break;
+	default:
+		fprintf(stderr, "invalid node type\n");
+		abort();
 	}
 
 	if (nd->is_wildcards)

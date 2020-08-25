@@ -196,7 +196,7 @@ atom: NUM {
 | _L_BRACE sum _R_BRACE {
 	$$ = $2;
 }
-| _STAR _L_BRACE NUM _R_BRACE {
+| _STAR _L_BRACE VAR _R_BRACE {
 	$3->is_wildcards = 1;
 	$$ = $3;
 }
