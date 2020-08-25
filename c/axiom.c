@@ -60,7 +60,7 @@ int alphabet_order(int var, int is_wildcards)
 
 int __test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, struct optr_node *map[])
 {
-	float type1 = e1->type, type2 = e2->type;
+	int   type1 = e1->type, type2 = e2->type;
 	float sign1 = e1->sign, sign2 = e2->sign;
 
 	if (type1 == OPTR_NODE_NUM) {
@@ -148,6 +148,32 @@ void alpha_map_free(struct optr_node *map[])
 
 	free(map);
 }
+
+struct optr_node *rewrite_by_alpha(struct optr_node *root, struct optr_node *map[])
+{
+	float sign = root->sign;
+	if (root->type == OPTR_NODE_VAR) {
+		int key = alphabet_order(root->var, root->is_wildcards);
+		struct optr_node *subst = map[key];
+
+		subst->sign *= sign;
+		return subst;
+
+	} else if (root->type == OPTR_NODE_NUM) {
+		return root;
+	}
+
+	struct optr_node *new_tr = optr_alloc(OPTR_NODE_TOKEN);
+	for (int i = 0; i < root->n_children; i++) {
+		struct optr_node *child = root->children[i];
+		struct optr_node *subst = rewrite_by_alpha(child, map);
+
+		optr_attach(new_tr, subst);
+	}
+
+	return new_tr;
+}
+
 
 int main()
 {
