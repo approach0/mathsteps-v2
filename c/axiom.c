@@ -93,6 +93,16 @@ int __test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, struct optr_n
 		}
 
 		if (c1->is_wildcards) {
+			int key = alphabet_order(c1->var, 1);
+			/* allocate placeholder operator */
+			struct optr_node *placeholder = optr_alloc(OPTR_NODE_TOKEN);
+			*placeholder = *e2;
+			placeholder->n_children = 0;
+
+			for (int j = i; j < e2->n_children; j++)
+				optr_attach(placeholder, e2->children[j]);
+
+			map[key] = placeholder;
 			length_unmatch = 0;
 			break;
 		}
@@ -111,15 +121,18 @@ int test_alpha_equiv(struct optr_node *e1, struct optr_node *e2)
 	int is_equiv = __test_alpha_equiv(e1, e2, map);
 
 #define DEBUG
-#ifdef DEBUG
 	for (int i = 0; i < 26 * 2 * 2; i++) {
 		struct optr_node *nd;
+#ifdef DEBUG
 		if ((nd = map[i])) {
 			printf("[%d] => \n", i);
 			optr_print(nd);
 		}
-	}
 #endif
+
+		if (i >= 26 * 2)
+			free(map[i]);
+	}
 	return is_equiv;
 }
 
@@ -128,8 +141,8 @@ int main()
 	void *scanner = parser_new_scanner();
 
 	struct optr_node *root1, *root2;
-	root1 = parser_parse(scanner, "a + b + 0");
-	root2 = parser_parse(scanner, "a + 1 + 0");
+	root1 = parser_parse(scanner, "a + b + b + *{z}");
+	root2 = parser_parse(scanner, "a + \\frac{1}{2} + \\frac{1}{2} + a + b + c");
 
 	if (root1 && root2) {
 		optr_print(root1);
