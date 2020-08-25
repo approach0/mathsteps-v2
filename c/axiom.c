@@ -207,7 +207,9 @@ int main()
 	root2 = parser_parse(scanner, "a + \\frac{1}{2} + \\frac{1}{2} + a + b + c");
 
 	if (root1 && root2) {
+		printf("tree1:\n");
 		optr_print(root1);
+		printf("tree2:\n");
 		optr_print(root2);
 
 		//int res = test_optr_identical(root1, root2);
@@ -219,6 +221,7 @@ int main()
 		alpha_map_print(map);
 
 		struct optr_node *root3 = rewrite_by_alpha(root1, map);
+		printf("tree3:\n");
 		optr_print(root3);
 
 		alpha_map_free(map);
