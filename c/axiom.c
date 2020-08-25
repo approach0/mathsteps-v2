@@ -114,26 +114,17 @@ int __test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, struct optr_n
 	return !length_unmatch;
 }
 
-int test_alpha_equiv(struct optr_node *e1, struct optr_node *e2)
+struct optr_node **test_alpha_equiv(struct optr_node *e1, struct optr_node *e2)
 {
-	struct optr_node *map[26 * 2 * 2] = {0};
+	struct optr_node **map = calloc(26 * 2 * 2, sizeof(struct optr_node*));
 
 	int is_equiv = __test_alpha_equiv(e1, e2, map);
-
-#define DEBUG
-	for (int i = 0; i < 26 * 2 * 2; i++) {
-		struct optr_node *nd;
-#ifdef DEBUG
-		if ((nd = map[i])) {
-			printf("[%d] => \n", i);
-			optr_print(nd);
-		}
-#endif
-
-		if (i >= 26 * 2)
-			free(map[i]);
+	if (is_equiv) {
+		return map;
+	} else {
+		free(map);
+		return NULL;
 	}
-	return is_equiv;
 }
 
 int main()
@@ -151,8 +142,22 @@ int main()
 		//int res = test_optr_identical(root1, root2);
 		//printf("res=%d\n", res);
 
-		int alpha = test_alpha_equiv(root1, root2);
-		printf("alpha = %d\n", alpha);
+		struct optr_node **map = test_alpha_equiv(root1, root2);
+		printf("alpha equiv = %d\n", (map != NULL));
+
+#define DEBUG
+		for (int i = 0; i < 26 * 2 * 2; i++) {
+			struct optr_node *nd;
+			if ((nd = map[i])) {
+#ifdef DEBUG
+				printf("[%d] => \n", i);
+				optr_print(nd);
+#endif
+				if (i >= 26 * 2)
+					free(map[i]);
+			}
+		}
+		free(map);
 
 		optr_release(root1);
 		optr_release(root2);
