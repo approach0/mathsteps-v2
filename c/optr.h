@@ -10,6 +10,8 @@ enum optr_node_type {
 	OPTR_NODE_TOKEN
 };
 
+#include <wchar.h>
+
 struct optr_node {
 	int type;
 	union {

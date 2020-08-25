@@ -29,7 +29,7 @@ void parser_dele_scanner(void *scanner)
 	yylex_destroy(scanner);
 }
 
-int main()
+int parser_test()
 {
 	struct optr_node *root;
 	void *scanner = parser_new_scanner();
