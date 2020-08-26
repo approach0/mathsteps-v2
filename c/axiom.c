@@ -2,33 +2,69 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "parser.h"
 #include "axiom.h"
 
+char *_ltrim(char *s)
+{
+    while(isspace(*s)) s++;
+    return s;
+}
+
+char *_rtrim(char *s)
+{
+    char* back = s + strlen(s);
+    while(isspace(*--back));
+    *(back+1) = '\0';
+    return s;
+}
+
+char *trim(char *s)
+{
+    return _rtrim(_ltrim(s));
+}
+
+int cnt_outputs(char *s)
+{
+	int count = 0;
+	while ((s = strchr(s, '\n')) != NULL) {
+		count++;
+		s++;
+	}
+	return count + 1;
+}
+
 struct Axiom *axiom_new(const char *name)
 {
-	struct Axiom *a = malloc(sizeof(struct Axiom));
+	struct Axiom *a = calloc(1, sizeof(struct Axiom));
 	strcpy(a->name, name);
-
-	a->n_rules = 0;
-	a->n_tests = 0;
-
-	a->is_root_sign_reduce = 0;
-	a->is_recursive_apply = 0;
-	a->is_allow_complication = 0;
-	a->is_strict_simplify = 0;
-	a->is_disabled = 0;
-
 	a->max_output_num = 10;
+}
+
+void _free_rule(struct Rule *rule)
+{
+	char *pattern = rule->pattern;
+
+	if (rule->pattern_cache) {
+		optr_release(rule->pattern_cache);
+		rule->pattern_cache = NULL;
+	}
+
+	for (int j = 0; j < MAX_RULE_OUTPUTS; j++) {
+		if (rule->output_cache[j]) {
+			optr_release(rule->output_cache[j]);
+			rule->output_cache[j] = NULL;
+		}
+	}
 }
 
 void axiom_free(struct Axiom *a)
 {
 	for (int i = 0; i < a->n_rules; i++) {
 		struct Rule *rule = &a->rules[i];
-		optr_release(rule->pattern_cache);
-		optr_release(rule->output_cache[0]);
+		_free_rule(rule);
 	}
 	free(a);
 }
@@ -39,42 +75,54 @@ struct Axiom *axiom_add_static_rule(
 	const char *output,
 	void *dynamic_procedure)
 {
+	struct optr_node *root = NULL;
 	int i = a->n_rules ++;
-	strcpy(a->rules[i].pattern, pattern);
-	strcpy(a->rules[i].output, output);
+	struct Rule *rule = &a->rules[i];
 
+	/* copy pattern/output string */
+	strcpy(rule->pattern, pattern);
+	strcpy(rule->output, output);
+
+	/* allocate scanner */
 	void *scanner = parser_new_scanner();
 	assert(scanner != NULL);
 
-	struct optr_node *root_pattern = NULL;
-	struct optr_node *root_output = NULL;
-
-	root_pattern = parser_parse(scanner, pattern);
-	if (NULL == root_pattern) {
+	/* create pattern cache */
+	root = parser_parse(scanner, pattern);
+	if (NULL == root) {
 		fprintf(stderr, "cannot add rule due to parser error.\n");
 
-		optr_release(root_pattern);
-		optr_release(root_output);
+		_free_rule(rule);
 		a->n_rules -= 1;
 
 		goto skip;
+	} else {
+		rule->pattern_cache = root;
 	}
 
-	root_output = parser_parse(scanner, output);
-	if (NULL == root_output) {
-		fprintf(stderr, "cannot add rule due to parser error.\n");
+	/* create output cache */
+	char *all, *now, *field;
+	int cnt = 0;
+	all = now = strdup(output);
+	while ((field = strsep(&now, "\n"))) {
+		char *subout = trim(field);
+		root = parser_parse(scanner, subout);
+		if (NULL == root) {
+			fprintf(stderr, "cannot add rule due to parser error: %s\n", subout);
 
-		optr_release(root_pattern);
-		optr_release(root_output);
-		a->n_rules -= 1;
+			_free_rule(rule);
+			a->n_rules -= 1;
 
-		goto skip;
+			free(all);
+			goto skip;
+		} else {
+			rule->output_cache[cnt++] = root;
+		}
 	}
-
-	a->rules[i].pattern_cache = root_pattern;
-	a->rules[i].output_cache[0] = root_output;
+	free(all);
 
 skip:
+	/* de-allocate scanner */
 	parser_dele_scanner(scanner);
 	return a;
 }
@@ -84,13 +132,17 @@ void axiom_print(struct Axiom *a)
 	printf("Axiom `%s':\n", a->name);
 	for (int i = 0; i < a->n_rules; i++) {
 		struct Rule *rule = &a->rules[i];
-		printf("#%d rule:\n", i);
+		printf("--- #%d rule ---\n", i);
 
-		printf("[pattern] %s\n", rule->pattern);
+		printf("[pattern]\n%s\n", rule->pattern);
 		optr_print(rule->pattern_cache);
 
-		printf("[output] %s\n", rule->output);
-		optr_print(rule->output_cache[0]);
+		printf("[output]\n%s\n", rule->output);
+		for (int j = 0; j < MAX_RULE_OUTPUTS; j++) {
+			if (rule->output_cache[j]) {
+				printf("{%d}:\n", j);
+				optr_print(rule->output_cache[j]);
+			}
+		}
 	}
-	printf("\n");
 }
