@@ -3,12 +3,13 @@ MHOOK_LDFLAGS := -Wl,--wrap,malloc -Wl,--wrap,free \
 
 CC := gcc
 CFLAGS :=
-LDFLAGS := $(MHOOK_LDFLAGS) -lfl -lpthread -lm -latomic
+LDFLAGS := $(MHOOK_LDFLAGS)
+LDLIBS := -lfl -lpthread -lm -latomic
 
 TEST_SRCS := $(wildcard test-*.c)
 TEST_BINS := $(TEST_SRCS:.c=.out)
 
-ALL_OBJS := mhook.o optr.o lex.yy.o y.tab.o parser.o axiom.o mcts.o
+ALL_OBJS := mhook.o optr.o lex.yy.o y.tab.o parser.o alpha-equiv.o mcts.o
 ALL_BINS := $(TEST_BINS)
 
 all: $(ALL_OBJS) $(ALL_BINS)
@@ -24,7 +25,7 @@ lex.yy.c  lex.yy.h:
 	$(CC) -std=c11 -c $(CFLAGS) $(filter %.c, $^) -o $@
 
 %.out: %.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $(ALL_OBJS) $(filter %.o, $^) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(ALL_OBJS) $(filter %.o, $^) $(LDLIBS) -o $@
 
 clean:
 	rm -f *.o *.out

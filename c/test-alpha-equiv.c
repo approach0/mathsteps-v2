@@ -1,6 +1,6 @@
 #include "mhook.h"
 #include "parser.h"
-#include "axiom.h"
+#include "alpha-equiv.h"
 
 int main()
 {
