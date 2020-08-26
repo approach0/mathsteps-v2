@@ -10,6 +10,7 @@ struct optr_node *optr_alloc(int type)
 	nd->type = type;
 	nd->sign = +1.f;
 	nd->is_wildcards = 0;
+	nd->pound_ID = 0;
 	nd->n_children = 0;
 	return nd;
 }
@@ -69,6 +70,8 @@ void __print_node(struct optr_node *nd)
 
 	if (nd->is_wildcards)
 		printf(" (wildcards)");
+	if (nd->pound_ID)
+		printf(" (pound sign #%d)", nd->pound_ID);
 
 	printf("\n");
 }

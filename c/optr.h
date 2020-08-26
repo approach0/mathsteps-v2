@@ -22,7 +22,9 @@ struct optr_node {
 		wchar_t  token;
 	};
 	float sign;
+
 	int is_wildcards;
+	int pound_ID;
 
 	int n_children;
 	struct optr_node *children[MAX_OPTR_NUM_CHILDREN];

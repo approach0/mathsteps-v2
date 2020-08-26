@@ -1,10 +1,14 @@
 %{
+#define YY_DECL int yylex(YYSTYPE *yylval_param, void *yyscanner, int *pound_cnt)
+
 #include "y.tab.h"
 #include "lex.yy.h"
 
+int yylex(YYSTYPE*, void*, int*);
+
 #include "optr.h"
 
-int yyerror(void*, struct optr_node**, const char*);
+int yyerror(void*, struct optr_node**, int *, const char*);
 wchar_t mbc2wc(const char*);
 
 #define COMM_ATTACH(_root, _child) \
@@ -13,6 +17,7 @@ wchar_t mbc2wc(const char*);
 
 %union {
 	struct optr_node *nd;
+	int pound_cnt;
 }
 
 %destructor {
@@ -26,12 +31,15 @@ wchar_t mbc2wc(const char*);
 %define parse.error verbose
 
 %lex-param {void *scanner}
+%lex-param {int *pound_cnt}
+
 %parse-param {void *scanner}
 %parse-param {struct optr_node **root}
+%parse-param {int *pound_cnt}
 /*
- * Above statements will change yyparse() and yylex() from no arguments to these:
- * yyparse(yyscan_t *scanner)
- * yylex(YYSTYPE *yylval_param, yyscan_t yyscanner)
+ * Above statements will change yylex() and yyparse() from no arguments to these:
+ * yylex(YYSTYPE *yylval_param, yyscan_t yyscanner, int *pound_cnt)
+ * yyparse(yyscan_t *scanner, struct optr_node *root, int *pound_cnt)
  */
 
 %token _EOL
@@ -40,6 +48,7 @@ wchar_t mbc2wc(const char*);
 %token _EQ
 %token _ADD
 %token _MINUS
+%token <pound_cnt> POUND
 %token _DIV
 %right _SUP _SUB
 %token _TIMES _CDOT
@@ -55,7 +64,7 @@ wchar_t mbc2wc(const char*);
 %type <nd> atom
 
 %left _NULL_REDUCE
-%left _ADD _MINUS
+%left _ADD _MINUS POUND
 %left _TIMES _CDOT
 
 %right _FRAC
@@ -103,6 +112,20 @@ sum: %prec _NULL_REDUCE {
 }
 | sum _MINUS term {
 	if ($3) $3->sign *= -1.f;
+
+	if (NULL != $1) {
+		struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
+		op->token = mbc2wc("+");
+
+		COMM_ATTACH(op, $1);
+		COMM_ATTACH(op, $3);
+		$$ = op;
+	} else {
+		$$ = $3;
+	}
+}
+| sum POUND term {
+	if ($3) $3->pound_ID = $2;
 
 	if (NULL != $1) {
 		struct optr_node *op = optr_alloc(OPTR_NODE_TOKEN);
@@ -221,7 +244,7 @@ atom: NUM {
 ;
 %%
 
-int yyerror(void *scanner, struct optr_node **root, const char *msg)
+int yyerror(void *scanner, struct optr_node **root, int *_, const char *msg)
 {
 	fprintf(stderr, "[Error] %s\n", msg);
 	*root = NULL;

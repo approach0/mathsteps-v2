@@ -6,7 +6,7 @@
 int test_node_identical(struct optr_node *n1, struct optr_node *n2)
 {
 	if (n1->type != n2->type ||
-	    n1->sign != n2->sign)
+	    (n1->sign != n2->sign && n1->pound_ID > 0 && n2->pound_ID > 0))
 		return 0;
 
 	switch (n1->type) {
@@ -86,6 +86,7 @@ int __test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, struct optr_n
 	int   type1 = e1->type, type2 = e2->type;
 	float sign1 = e1->sign, sign2 = e2->sign;
 
+
 	if (type1 == OPTR_NODE_NUM) {
 		return test_node_identical(e1, e2);
 
@@ -101,6 +102,9 @@ int __test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, struct optr_n
 			map[key] = e2;
 			return 1;
 		}
+
+	} else if (!test_node_identical(e1, e2)) {
+		return 0;
 	}
 
 	int length_unmatch = 0;
@@ -150,6 +154,9 @@ struct optr_node **test_alpha_equiv(struct optr_node *e1, struct optr_node *e2)
 
 void alpha_map_print(struct optr_node *map[])
 {
+	if (NULL == map)
+		return;
+
 	for (int i = 0; i < 26 * 2 * 2; i++) {
 		struct optr_node *nd;
 		if ((nd = map[i])) {
@@ -161,6 +168,9 @@ void alpha_map_print(struct optr_node *map[])
 
 void alpha_map_free(struct optr_node *map[])
 {
+	if (NULL == map)
+		return;
+
 	for (int i = 0; i < 26 * 2 * 2; i++) {
 		struct optr_node *nd;
 		if ((nd = map[i]) && i >= 26 * 2)
@@ -172,6 +182,9 @@ void alpha_map_free(struct optr_node *map[])
 
 struct optr_node *rewrite_by_alpha(struct optr_node *root, struct optr_node *map[])
 {
+	if (NULL == map)
+		return deep_copy(root);
+
 	float sign = root->sign;
 	if (root->type == OPTR_NODE_VAR) {
 		int key = alphabet_order(root->var, root->is_wildcards);

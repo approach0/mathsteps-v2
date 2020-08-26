@@ -36,7 +36,7 @@ struct Axiom {
 };
 
 struct Axiom *axiom_new(const char*);
-void axiom_free(struct Axiom*);
+void          axiom_free(struct Axiom*);
 
 struct Axiom *axiom_add_static_rule(struct Axiom*, const char*, const char*, void*);
-void axiom_print(struct Axiom*);
+void          axiom_print(struct Axiom*);

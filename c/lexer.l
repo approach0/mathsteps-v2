@@ -2,6 +2,8 @@
 %option header-file="lex.yy.h"
 
 %{
+#define YY_DECL int yylex(YYSTYPE *yylval_param, void *yyscanner, int *pound_cnt)
+
 #include "y.tab.h"
 #include "optr.h"
 
@@ -36,6 +38,7 @@ int fileno(FILE *stream); /* for fileno() in C-std11 used by lex.yy.c */
 \\sqrt         { return _SQRT; }
 
 "*"            { return _STAR; }
+"#"            { yylval->pound_cnt = ++(*pound_cnt); return POUND; }
 
 "("            { return _L_PARENTHESIS; }
 ")"            { return _R_PARENTHESIS; }

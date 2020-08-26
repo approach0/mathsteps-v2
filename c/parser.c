@@ -17,7 +17,8 @@ struct optr_node *parser_parse(void *scanner, const char *tex)
 	YY_BUFFER_STATE buf = yy_scan_string(tex, scanner);
 
 	struct optr_node *root;
-	yyparse(scanner, &root);
+	int pound_cnt = 0;
+	yyparse(scanner, &root, &pound_cnt);
 
 	yy_delete_buffer(buf, scanner);
 	return root;

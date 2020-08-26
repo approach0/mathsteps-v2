@@ -18,7 +18,8 @@ int main()
 	//char test[] = "12 + x *{12}";
 	//char test[] = "\\sqrt 12 + 3";
 	//char test[] = "\\sqrt 12 + 3";
-	char test[] = "\\left | 1 - 2 \\right|";
+	//char test[] = "\\left | 1 - 2 \\right|";
+	char test[] = "# \\frac{a}{#2} # x + 1 - 2";
 
 	printf("TeX: %s\n", test);
 	root = parser_parse(scanner, test);
