@@ -16,6 +16,9 @@ struct optr_node *optr_alloc(int type)
 
 void optr_release(struct optr_node *root)
 {
+	if (root == NULL)
+		return;
+
 	for (int i = 0; i < root->n_children; i++) {
 		struct optr_node *c = root->children[i];
 		optr_release(c);

@@ -24,8 +24,8 @@ lex.yy.c  lex.yy.h:
 %.o: %.c y.tab.h lex.yy.h
 	$(CC) -std=c11 -c $(CFLAGS) $(filter %.c, $^) -o $@
 
-%.out: %.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $(ALL_OBJS) $(filter %.o, $^) $(LDLIBS) -o $@
+%.out: $(ALL_OBJS) %.o
+	$(CC) $(CFLAGS) $(LDFLAGS) $(filter %.o, $^) $(LDLIBS) -o $@
 
 clean:
 	rm -f *.o *.out
