@@ -22,7 +22,7 @@ lex.yy.c  lex.yy.h:
 	flex lexer.l
 
 %.o: %.c y.tab.h lex.yy.h
-	$(CC) -std=c11 -c $(CFLAGS) $(filter %.c, $^) -o $@
+	$(CC) -std=gnu11 -c $(CFLAGS) $(filter %.c, $^) -o $@
 
 %.out: $(ALL_OBJS) %.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(filter %.o, $^) $(LDLIBS) -o $@

@@ -2,6 +2,7 @@
 #define MAX_RULE_NAME_LEN  128
 #define MAX_RULE_STR_LEN   1024
 #define MAX_AXIOM_RULES    32
+#define MAX_RULE_OUTPUTS   3
 
 #include "optr.h"
 
@@ -9,7 +10,7 @@ struct Rule {
 	char pattern[MAX_RULE_STR_LEN];
 	char output[MAX_RULE_STR_LEN];
 
-	struct optr_node *pattern_cache, *output_cache;
+	struct optr_node *pattern_cache, *output_cache[MAX_RULE_OUTPUTS];
 	float             signs_cache[MAX_RULE_STR_LEN];
 
 	void *dynamic_output;

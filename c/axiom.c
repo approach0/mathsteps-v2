@@ -28,7 +28,7 @@ void axiom_free(struct Axiom *a)
 	for (int i = 0; i < a->n_rules; i++) {
 		struct Rule *rule = &a->rules[i];
 		optr_release(rule->pattern_cache);
-		optr_release(rule->output_cache);
+		optr_release(rule->output_cache[0]);
 	}
 	free(a);
 }
@@ -72,7 +72,7 @@ struct Axiom *axiom_add_static_rule(
 	}
 
 	a->rules[i].pattern_cache = root_pattern;
-	a->rules[i].output_cache = root_output;
+	a->rules[i].output_cache[0] = root_output;
 
 skip:
 	parser_dele_scanner(scanner);
@@ -90,7 +90,7 @@ void axiom_print(struct Axiom *a)
 		optr_print(rule->pattern_cache);
 
 		printf("[output] %s\n", rule->output);
-		optr_print(rule->output_cache);
+		optr_print(rule->output_cache[0]);
 	}
 	printf("\n");
 }
