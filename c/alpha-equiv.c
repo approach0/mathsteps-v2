@@ -3,29 +3,39 @@
 
 #include "parser.h"
 
-int test_node_identical(struct optr_node *n1, struct optr_node *n2)
+int test_node_identical(struct optr_node *n1, struct optr_node *n2, float signs[])
 {
 	if (n1->type != n2->type ||
-	    (n1->sign != n2->sign && n1->pound_ID > 0 && n2->pound_ID > 0))
+	    (n1->sign != n2->sign && n1->pound_ID == 0))
 		return 0;
 
+	int is_match = 0;
 	switch (n1->type) {
 	case OPTR_NODE_VAR:
-		return n1->var == n2->var;
+		is_match = (n1->var == n2->var);
+		break;
 	case OPTR_NODE_NUM:
-		return n1->num == n2->num;
+		is_match = (n1->num == n2->num);
+		break;
 	case OPTR_NODE_TOKEN:
-		return n1->token == n2->token;
+		is_match = (n1->token == n2->token);
+		break;
 	default:
 		fprintf(stderr, "invalid node type\n");
 		abort();
 	}
-	return 0;
+
+	if (is_match) {
+		signs[n1->pound_ID] = n2->sign;
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
-int test_optr_identical(struct optr_node *e1, struct optr_node *e2)
+int test_optr_identical(struct optr_node *e1, struct optr_node *e2, float signs[])
 {
-	if (!test_node_identical(e1, e2))
+	if (!test_node_identical(e1, e2, signs))
 		return 0;
 	else if (e1->n_children != e2->n_children)
 		return 0;
@@ -34,7 +44,7 @@ int test_optr_identical(struct optr_node *e1, struct optr_node *e2)
 		struct optr_node *c1, *c2;
 		c1 = e1->children[i];
 		c2 = e2->children[i];
-		if (!test_optr_identical(c1, c2))
+		if (!test_optr_identical(c1, c2, signs))
 			return 0;
 	}
 
@@ -81,14 +91,16 @@ struct optr_node *deep_copy(struct optr_node *src)
 	return copy_root;
 }
 
-int __test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, struct optr_node *map[])
+int __test_alpha_equiv(
+	struct optr_node *e1, struct optr_node *e2,
+	struct optr_node *map[], float signs[])
 {
 	int   type1 = e1->type, type2 = e2->type;
 	float sign1 = e1->sign, sign2 = e2->sign;
 
 
 	if (type1 == OPTR_NODE_NUM) {
-		return test_node_identical(e1, e2);
+		return test_node_identical(e1, e2, signs);
 
 	} else if (type1 == OPTR_NODE_VAR) {
 		int key = alphabet_order(e1->var, e1->is_wildcards);
@@ -96,14 +108,14 @@ int __test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, struct optr_n
 
 		//e2->sign *= sign1;
 		if ((e_map = map[key])) {
-			return test_optr_identical(e_map, e2);
+			return test_optr_identical(e_map, e2, signs);
 
 		} else {
 			map[key] = e2;
 			return 1;
 		}
 
-	} else if (!test_node_identical(e1, e2)) {
+	} else if (!test_node_identical(e1, e2, signs)) {
 		return 0;
 	}
 
@@ -132,18 +144,19 @@ int __test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, struct optr_n
 			break;
 		}
 
-		if (!__test_alpha_equiv(c1, c2, map))
+		if (!__test_alpha_equiv(c1, c2, map, signs))
 			return 0;
 	}
 
 	return !length_unmatch;
 }
 
-struct optr_node **test_alpha_equiv(struct optr_node *e1, struct optr_node *e2)
+struct optr_node
+**test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, float signs[])
 {
 	struct optr_node **map = calloc(26 * 2 * 2, sizeof(struct optr_node*));
 
-	int is_equiv = __test_alpha_equiv(e1, e2, map);
+	int is_equiv = __test_alpha_equiv(e1, e2, map, signs);
 	if (is_equiv) {
 		return map;
 	} else {
