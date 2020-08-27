@@ -16,7 +16,7 @@ int main()
 		printf("tree2:\n");
 		optr_print(root2);
 
-		float signs[MAX_NUM_POUNDS] = {0};
+		float signs[16] = {0};
 		struct optr_node **map = test_alpha_equiv(root1, root2, signs);
 		printf("alpha equiv = %d (pound#1 = %g)\n", (map != NULL), signs[1]);
 

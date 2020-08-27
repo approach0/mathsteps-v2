@@ -1,8 +1,6 @@
 #pragma once
 #include "optr.h"
 
-#define MAX_NUM_POUNDS 16
-
 int test_node_identical(struct optr_node*, struct optr_node*);
 int test_optr_identical(struct optr_node*, struct optr_node*);
 

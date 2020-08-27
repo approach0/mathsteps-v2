@@ -26,14 +26,30 @@ char *trim(char *s)
     return _rtrim(_ltrim(s));
 }
 
-int cnt_outputs(char *s)
+int cnt_char_occurrence(const char *s, char t)
 {
 	int count = 0;
-	while ((s = strchr(s, '\n')) != NULL) {
+	while ((s = strchr(s, t)) != NULL) {
 		count++;
 		s++;
 	}
-	return count + 1;
+	return count;
+}
+
+int ipow(int base, int exp)
+{
+	int result = 1;
+	for (;;)
+	{
+		if (exp & 1)
+			result *= base;
+		exp >>= 1;
+		if (!exp)
+			break;
+		base *= base;
+	}
+
+	return result;
 }
 
 struct Axiom *axiom_new(const char *name)
@@ -52,10 +68,12 @@ void _free_rule(struct Rule *rule)
 		rule->pattern_cache = NULL;
 	}
 
-	for (int j = 0; j < MAX_RULE_OUTPUTS; j++) {
-		if (rule->output_cache[j]) {
-			optr_release(rule->output_cache[j]);
-			rule->output_cache[j] = NULL;
+	for (int i = 0; i < ipow(2, rule->n_pounds); i++) {
+		for (int j = 0; j < MAX_RULE_OUTPUTS; j++) {
+			if (rule->output_cache[i][j]) {
+				optr_release(rule->output_cache[i][j]);
+				rule->output_cache[i][j] = NULL;
+			}
 		}
 	}
 }
@@ -67,6 +85,36 @@ void axiom_free(struct Axiom *a)
 		_free_rule(rule);
 	}
 	free(a);
+}
+
+int pound2signed(char *dest, const char *src, int bits, int n_pounds)
+{
+	int reduce_sign = 1;
+	strcpy(dest, src);
+	for (int i = 1; i <= n_pounds; i++) {
+		/* find named pound... */
+		char named_pound[16];
+		sprintf(named_pound, "#%d", i);
+		char *pound_pos = strstr(dest, named_pound);
+		if (NULL == pound_pos)
+			continue;
+
+		/* replace named pound */
+		*(pound_pos + 0) = ' ';
+		*(pound_pos + 1) = (bits & 0x1) ? '+' : '-';
+
+		/* reduce sign */
+		reduce_sign *= (bits & 0x1) ? +1 : -1;
+
+		/* continue to get next sign bit */
+		bits = bits >> 1;
+	}
+
+	char *pound_pos = strstr(dest, "#0");
+	if (pound_pos) {
+		*(pound_pos + 0) = ' ';
+		*(pound_pos + 1) = (reduce_sign == 1) ? '+' : '-';
+	}
 }
 
 struct Axiom *axiom_add_rule(
@@ -82,6 +130,10 @@ struct Axiom *axiom_add_rule(
 	/* copy pattern/output string */
 	strcpy(rule->pattern, pattern);
 	strcpy(rule->output, output);
+
+	/* set n_pounds */
+	int n_pounds = cnt_char_occurrence(pattern, '#');
+	rule->n_pounds = n_pounds;
 
 	/* allocate scanner */
 	void *scanner = parser_new_scanner();
@@ -100,26 +152,32 @@ struct Axiom *axiom_add_rule(
 		rule->pattern_cache = root;
 	}
 
-	/* create output cache */
-	char *all, *now, *field;
-	int cnt = 0;
-	all = now = strdup(output);
-	while ((field = strsep(&now, "\n"))) {
-		char *subout = trim(field);
-		root = parser_parse(scanner, subout);
-		if (NULL == root) {
-			fprintf(stderr, "cannot add rule due to parser error: %s\n", subout);
+	for (int k = 0; k < ipow(2, n_pounds); k++) {
+		char tmp[MAX_RULE_STR_LEN];
+		pound2signed(tmp, output, k, n_pounds);
+		//printf("%s => %s => %s\n", pattern, output, tmp);
 
-			_free_rule(rule);
-			a->n_rules -= 1;
+		/* create output cache */
+		char *all, *now, *field;
+		int cnt = 0;
+		all = now = strdup(tmp);
+		while ((field = strsep(&now, "\n"))) {
+			char *subout = trim(field);
+			root = parser_parse(scanner, subout);
+			if (NULL == root) {
+				fprintf(stderr, "cannot add rule due to parser error: %s\n", subout);
 
-			free(all);
-			goto skip;
-		} else {
-			rule->output_cache[cnt++] = root;
+				_free_rule(rule);
+				a->n_rules -= 1;
+
+				free(all);
+				goto skip;
+			} else {
+				rule->output_cache[k][cnt++] = root;
+			}
 		}
+		free(all);
 	}
-	free(all);
 
 skip:
 	/* de-allocate scanner */
@@ -138,10 +196,12 @@ void axiom_print(struct Axiom *a)
 		optr_print(rule->pattern_cache);
 
 		printf("[output]\n%s\n", rule->output);
-		for (int j = 0; j < MAX_RULE_OUTPUTS; j++) {
-			if (rule->output_cache[j]) {
-				printf("{%d}:\n", j);
-				optr_print(rule->output_cache[j]);
+		for (int k = 0; k < ipow(2, rule->n_pounds); k++) {
+			for (int j = 0; j < MAX_RULE_OUTPUTS; j++) {
+				if (rule->output_cache[k][j]) {
+					printf("{%d, %d}:\n", k, j);
+					optr_print(rule->output_cache[k][j]);
+				}
 			}
 		}
 	}
