@@ -17,16 +17,13 @@ int main()
 	//axiom_print(a);
 
 	void *scanner = parser_new_scanner();
-	struct optr_node *tree = parser_parse(scanner, "\\frac{1}{2} + 0");
-	struct optr_node *output;
+	struct optr_node *tree = parser_parse(scanner, "\\frac{1}{2} + 0 + xx");
 	parser_dele_scanner(scanner);
 
-	if (exact_rule_apply(a->rules + 0, tree, &output)) {
-		printf("applied.\n");
-		optr_print(output);
-	} else {
-		printf("not applied.\n");
-	}
+	struct optr_node *output = exact_rule_apply(a->rules + 0, tree);
+
+	printf("applied? %d \n", output != NULL);
+	optr_print(output);
 
 	optr_release(tree);
 	optr_release(output);

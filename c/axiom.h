@@ -42,4 +42,4 @@ void          axiom_free(struct Axiom*);
 struct Axiom *axiom_add_rule(struct Axiom*, const char*, const char*, void*);
 void          axiom_print(struct Axiom*);
 
-int exact_rule_apply(struct Rule*, struct optr_node*, struct optr_node **);
+struct optr_node *exact_rule_apply(struct Rule*, struct optr_node*);

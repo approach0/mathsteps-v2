@@ -207,14 +207,13 @@ void axiom_print(struct Axiom *a)
 	}
 }
 
-int exact_rule_apply(struct Rule *rule, struct optr_node *tree, struct optr_node **output)
+struct optr_node *exact_rule_apply(struct Rule *rule, struct optr_node *tree)
 {
 	float signs[MAX_NUM_POUNDS];
 	struct optr_node **map = test_alpha_equiv(rule->pattern_cache, tree, signs);
 
 	if (NULL == map) {
-		*output = NULL;
-		return 0;
+		return NULL;
 	}
 
 	int k = 0;
@@ -228,10 +227,10 @@ int exact_rule_apply(struct Rule *rule, struct optr_node *tree, struct optr_node
 	struct optr_node **outputs = rule->output_cache[k];
 
 	if (rule->dynamic_procedure) {
+		return NULL;
 	} else {
-		*output = rewrite_by_alpha(outputs[0], map);
+		struct optr_node *tmp = rewrite_by_alpha(outputs[0], map);
+		alpha_map_free(map);
+		return tmp;
 	}
-
-	alpha_map_free(map);
-	return 1;
 }
