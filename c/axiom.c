@@ -121,25 +121,24 @@ struct Axiom *axiom_add_rule(
 	struct Axiom *a,
 	const char *pattern,
 	const char *output,
-	void *dynamic_procedure)
+	apply_callbk_t *dynamic_procedure)
 {
 	struct optr_node *root = NULL;
 	int i = a->n_rules ++;
 	struct Rule *rule = &a->rules[i];
 
-	/* copy pattern/output string */
+	/* set properties */
 	strcpy(rule->pattern, pattern);
 	strcpy(rule->output, output);
-
-	/* set n_pounds */
 	int n_pounds = cnt_char_occurrence(pattern, '#');
 	rule->n_pounds = n_pounds;
+	rule->dynamic_procedure = dynamic_procedure;
 
 	/* allocate scanner */
 	void *scanner = parser_new_scanner();
 	assert(scanner != NULL);
 
-	/* create pattern cache */
+	/* setup pattern cache */
 	root = parser_parse(scanner, pattern);
 	if (NULL == root) {
 		fprintf(stderr, "cannot add rule due to parser error.\n");
@@ -152,6 +151,7 @@ struct Axiom *axiom_add_rule(
 		rule->pattern_cache = root;
 	}
 
+	/* setup output cache */
 	for (int k = 0; k < ipow(2, n_pounds); k++) {
 		char tmp[MAX_RULE_STR_LEN];
 		pound2signed(tmp, output, k, n_pounds);
@@ -225,12 +225,13 @@ struct optr_node *exact_rule_apply(struct Rule *rule, struct optr_node *tree)
 	}
 
 	struct optr_node **outputs = rule->output_cache[k];
-
+	struct optr_node *output;
 	if (rule->dynamic_procedure) {
-		return NULL;
+		output = (*rule->dynamic_procedure)(rule, tree, map, signs, k);
 	} else {
-		struct optr_node *tmp = rewrite_by_alpha(outputs[0], map);
-		alpha_map_free(map);
-		return tmp;
+		output = rewrite_by_alpha(outputs[0], map);
 	}
+
+	alpha_map_free(map);
+	return output;
 }

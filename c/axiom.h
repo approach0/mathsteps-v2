@@ -9,16 +9,20 @@
 
 #include "alpha-equiv.h"
 
+struct Rule;
+
+typedef struct optr_node *
+(*apply_callbk_t)(struct Rule*, struct optr_node*, struct optr_node **map, float *signs, int);
+
 struct Rule {
 	char pattern[MAX_RULE_STR_LEN];
 	char output[MAX_RULE_STR_LEN];
 
 	int n_pounds; /* number of pounds in pattern */
+	apply_callbk_t   *dynamic_procedure;
+
 	struct optr_node *pattern_cache;
 	struct optr_node *output_cache[MAX_SIGN_PERMUTATIONS][MAX_RULE_OUTPUTS];
-
-	void *dynamic_procedure;
-	int   is_wildcards;
 };
 
 struct Axiom {
@@ -39,7 +43,7 @@ struct Axiom {
 struct Axiom *axiom_new(const char*);
 void          axiom_free(struct Axiom*);
 
-struct Axiom *axiom_add_rule(struct Axiom*, const char*, const char*, void*);
+struct Axiom *axiom_add_rule(struct Axiom*, const char*, const char*, apply_callbk_t*);
 void          axiom_print(struct Axiom*);
 
 struct optr_node *exact_rule_apply(struct Rule*, struct optr_node*);

@@ -17,7 +17,7 @@ int main()
 	//axiom_print(a);
 
 	void *scanner = parser_new_scanner();
-	struct optr_node *tree = parser_parse(scanner, "\\frac{1}{2} + 0 + xx");
+	struct optr_node *tree = parser_parse(scanner, "\\frac{1}{2} + 0");
 	parser_dele_scanner(scanner);
 
 	struct optr_node *output = exact_rule_apply(a->rules + 0, tree);
