@@ -10,8 +10,8 @@ int main()
 {
 	struct Axiom *a = axiom_new("distribute rules");
 
-	axiom_add_static_rule(a, "a + 0", "a", NULL);
-	axiom_add_static_rule(a, "\\frac{a}{b}", "a \n \\frac{c}{d}", NULL);
+	axiom_add_rule(a, "a + 0", "a", NULL);
+	axiom_add_rule(a, "\\frac{a}{b}", "a \n \\frac{c}{d}", NULL);
 
 	axiom_print(a);
 

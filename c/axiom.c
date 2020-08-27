@@ -69,7 +69,7 @@ void axiom_free(struct Axiom *a)
 	free(a);
 }
 
-struct Axiom *axiom_add_static_rule(
+struct Axiom *axiom_add_rule(
 	struct Axiom *a,
 	const char *pattern,
 	const char *output,

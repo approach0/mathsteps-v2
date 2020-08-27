@@ -4,7 +4,7 @@
 #define MAX_AXIOM_RULES    32
 #define MAX_RULE_OUTPUTS   3
 
-#include "optr.h"
+#include "alpha-equiv.h"
 
 struct Rule {
 	char pattern[MAX_RULE_STR_LEN];
@@ -38,5 +38,5 @@ struct Axiom {
 struct Axiom *axiom_new(const char*);
 void          axiom_free(struct Axiom*);
 
-struct Axiom *axiom_add_static_rule(struct Axiom*, const char*, const char*, void*);
+struct Axiom *axiom_add_rule(struct Axiom*, const char*, const char*, void*);
 void          axiom_print(struct Axiom*);
