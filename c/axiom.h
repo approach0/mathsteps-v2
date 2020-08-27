@@ -3,7 +3,8 @@
 #define MAX_RULE_STR_LEN   1024
 #define MAX_AXIOM_RULES    32
 
-#define MAX_SIGN_PERMUTATIONS 32
+#define MAX_SIGN_PERMUTATIONS 32 /* 2^5 */
+#define MAX_NUM_POUNDS        5
 #define MAX_RULE_OUTPUTS   3
 
 #include "alpha-equiv.h"
@@ -16,7 +17,7 @@ struct Rule {
 	struct optr_node *pattern_cache;
 	struct optr_node *output_cache[MAX_SIGN_PERMUTATIONS][MAX_RULE_OUTPUTS];
 
-	void *dynamic_output;
+	void *dynamic_procedure;
 	int   is_wildcards;
 };
 
@@ -40,3 +41,5 @@ void          axiom_free(struct Axiom*);
 
 struct Axiom *axiom_add_rule(struct Axiom*, const char*, const char*, void*);
 void          axiom_print(struct Axiom*);
+
+int exact_rule_apply(struct Rule*, struct optr_node*, struct optr_node **);

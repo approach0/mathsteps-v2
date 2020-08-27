@@ -206,3 +206,32 @@ void axiom_print(struct Axiom *a)
 		}
 	}
 }
+
+int exact_rule_apply(struct Rule *rule, struct optr_node *tree, struct optr_node **output)
+{
+	float signs[MAX_NUM_POUNDS];
+	struct optr_node **map = test_alpha_equiv(rule->pattern_cache, tree, signs);
+
+	if (NULL == map) {
+		*output = NULL;
+		return 0;
+	}
+
+	int k = 0;
+	for (int i = 0; i < rule->n_pounds; i++) {
+		int pound_ID = i + 1;
+		if (signs[pound_ID] > 0) {
+			k = k | (0x1 << i);
+		}
+	}
+
+	struct optr_node **outputs = rule->output_cache[k];
+
+	if (rule->dynamic_procedure) {
+	} else {
+		*output = rewrite_by_alpha(outputs[0], map);
+	}
+
+	alpha_map_free(map);
+	return 1;
+}

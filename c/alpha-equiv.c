@@ -119,7 +119,8 @@ int __test_alpha_equiv(
 		return 0;
 	}
 
-	int length_unmatch = 0;
+	int length_unmatch = !(e1->n_children == e2->n_children);
+
 	for (int i = 0; i < e1->n_children; i++) {
 		struct optr_node *c1, *c2;
 		c1 = e1->children[i];
