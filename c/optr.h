@@ -37,4 +37,5 @@ struct optr_node *optr_attach(struct optr_node *, struct optr_node *);
 void optr_print(struct optr_node*);
 void optr_release(struct optr_node *);
 
-float optr_node_value(struct optr_node*);
+float            optr_get_node_val(struct optr_node*);
+struct optr_node optr_gen_val_node(float);

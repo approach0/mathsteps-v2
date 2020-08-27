@@ -49,6 +49,3 @@ void          rule_print(struct Rule*);
 void          axiom_print(struct Axiom*);
 
 struct optr_node *exact_rule_apply(struct Rule*, struct optr_node*);
-
-float optr_get_node_val(struct optr_node*);
-struct optr_node optr_gen_val_node(float);
