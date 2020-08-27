@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <locale.h>
+#include <string.h>
 
 #include "optr.h"
 
@@ -39,6 +40,25 @@ struct optr_node *optr_attach(struct optr_node *f, struct optr_node *s)
 		optr_release(s);
 
 	return f;
+}
+
+float optr_get_node_val(struct optr_node *nd)
+{
+	if (nd->type == OPTR_NODE_NUM)
+		return nd->sign * nd->num;
+	else
+		return 0;
+}
+
+struct optr_node optr_gen_val_node(float val)
+{
+	struct optr_node ret;
+	memset(&ret, 0, sizeof(ret));
+
+	ret.type = OPTR_NODE_NUM;
+	ret.sign = (val < 0) ? -1.f : 1.f;
+	ret.num = (val < 0) ? -val : val;
+	return ret;
 }
 
 void __print_node(struct optr_node *nd)

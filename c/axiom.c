@@ -121,7 +121,7 @@ struct Axiom *axiom_add_rule(
 	struct Axiom *a,
 	const char *pattern,
 	const char *output,
-	apply_callbk_t *dynamic_procedure)
+	apply_callbk_t dynamic_procedure)
 {
 	struct optr_node *root = NULL;
 	int i = a->n_rules ++;
@@ -185,25 +185,29 @@ skip:
 	return a;
 }
 
+void rule_print(struct Rule *rule)
+{
+	printf("[pattern]\n%s\n", rule->pattern);
+	optr_print(rule->pattern_cache);
+
+	printf("[output]\n%s\n", rule->output);
+	for (int k = 0; k < ipow(2, rule->n_pounds); k++) {
+		for (int j = 0; j < MAX_RULE_OUTPUTS; j++) {
+			if (rule->output_cache[k][j]) {
+				printf("{%d, %d}:\n", k, j);
+				optr_print(rule->output_cache[k][j]);
+			}
+		}
+	}
+}
+
 void axiom_print(struct Axiom *a)
 {
 	printf("Axiom `%s':\n", a->name);
 	for (int i = 0; i < a->n_rules; i++) {
 		struct Rule *rule = &a->rules[i];
 		printf("--- #%d rule ---\n", i);
-
-		printf("[pattern]\n%s\n", rule->pattern);
-		optr_print(rule->pattern_cache);
-
-		printf("[output]\n%s\n", rule->output);
-		for (int k = 0; k < ipow(2, rule->n_pounds); k++) {
-			for (int j = 0; j < MAX_RULE_OUTPUTS; j++) {
-				if (rule->output_cache[k][j]) {
-					printf("{%d, %d}:\n", k, j);
-					optr_print(rule->output_cache[k][j]);
-				}
-			}
-		}
+		rule_print(rule);
 	}
 }
 
