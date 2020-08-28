@@ -106,7 +106,8 @@ int __test_alpha_equiv(
 		int key = alphabet_order(e1->var, e1->is_wildcards);
 		struct optr_node *e_map;
 
-		//e2->sign *= sign1;
+		e2->sign *= sign1;
+
 		if ((e_map = map[key])) {
 			return test_optr_identical(e_map, e2, signs);
 

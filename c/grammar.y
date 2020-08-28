@@ -6,13 +6,14 @@
 
 int yylex(YYSTYPE*, void*, int*);
 
-#include "optr.h"
+#include "parser.h"
 
 int yyerror(void*, struct optr_node**, int *, const char*);
-wchar_t mbc2wc(const char*);
 
 #define COMM_ATTACH(_root, _child) \
 	optr_pass_children(_root, _child)
+
+wchar_t mbc2wc(const char *);
 %}
 
 %union {

@@ -4,7 +4,7 @@ MHOOK_LDFLAGS := -Wl,--wrap,malloc -Wl,--wrap,free \
 CC := gcc
 CFLAGS :=
 LDFLAGS := $(MHOOK_LDFLAGS)
-LDLIBS := -lfl -lpthread -lm -latomic
+LDLIBS := -lfl -lpthread -lm -latomic -lmcheck
 
 TEST_SRCS := $(wildcard test-*.c)
 TEST_BINS := $(TEST_SRCS:.c=.out)
