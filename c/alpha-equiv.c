@@ -147,8 +147,10 @@ static int __test_alpha_equiv(
 			/* allocate placeholder operator */
 			struct optr_node *placeholder = shallow_copy(e2);
 
-			for (int j = i; j < e2->n_children; j++)
-				optr_attach(placeholder, e2->children[j]);
+			for (int j = i; j < e2->n_children; j++) {
+				struct optr_node *copy = deep_copy(e2->children[j]);
+				optr_attach(placeholder, copy);
+			}
 
 			map[key] = placeholder;
 			length_unmatch = 0;

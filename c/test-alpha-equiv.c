@@ -7,8 +7,8 @@ int main()
 	void *scanner = parser_new_scanner();
 
 	struct optr_node *root1, *root2;
-	root1 = parser_parse(scanner, "#\\frac{1}{a} + b + b");
-	root2 = parser_parse(scanner, "-\\frac{1}{x} + \\frac{1}{2} + \\frac{1}{2}");
+	root1 = parser_parse(scanner, "#\\frac{1}{a} + b + b + *{z}");
+	root2 = parser_parse(scanner, "-\\frac{1}{x} + \\frac{1}{2} + \\frac{1}{2} + a + b + c");
 
 	if (root1 && root2) {
 		printf("tree1:\n");
