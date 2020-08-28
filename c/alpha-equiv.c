@@ -91,7 +91,13 @@ struct optr_node *deep_copy(struct optr_node *src)
 	return copy_root;
 }
 
-int __test_alpha_equiv(
+static int plug_and_apply_sign(struct optr_node *e, float sign)
+{
+	e->sign *= sign;
+	return 0;
+}
+
+static int __test_alpha_equiv(
 	struct optr_node *e1, struct optr_node *e2,
 	struct optr_node *map[], float signs[])
 {
@@ -104,15 +110,18 @@ int __test_alpha_equiv(
 
 	} else if (type1 == OPTR_NODE_VAR) {
 		int key = alphabet_order(e1->var, e1->is_wildcards);
-		struct optr_node *e_map;
+		struct optr_node *e_map_old, *e_map_new = deep_copy(e2);
 
-		e2->sign *= sign1;
+		/* if for example `-x' matches `a+b', then `x=-a-b' */
+		plug_and_apply_sign(e_map_new, sign1);
 
-		if ((e_map = map[key])) {
-			return test_optr_identical(e_map, e2, signs);
+		if ((e_map_old = map[key])) {
+			int save = test_optr_identical(e_map_old, e_map_new, signs);
+			optr_release(e_map_new);
+			return save;
 
 		} else {
-			map[key] = e2;
+			map[key] = e_map_new;
 			return 1;
 		}
 
@@ -153,20 +162,6 @@ int __test_alpha_equiv(
 	return !length_unmatch;
 }
 
-struct optr_node
-**test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, float signs[])
-{
-	struct optr_node **map = calloc(26 * 2 * 2, sizeof(struct optr_node*));
-
-	int is_equiv = __test_alpha_equiv(e1, e2, map, signs);
-	if (is_equiv) {
-		return map;
-	} else {
-		free(map);
-		return NULL;
-	}
-}
-
 void alpha_map_print(struct optr_node *map[])
 {
 	if (NULL == map)
@@ -188,11 +183,26 @@ void alpha_map_free(struct optr_node *map[])
 
 	for (int i = 0; i < 26 * 2 * 2; i++) {
 		struct optr_node *nd;
-		if ((nd = map[i]) && i >= 26 * 2)
-			free(map[i]);
+		if ((nd = map[i])) {
+			optr_release(map[i]);
+		}
 	}
 
 	free(map);
+}
+
+struct optr_node
+**test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, float signs[])
+{
+	struct optr_node **map = calloc(26 * 2 * 2, sizeof(struct optr_node*));
+
+	int is_equiv = __test_alpha_equiv(e1, e2, map, signs);
+	if (is_equiv) {
+		return map;
+	} else {
+		alpha_map_free(map);
+		return NULL;
+	}
 }
 
 struct optr_node *rewrite_by_alpha(struct optr_node *root, struct optr_node *map[])
@@ -206,7 +216,8 @@ struct optr_node *rewrite_by_alpha(struct optr_node *root, struct optr_node *map
 		struct optr_node *subst = map[key] ? map[key] : root;
 		subst = deep_copy(subst);
 
-		subst->sign *= sign;
+		/* if for example `x=a+b' plugs into `-x` will become `-a-b' */
+		plug_and_apply_sign(subst, sign);
 		return subst;
 
 	} else if (root->type == OPTR_NODE_NUM) {
