@@ -333,7 +333,6 @@ int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_n
 	if (tree->type != OPTR_NODE_TOKEN)
 		return 0;
 
-
 	for (int i = 0; i < axiom->n_rules; i++) {
 		struct Rule *rule = axiom->rules + i;
 		struct optr_node *reduced, hanger;
@@ -384,4 +383,24 @@ int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_n
 	}
 
 	return cnt;
+}
+
+int axiom_onetime_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_node **results)
+{
+	int n_results = axiom_level_apply(axiom, tree, results);
+	results += n_results;
+
+	for (int i = 0; i + 1 < tree->n_children; i++) {
+		struct optr_node *child = tree->children[i];
+		int n = axiom_onetime_apply(axiom, child, results);
+		for (int j = 0; j < n; j++) {
+			struct optr_node *subst = results[j];
+
+			struct optr_node *newtr = deep_copy(tree);
+			optr_release(newtr->children[i]);
+			newtr->children[i] = subst;
+		}
+
+		n_results += n;
+	}
 }
