@@ -52,6 +52,57 @@ int ipow(int base, int exp)
 	return result;
 }
 
+int axiom_add_test(struct Axiom* a, const char* test_str)
+{
+	if (a->n_tests + 1 < MAX_AXIOM_TESTS) {
+		strcpy(a->tests[a->n_tests ++], test_str);
+		return 0;
+	}
+
+	return 1;
+}
+
+int axiom_test(struct Axiom* a)
+{
+	int n_failed = 0;
+	struct optr_node *output[MAX_AXIOM_OUTPUTS];
+
+	void *scanner = parser_new_scanner();
+
+	for (int i = 0; i < a->n_tests; i++) {
+		const char *test_str = a->tests[i];
+		struct optr_node *tree = parser_parse(scanner, test_str);
+		printf("[testing] `%s':\n", test_str);
+
+		if (NULL == tree) {
+			n_failed ++;
+			break;
+		}
+
+		int n_output = axiom_level_apply(a, tree, output);
+		printf("applied in %d places.\n", n_output);
+
+		for (int i = 0; i < n_output; i++) {
+			struct optr_node *out = output[i];
+			char outtex[MAX_TEX_LEN];
+
+			printf("place#%d: ", i);
+			optr_write_tex(outtex, out);
+			printf("%s\n", outtex);
+
+			//optr_print(out);
+
+			optr_release(out);
+		}
+
+		optr_release(tree);
+		printf("\n");
+	}
+
+	parser_dele_scanner(scanner);
+	return n_failed;
+}
+
 struct Axiom *axiom_new(const char *name)
 {
 	struct Axiom *a = calloc(1, sizeof(struct Axiom));
@@ -290,7 +341,8 @@ int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_n
 		if (n == 1 || tree->n_wildcards_children > 0) {
 			/* in unary or wildcards tree, invok exact_rule_apply() directly */
 			reduced = exact_rule_apply(rule, tree);
-			if (reduced) results[cnt++] = reduced;
+			if (reduced && cnt < MAX_AXIOM_OUTPUTS)
+				results[cnt++] = reduced;
 
 		} else if (tok == TOK_HEX_ADD || tok == TOK_HEX_TIMES) {
 			/* in commutative tree, make children pair permutations */
@@ -301,9 +353,8 @@ int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_n
 						hanger.n_children = 0;
 						optr_attach(&hanger, tree->children[i]);
 						optr_attach(&hanger, tree->children[j]);
-						optr_print(&hanger);
 						reduced = exact_rule_apply(rule, &hanger);
-						if (reduced)
+						if (reduced && cnt < MAX_AXIOM_OUTPUTS)
 							results[cnt++] = merge_brothers(tree, reduced, i, j, n, rsr);
 					}
 
@@ -313,7 +364,7 @@ int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_n
 						optr_attach(&hanger, tree->children[j]);
 						optr_attach(&hanger, tree->children[i]);
 						reduced = exact_rule_apply(rule, &hanger);
-						if (reduced)
+						if (reduced && cnt < MAX_AXIOM_OUTPUTS)
 							results[cnt++] = merge_brothers(tree, reduced, j, i, n, rsr);
 					}
 				}
@@ -326,7 +377,7 @@ int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_n
 				optr_attach(&hanger, tree->children[i]);
 				optr_attach(&hanger, tree->children[i + 1]);
 				reduced = exact_rule_apply(rule, &hanger);
-				if (reduced)
+				if (reduced && cnt < MAX_AXIOM_OUTPUTS)
 					results[cnt++] = merge_brothers(tree, reduced, i, i + 1, n, rsr);
 			}
 		}

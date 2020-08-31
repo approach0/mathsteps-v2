@@ -5,7 +5,10 @@
 
 #define MAX_SIGN_PERMUTATIONS 32 /* 2^5 */
 #define MAX_NUM_POUNDS        5
-#define MAX_RULE_OUTPUTS   3
+#define MAX_RULE_OUTPUTS      3
+
+#define MAX_AXIOM_TESTS    128
+#define MAX_AXIOM_OUTPUTS  20
 
 #include "alpha-equiv.h"
 
@@ -31,6 +34,9 @@ struct Axiom {
 	int n_rules;
 	struct Rule rules[MAX_AXIOM_RULES];
 
+	int n_tests;
+	char tests[MAX_AXIOM_TESTS][MAX_TEX_LEN];
+
 	int is_root_sign_reduce;
 	int is_symmetric_reduce;
 	//int is_recursive_apply;
@@ -44,6 +50,8 @@ struct Axiom *axiom_new(const char*);
 void          axiom_free(struct Axiom*);
 
 struct Axiom *axiom_add_rule(struct Axiom*, const char*, const char*, apply_callbk_t);
+int           axiom_add_test(struct Axiom*, const char*);
+int           axiom_test(struct Axiom*);
 
 void          rule_print(struct Rule*);
 void          axiom_print(struct Axiom*);
