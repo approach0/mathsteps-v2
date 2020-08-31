@@ -49,20 +49,26 @@ int main()
 	struct Axiom *a = axiom_new("distribute rules");
 
 	axiom_add_rule(a, "a # 0", "a", NULL);
-	//axiom_add_rule(a, "# \\frac{a}{c} # \\frac{b}{c}", "\\frac{x}{c}", &test_addition);
 	//axiom_print(a);
 
 	void *scanner = parser_new_scanner();
-	struct optr_node *tree = parser_parse(scanner, "\\frac{1}{zz} + \\frac{3}{zz}");
+	struct optr_node *tree = parser_parse(scanner, "a + 0 + b");
 	parser_dele_scanner(scanner);
 
-	struct optr_node *output = exact_rule_apply(a->rules + 1, tree);
+	//struct optr_node *output = exact_rule_apply(a->rules + 1, tree);
+	struct optr_node *output[128];
+	int n_output = axiom_level_apply(a, tree, output);
 
-	printf("applied? %d \n", output != NULL);
-	optr_print(output);
+	printf("applied %d times \n", n_output);
+
+	for (int i = 0; i < n_output; i++) {
+		struct optr_node *out = output[i];
+		printf("output# %d\n", i);
+		optr_print(out);
+		optr_release(out);
+	}
 
 	optr_release(tree);
-	optr_release(output);
 	axiom_free(a);
 	mhook_print_unfree();
 	return 0;

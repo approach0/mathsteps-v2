@@ -255,10 +255,12 @@ int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_n
 		struct optr_node *output, hanger;
 
 		if (n == 1 || tree->n_wildcards_children > 0) {
+			/* in unary or wildcards tree, invok exact_rule_apply() directly */
 			output = exact_rule_apply(rule, tree);
-			results[cnt++] = output;
+			if (output) results[cnt++] = output;
 
 		} else if (tok == TOK_HEX_ADD || tok == TOK_HEX_TIMES) {
+			/* in commutative tree, make children pair permutations */
 			for (int i = 0; i < n; i++) {
 				for (int j = i + 1; j < n; j++) {
 					hanger = *tree;
@@ -266,24 +268,25 @@ int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_n
 					optr_attach(&hanger, tree->children[i]);
 					optr_attach(&hanger, tree->children[j]);
 					output = exact_rule_apply(rule, &hanger);
-					results[cnt++] = output;
+					if (output) results[cnt++] = output;
 
 					hanger = *tree;
 					hanger.n_children = 0;
 					optr_attach(&hanger, tree->children[j]);
 					optr_attach(&hanger, tree->children[i]);
 					output = exact_rule_apply(rule, &hanger);
-					results[cnt++] = output;
+					if (output) results[cnt++] = output;
 				}
 			}
 		} else {
+			/* in non-commutative tree, make children pair in order */
 			for (int i = 0; i + 1 < n; i++) {
 				hanger = *tree;
 				hanger.n_children = 0;
 				optr_attach(&hanger, tree->children[i]);
 				optr_attach(&hanger, tree->children[i + 1]);
 				output = exact_rule_apply(rule, &hanger);
-				results[cnt++] = output;
+				if (output) results[cnt++] = output;
 			}
 		}
 	}

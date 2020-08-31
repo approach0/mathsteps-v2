@@ -49,3 +49,5 @@ void          rule_print(struct Rule*);
 void          axiom_print(struct Axiom*);
 
 struct optr_node *exact_rule_apply(struct Rule*, struct optr_node*);
+
+int axiom_level_apply(struct Axiom*, struct optr_node*, struct optr_node **);
