@@ -91,9 +91,21 @@ struct optr_node *deep_copy(struct optr_node *src)
 	return copy_root;
 }
 
-static int plug_and_apply_sign(struct optr_node *e, float sign)
+static int plug_sign_apply(struct optr_node *e, float sign)
 {
-	e->sign *= sign;
+	if (e->sign < 0) {
+		e->sign *= sign;
+
+	} else if (e->type == OPTR_NODE_TOKEN || e->token == TOK_HEX_ADD) {
+		for (int i = 0; i < e->n_children; i++) {
+			struct optr_node *child = e->children[i];
+			child->sign *= sign;
+		}
+
+	} else {
+		e->sign *= sign;
+	}
+
 	return 0;
 }
 
@@ -113,7 +125,7 @@ static int __test_alpha_equiv(
 		struct optr_node *e_map_old, *e_map_new = deep_copy(e2);
 
 		/* if for example `-x' matches `a+b', then `x=-a-b' */
-		plug_and_apply_sign(e_map_new, sign1);
+		plug_sign_apply(e_map_new, sign1);
 
 		if ((e_map_old = map[key])) {
 			int save = test_optr_identical(e_map_old, e_map_new, signs);
@@ -219,7 +231,7 @@ struct optr_node *rewrite_by_alpha(struct optr_node *root, struct optr_node *map
 		subst = deep_copy(subst);
 
 		/* if for example `x=a+b' plugs into `-x` will become `-a-b' */
-		plug_and_apply_sign(subst, sign);
+		plug_sign_apply(subst, sign);
 		return subst;
 
 	} else if (root->type == OPTR_NODE_NUM) {
