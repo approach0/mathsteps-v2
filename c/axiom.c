@@ -291,6 +291,26 @@ struct optr_node *exact_rule_apply(struct Rule *rule, struct optr_node *tree)
 	return output;
 }
 
+struct optr_node *ij_replaced(
+	struct optr_node *tree, struct optr_node *subst,
+	int i, int j, int is_root_sign_reduce)
+{
+	struct optr_node *new_tree = shallow_copy(tree);
+
+	/* new sign depends on reduction, e.g., "-(-a)(-b)c => -abc" */
+	if (is_root_sign_reduce)
+		new_tree->sign = 1.f;
+
+	for (int k = 0; k < tree->n_children; k++) {
+		if (k != i && k != j) {
+			optr_attach(new_tree, deep_copy(tree->children[k]));
+		} else if (k == i) {
+			optr_pass_children(new_tree, subst);
+		}
+	}
+	return new_tree;
+}
+
 struct optr_node *merge_brothers(
 	struct optr_node *tree, struct optr_node *reduced,
 	int i, int j, int n, int is_root_sign_reduce)
@@ -298,21 +318,11 @@ struct optr_node *merge_brothers(
 	struct optr_node *new_tree = reduced;
 	if (n > 2) {
 		/* there are left brothers */
+		new_tree = ij_replaced(tree, reduced, i, j, is_root_sign_reduce);
 
-		new_tree = shallow_copy(tree);
-
-		/* new sign depends on reduction, e.g., "-(-a)(-b)c => -abc" */
-		if (is_root_sign_reduce)
-			new_tree->sign = 1.f;
-
-		optr_pass_children(new_tree, reduced);
-		for (int k = 0; k < n; k++) {
-			if (k != i && k != j) {
-				optr_attach(new_tree, deep_copy(tree->children[k]));
-			}
-		}
 	} else {
 		/* entire level gets reduced */
+		;
 
 		/* for non-reduce root sign, apply root sign in this case.
 		 * e.g., "-(1 - 2) => 1" */
@@ -390,17 +400,15 @@ int axiom_onetime_apply(struct Axiom *axiom, struct optr_node *tree, struct optr
 	int n_results = axiom_level_apply(axiom, tree, results);
 	results += n_results;
 
-	for (int i = 0; i + 1 < tree->n_children; i++) {
+	for (int i = 0; i < tree->n_children; i++) {
 		struct optr_node *child = tree->children[i];
 		int n = axiom_onetime_apply(axiom, child, results);
 		for (int j = 0; j < n; j++) {
 			struct optr_node *subst = results[j];
-
-			struct optr_node *newtr = deep_copy(tree);
-			optr_release(newtr->children[i]);
-			newtr->children[i] = subst;
+			struct optr_node *newtr = ij_replaced(tree, subst, i, -1, 0);
+			results[j] = newtr;
 		}
-
 		n_results += n;
+		results += n;
 	}
 }
