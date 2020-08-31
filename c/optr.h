@@ -38,6 +38,7 @@ struct optr_node {
 
 	int n_children;
 	struct optr_node *children[MAX_OPTR_NUM_CHILDREN];
+	int n_wildcards_children;
 };
 
 struct optr_node *optr_alloc(int);

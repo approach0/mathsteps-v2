@@ -13,6 +13,7 @@ struct optr_node *optr_alloc(int type)
 	nd->is_wildcards = 0;
 	nd->pound_ID = 0;
 	nd->n_children = 0;
+	nd->n_wildcards_children = 0;
 	return nd;
 }
 
@@ -34,10 +35,14 @@ struct optr_node *optr_attach(struct optr_node *f, struct optr_node *s)
 	if (s == NULL)
 		return f;
 
-	if (f->n_children + 1 < MAX_OPTR_NUM_CHILDREN)
+	if (f->n_children + 1 < MAX_OPTR_NUM_CHILDREN) {
 		f->children[f->n_children++] = s;
-	else
+
+		if (s->is_wildcards)
+			f->n_wildcards_children += 1;
+	} else {
 		optr_release(s);
+	}
 
 	return f;
 }
@@ -90,6 +95,9 @@ static void __print_node(struct optr_node *nd)
 
 	if (nd->is_wildcards)
 		printf(" (wildcards)");
+	else if (nd->n_wildcards_children > 0)
+		printf(" (has %d wildcards children)", nd->n_wildcards_children);
+
 	if (nd->pound_ID)
 		printf(" (pound sign #%d)", nd->pound_ID);
 

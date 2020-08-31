@@ -239,3 +239,54 @@ struct optr_node *exact_rule_apply(struct Rule *rule, struct optr_node *tree)
 	alpha_map_free(map);
 	return output;
 }
+
+int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_node **results)
+{
+	int tok = tree->token;
+	int n = tree->n_children;
+	int cnt = 0;
+
+	if (tree->type != OPTR_NODE_TOKEN)
+		return 0;
+
+
+	for (int i = 0; i < axiom->n_rules; i++) {
+		struct Rule *rule = axiom->rules + i;
+		struct optr_node *output, hanger;
+
+		if (n == 1 || tree->n_wildcards_children > 0) {
+			output = exact_rule_apply(rule, tree);
+			results[cnt++] = output;
+
+		} else if (tok == TOK_HEX_ADD || tok == TOK_HEX_TIMES) {
+			for (int i = 0; i < n; i++) {
+				for (int j = i + 1; j < n; j++) {
+					hanger = *tree;
+					hanger.n_children = 0;
+					optr_attach(&hanger, tree->children[i]);
+					optr_attach(&hanger, tree->children[j]);
+					output = exact_rule_apply(rule, &hanger);
+					results[cnt++] = output;
+
+					hanger = *tree;
+					hanger.n_children = 0;
+					optr_attach(&hanger, tree->children[j]);
+					optr_attach(&hanger, tree->children[i]);
+					output = exact_rule_apply(rule, &hanger);
+					results[cnt++] = output;
+				}
+			}
+		} else {
+			for (int i = 0; i + 1 < n; i++) {
+				hanger = *tree;
+				hanger.n_children = 0;
+				optr_attach(&hanger, tree->children[i]);
+				optr_attach(&hanger, tree->children[i + 1]);
+				output = exact_rule_apply(rule, &hanger);
+				results[cnt++] = output;
+			}
+		}
+	}
+
+	return cnt;
+}

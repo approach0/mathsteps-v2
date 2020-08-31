@@ -49,7 +49,7 @@ int main()
 	struct Axiom *a = axiom_new("distribute rules");
 
 	axiom_add_rule(a, "a # 0", "a", NULL);
-	axiom_add_rule(a, "# \\frac{a}{c} # \\frac{b}{c}", "\\frac{x}{c}", &test_addition);
+	//axiom_add_rule(a, "# \\frac{a}{c} # \\frac{b}{c}", "\\frac{x}{c}", &test_addition);
 	//axiom_print(a);
 
 	void *scanner = parser_new_scanner();
