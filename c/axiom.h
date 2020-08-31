@@ -4,8 +4,8 @@
 #define MAX_AXIOM_RULES    32
 
 #define MAX_SIGN_PERMUTATIONS 32 /* 2^5 */
-#define MAX_NUM_POUNDS        5
-#define MAX_RULE_OUTPUTS      3
+#define MAX_NUM_POUNDS        12
+#define MAX_RULE_OUTPUTS      6
 
 #define MAX_AXIOM_TESTS    128
 #define MAX_AXIOM_OUTPUTS  20
@@ -37,12 +37,15 @@ struct Axiom {
 	int n_tests;
 	char tests[MAX_AXIOM_TESTS][MAX_TEX_LEN];
 
+	/* used by internal methods of this module */
 	int is_root_sign_reduce;
 	int is_symmetric_reduce;
-	//int is_recursive_apply;
-	//int is_allow_complication;
-	//int is_strict_simplify;
-	//int is_disabled;
+
+	/* used by outside methods */
+	int is_recursive_apply;
+	int is_allow_complication;
+	int is_strict_simplify;
+	int is_disabled;
 	int max_output_num;
 };
 

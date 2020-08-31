@@ -342,7 +342,7 @@ int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_n
 			/* in unary or wildcards tree, invok exact_rule_apply() directly */
 			reduced = exact_rule_apply(rule, tree);
 			if (reduced && cnt < MAX_AXIOM_OUTPUTS)
-				results[cnt++] = reduced;
+				results[cnt++] = merge_brothers(tree, reduced, 0, 0, 0, rsr);
 
 		} else if (tok == TOK_HEX_ADD || tok == TOK_HEX_TIMES) {
 			/* in commutative tree, make children pair permutations */
