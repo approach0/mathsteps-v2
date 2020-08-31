@@ -252,12 +252,12 @@ int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_n
 
 	for (int i = 0; i < axiom->n_rules; i++) {
 		struct Rule *rule = axiom->rules + i;
-		struct optr_node *output, hanger;
+		struct optr_node *reduced, hanger;
 
 		if (n == 1 || tree->n_wildcards_children > 0) {
 			/* in unary or wildcards tree, invok exact_rule_apply() directly */
-			output = exact_rule_apply(rule, tree);
-			if (output) results[cnt++] = output;
+			reduced = exact_rule_apply(rule, tree);
+			if (reduced) results[cnt++] = reduced;
 
 		} else if (tok == TOK_HEX_ADD || tok == TOK_HEX_TIMES) {
 			/* in commutative tree, make children pair permutations */
@@ -267,15 +267,31 @@ int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_n
 					hanger.n_children = 0;
 					optr_attach(&hanger, tree->children[i]);
 					optr_attach(&hanger, tree->children[j]);
-					output = exact_rule_apply(rule, &hanger);
-					if (output) results[cnt++] = output;
+					reduced = exact_rule_apply(rule, &hanger);
 
-					hanger = *tree;
-					hanger.n_children = 0;
-					optr_attach(&hanger, tree->children[j]);
-					optr_attach(&hanger, tree->children[i]);
-					output = exact_rule_apply(rule, &hanger);
-					if (output) results[cnt++] = output;
+					if (reduced) {
+						struct optr_node *new_tree;
+						if (n > 2) {
+							/* there are left brothers */
+							new_tree = shallow_copy(tree);
+							if (axiom->is_root_sign_reduce)
+								new_tree->sign = 1.f;
+
+							optr_pass_children(new_tree, reduced);
+							for (int k = 0; k < n; k++) {
+								if (k != i && k != j) {
+									optr_attach(new_tree, deep_copy(tree->children[k]));
+								}
+							}
+							results[cnt++] = new_tree;
+						} else {
+							new_tree = reduced;
+							if (!axiom->is_root_sign_reduce)
+								new_tree->sign *= tree->sign;
+						}
+
+						results[cnt++] = new_tree;
+					}
 				}
 			}
 		} else {
@@ -285,8 +301,8 @@ int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_n
 				hanger.n_children = 0;
 				optr_attach(&hanger, tree->children[i]);
 				optr_attach(&hanger, tree->children[i + 1]);
-				output = exact_rule_apply(rule, &hanger);
-				if (output) results[cnt++] = output;
+				reduced = exact_rule_apply(rule, &hanger);
+				if (reduced) results[cnt++] = reduced;
 			}
 		}
 	}
