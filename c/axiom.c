@@ -240,11 +240,34 @@ struct optr_node *exact_rule_apply(struct Rule *rule, struct optr_node *tree)
 	return output;
 }
 
+struct optr_node *merge_brothers(
+	struct optr_node *tree, struct optr_node *reduced,
+	int i, int j, int n, int is_root_sign_reduce)
+{
+	struct optr_node *new_tree = reduced;
+	if (n > 2) {
+		/* there are left brothers */
+		new_tree = shallow_copy(tree);
+		if (is_root_sign_reduce)
+			new_tree->sign = 1.f;
+
+		optr_pass_children(new_tree, reduced);
+		for (int k = 0; k < n; k++) {
+			if (k != i && k != j) {
+				optr_attach(new_tree, deep_copy(tree->children[k]));
+			}
+		}
+	}
+
+	return new_tree;
+}
+
 int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_node **results)
 {
 	int tok = tree->token;
 	int n = tree->n_children;
 	int cnt = 0;
+	int rsr = axiom->is_root_sign_reduce;
 
 	if (tree->type != OPTR_NODE_TOKEN)
 		return 0;
@@ -268,30 +291,16 @@ int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_n
 					optr_attach(&hanger, tree->children[i]);
 					optr_attach(&hanger, tree->children[j]);
 					reduced = exact_rule_apply(rule, &hanger);
+					if (reduced)
+						results[cnt++] = merge_brothers(tree, reduced, i, j, n, rsr);
 
-					if (reduced) {
-						struct optr_node *new_tree;
-						if (n > 2) {
-							/* there are left brothers */
-							new_tree = shallow_copy(tree);
-							if (axiom->is_root_sign_reduce)
-								new_tree->sign = 1.f;
-
-							optr_pass_children(new_tree, reduced);
-							for (int k = 0; k < n; k++) {
-								if (k != i && k != j) {
-									optr_attach(new_tree, deep_copy(tree->children[k]));
-								}
-							}
-							results[cnt++] = new_tree;
-						} else {
-							new_tree = reduced;
-							if (!axiom->is_root_sign_reduce)
-								new_tree->sign *= tree->sign;
-						}
-
-						results[cnt++] = new_tree;
-					}
+					hanger = *tree;
+					hanger.n_children = 0;
+					optr_attach(&hanger, tree->children[j]);
+					optr_attach(&hanger, tree->children[i]);
+					reduced = exact_rule_apply(rule, &hanger);
+					if (reduced)
+						results[cnt++] = merge_brothers(tree, reduced, j, i, n, rsr);
 				}
 			}
 		} else {
@@ -302,7 +311,8 @@ int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_n
 				optr_attach(&hanger, tree->children[i]);
 				optr_attach(&hanger, tree->children[i + 1]);
 				reduced = exact_rule_apply(rule, &hanger);
-				if (reduced) results[cnt++] = reduced;
+				if (reduced)
+					results[cnt++] = merge_brothers(tree, reduced, i, i + 1, n, rsr);
 			}
 		}
 	}
