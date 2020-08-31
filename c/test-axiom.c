@@ -10,7 +10,8 @@
 
 int main()
 {
-	struct Axiom *a = axiom_addition();
+	//struct Axiom *a = axiom_add();
+	struct Axiom *a = axiom_mul();
 	axiom_test(a);
 	axiom_free(a);
 
