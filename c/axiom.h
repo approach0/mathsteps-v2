@@ -32,6 +32,7 @@ struct Axiom {
 	struct Rule rules[MAX_AXIOM_RULES];
 
 	int is_root_sign_reduce;
+	int is_symmetric_reduce;
 	//int is_recursive_apply;
 	//int is_allow_complication;
 	//int is_strict_simplify;

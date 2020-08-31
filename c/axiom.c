@@ -247,7 +247,10 @@ struct optr_node *merge_brothers(
 	struct optr_node *new_tree = reduced;
 	if (n > 2) {
 		/* there are left brothers */
+
 		new_tree = shallow_copy(tree);
+
+		/* new sign depends on reduction, e.g., "-(-a)(-b)c => -abc" */
 		if (is_root_sign_reduce)
 			new_tree->sign = 1.f;
 
@@ -257,6 +260,13 @@ struct optr_node *merge_brothers(
 				optr_attach(new_tree, deep_copy(tree->children[k]));
 			}
 		}
+	} else {
+		/* entire level gets reduced */
+
+		/* for non-reduce root sign, apply root sign in this case.
+		 * e.g., "-(1 - 2) => 1" */
+		if (!is_root_sign_reduce)
+			new_tree->sign *= tree->sign;
 	}
 
 	return new_tree;
@@ -286,21 +296,26 @@ int axiom_level_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_n
 			/* in commutative tree, make children pair permutations */
 			for (int i = 0; i < n; i++) {
 				for (int j = i + 1; j < n; j++) {
-					hanger = *tree;
-					hanger.n_children = 0;
-					optr_attach(&hanger, tree->children[i]);
-					optr_attach(&hanger, tree->children[j]);
-					reduced = exact_rule_apply(rule, &hanger);
-					if (reduced)
-						results[cnt++] = merge_brothers(tree, reduced, i, j, n, rsr);
+					if (1) {
+						hanger = *tree;
+						hanger.n_children = 0;
+						optr_attach(&hanger, tree->children[i]);
+						optr_attach(&hanger, tree->children[j]);
+						optr_print(&hanger);
+						reduced = exact_rule_apply(rule, &hanger);
+						if (reduced)
+							results[cnt++] = merge_brothers(tree, reduced, i, j, n, rsr);
+					}
 
-					hanger = *tree;
-					hanger.n_children = 0;
-					optr_attach(&hanger, tree->children[j]);
-					optr_attach(&hanger, tree->children[i]);
-					reduced = exact_rule_apply(rule, &hanger);
-					if (reduced)
-						results[cnt++] = merge_brothers(tree, reduced, j, i, n, rsr);
+					if (!axiom->is_symmetric_reduce) {
+						hanger = *tree;
+						hanger.n_children = 0;
+						optr_attach(&hanger, tree->children[j]);
+						optr_attach(&hanger, tree->children[i]);
+						reduced = exact_rule_apply(rule, &hanger);
+						if (reduced)
+							results[cnt++] = merge_brothers(tree, reduced, j, i, n, rsr);
+					}
 				}
 			}
 		} else {
