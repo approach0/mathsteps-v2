@@ -6,7 +6,7 @@
 
 struct Axiom **common_axioms(int *n)
 {
-	struct Axiom **ret = malloc(sizeof(struct Axiom) * MAX_AXIOMS);
+	struct Axiom **ret = malloc(sizeof(struct Axiom*) * MAX_AXIOMS);
 	int cnt = 0;
 
 	{

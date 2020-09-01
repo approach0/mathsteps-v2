@@ -168,7 +168,7 @@ static int _prior_than(struct Step *s1, struct Step *s2)
 static int quicksort_parition(struct Step *steps, int lo, int hi)
 {
 	struct Step tmp, *pivot = steps + hi;
-	int i = lo;
+	int i = lo; /* separator of smaller elements */
 	for (int j = lo; j < hi; j++) {
 		if (_prior_than(steps + j, pivot)) {
 			tmp = steps[i];
@@ -196,9 +196,9 @@ static void sort_steps(struct Step *steps, int lo, int hi)
 
 int possible_next_steps(
 	struct optr_node *tree, struct Axiom *axioms[], int m,
-	struct Step *results, int max_results)
+	struct Step *steps, int max_steps)
 {
-	int n_results = 0;
+	int n_steps = 0;
 	float v0 = state_value__neg_complexity(tree);
 
 	for (int i = 0; i < m; i++) {
@@ -210,7 +210,7 @@ int possible_next_steps(
 		for (int j = 0; j < n; j++) {
 			struct optr_node *out = output[j];
 
-			if (out && n_results + 1 < max_results) {
+			if (out && n_steps + 1 < max_steps) {
 				float value = state_value__neg_complexity(out);
 
 				if (!a->is_allow_complication) {
@@ -219,36 +219,36 @@ int possible_next_steps(
 						continue;
 				}
 
-				results[n_results].axiom     = a;
-				results[n_results].axiom_idx = i;
-				results[n_results].tree      = out;
-				results[n_results].value     = value;
-				n_results += 1;
+				steps[n_steps].axiom     = a;
+				steps[n_steps].axiom_idx = i;
+				steps[n_steps].tree      = out;
+				steps[n_steps].value     = value;
+				n_steps += 1;
 			}
 		}
 	}
 
-	sort_steps(results, 0, n_results);
-	return n_results;
+	sort_steps(steps, 0, n_steps - 1);
+	return n_steps;
 }
 
 int mathsteps_baseline(
 	struct optr_node *tree, struct Axiom *axioms[], int m,
-	struct Step *results, int max_steps)
+	struct Step *steps, int max_steps)
 {
-	int n, n_results = 1;
-	results[0].axiom     = NULL;
-	results[0].axiom_idx = -1;
-	results[0].tree      = deep_copy(tree);
-	results[0].value     = state_value__neg_complexity(tree);
+	int n, n_steps = 1;
+	steps[0].axiom     = NULL;
+	steps[0].axiom_idx = -1;
+	steps[0].tree      = deep_copy(tree);
+	steps[0].value     = state_value__neg_complexity(tree);
 
 	do {
-		struct Step cur = results[n_results - 1];
-		n = possible_next_steps(cur.tree, axioms, m, results + n_results, max_steps - n_results);
-		for (int j = n_results + 1; j < n_results + n; j++)
-			optr_release(results[j].tree);
-		n_results += 1;
+		struct Step cur = steps[n_steps - 1];
+		n = possible_next_steps(cur.tree, axioms, m, steps + n_steps, max_steps - n_steps);
+		for (int j = n_steps + 1; j < n_steps + n; j++)
+			optr_release(steps[j].tree);
+		n_steps += 1;
 	} while (n > 0);
 
-	return n_results;
+	return n_steps;
 }
