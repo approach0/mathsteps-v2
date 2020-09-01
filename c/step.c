@@ -29,9 +29,12 @@ struct collect_args {
 	int num_under_sqrt;
 };
 
-int right_padding_zeros(int Int)
+static int right_padding_zeros(int Int)
 {
 	int digit, cnt = 0;
+	if (Int == 0)
+		return 1;
+
 	while (Int > 0) {
 		digit = Int % 10;
 		if (digit != 0)
@@ -41,10 +44,10 @@ int right_padding_zeros(int Int)
 
 		Int /= 10;
 	}
-	return 0;
+	return cnt;
 }
 
-void collect_stats(struct optr_node *tree, int *stats, struct collect_args args)
+static void collect_stats(struct optr_node *tree, int *stats, struct collect_args args)
 {
 	if (tree->sign < 0)
 		stats[NEGATIVE_SIGNS] += 1;
@@ -66,7 +69,10 @@ void collect_stats(struct optr_node *tree, int *stats, struct collect_args args)
 
 			if (num == (int)num) {
 				int abs_num = ABS(num);
-				if (abs_num == 0 && !args.right_side_of_eq) {
+				if (abs_num == 0) {
+					if (stats[RIGHT_SIDE_OF_EQ] > 0)
+						stats[RIGHT_SIDE_OF_EQ] -= 1;
+
 					stats[NUMBER_ONE_ZERO] += 1;
 				} else if (abs_num == 1) {
 					stats[NUMBER_ONE_ZERO] += 1;
@@ -88,6 +94,12 @@ void collect_stats(struct optr_node *tree, int *stats, struct collect_args args)
 		}
 
 	} else {
+		/* dive deeper */
+		if (tree->token == TOK_HEX_FRAC)
+			args.level += 4;
+		else
+			args.level += 1;
+
 		for (int i = 0; i < tree->n_children; i++) {
 			struct optr_node *child = tree->children[i];
 
@@ -96,18 +108,34 @@ void collect_stats(struct optr_node *tree, int *stats, struct collect_args args)
 			else if (tree->token == TOK_HEX_SQRT)
 				args.num_under_sqrt = 1;
 
-			args.level += 1;
 			collect_stats(child, stats, args);
 		}
 	}
 }
 
-float state_value(struct optr_node *tree)
+float state_value__neg_complexity(struct optr_node *tree)
 {
 	int stats[N_VALUE_FACTORS] = {0};
 	struct collect_args args = {0};
 
 	collect_stats(tree, stats, args);
+
+#if 0
+	#define PRINT(_field) \
+		printf("%s = %d\n", # _field, stats[_field]);
+
+	PRINT(RIGHT_SIDE_OF_EQ);
+	PRINT(NEGATIVE_SIGNS);
+	PRINT(NUMBER_LEVEL_CNT);
+	PRINT(NUMBER_SUM);
+	PRINT(NUMBER_IN_SQRT);
+	PRINT(NUMBER_ONE_ZERO);
+	PRINT(NUMBER_OTHER_INTS);
+	PRINT(NUMBER_PAD_ZEROS);
+	PRINT(NUMBER_DECIMALS);
+	PRINT(VAR_LEVEL_CNT);
+	PRINT(VAR_MAX_LEVEL);
+#endif
 
 	float complexity =
 		powf(2.f * stats[RIGHT_SIDE_OF_EQ], 3.f) +
