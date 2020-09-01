@@ -201,6 +201,9 @@ int possible_next_steps(
 	int n_steps = 0;
 	float v0 = state_value__neg_complexity(tree);
 
+	if (max_steps <= 0)
+		goto skip;
+
 	for (int i = 0; i < m; i++) {
 		struct Axiom *a = axioms[i];
 
@@ -210,7 +213,7 @@ int possible_next_steps(
 		for (int j = 0; j < n; j++) {
 			struct optr_node *out = output[j];
 
-			if (out && n_steps + 1 <= max_steps) {
+			if (n_steps + 1 <= max_steps) {
 				float value = state_value__neg_complexity(out);
 
 				if (!a->is_allow_complication) {
@@ -224,11 +227,14 @@ int possible_next_steps(
 				steps[n_steps].tree      = out;
 				steps[n_steps].value     = value;
 				n_steps += 1;
+			} else {
+				optr_release(out);
 			}
 		}
 	}
 
 	sort_steps(steps, 0, n_steps - 1);
+skip:
 	return n_steps;
 }
 
@@ -248,8 +254,9 @@ int mathsteps_baseline(
 	do {
 		struct Step cur = steps[n_steps - 1];
 		n = possible_next_steps(cur.tree, axioms, m, steps + n_steps, max_steps - n_steps);
-		for (int j = n_steps + 1; j < n_steps + n; j++)
+		for (int j = n_steps + 1; j < n_steps + n; j++) {
 			optr_release(steps[j].tree);
+		}
 		n_steps += (n > 0) ? 1 : 0;
 	} while (n > 0);
 

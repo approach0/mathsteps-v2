@@ -124,6 +124,7 @@ static void test__baseline(void *scanner, struct Axiom **axioms, int m)
 	for (int i = 0; i < n; i++) {
 		printf("[step %d] ", i);
 		print_step(&steps[i], 0);
+
 		optr_release(steps[i].tree);
 	}
 
