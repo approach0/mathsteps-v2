@@ -58,6 +58,7 @@ struct Axiom *axiom_add()
 
 	axiom_add_test(a, "-(1 + 3 - 2)");
 	axiom_add_test(a, "-(1 - 2)");
+	axiom_add_test(a, "\\sqrt{3(1 - 2 + 3)x}");
 
 	return a;
 }

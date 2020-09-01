@@ -79,7 +79,7 @@ int axiom_test(struct Axiom* a)
 			break;
 		}
 
-		int n_output = axiom_level_apply(a, tree, output);
+		int n_output = axiom_onetime_apply(a, tree, output);
 		printf("applied in %d places.\n", n_output);
 
 		for (int i = 0; i < n_output; i++) {
@@ -402,13 +402,20 @@ int axiom_onetime_apply(struct Axiom *axiom, struct optr_node *tree, struct optr
 
 	for (int i = 0; i < tree->n_children; i++) {
 		struct optr_node *child = tree->children[i];
+
+		/* invoke this function recursively for each child */
 		int n = axiom_onetime_apply(axiom, child, results);
+
+		/* for each applied child, plug in back to original tree */
 		for (int j = 0; j < n; j++) {
 			struct optr_node *subst = results[j];
 			struct optr_node *newtr = ij_replaced(tree, subst, i, -1, 0);
 			results[j] = newtr;
 		}
+
+		/* update output pointer and counter */
 		n_results += n;
 		results += n;
 	}
+	return n_results;
 }
