@@ -7,8 +7,9 @@
 #define MAX_NUM_POUNDS        12
 #define MAX_RULE_OUTPUTS      6
 
-#define MAX_AXIOM_TESTS    128
-#define MAX_AXIOM_OUTPUTS  20
+#define MAX_AXIOM_TESTS       128
+#define MAX_AXIOM_OUTPUTS     20
+#define DEFAULT_AXIOM_OUTPUTS 10
 
 #include "alpha-equiv.h"
 
@@ -43,9 +44,9 @@ struct Axiom {
 
 	/* used by outside methods */
 	int is_recursive_apply;
+	int is_disabled;
 	int is_allow_complication;
 	int is_strict_simplify;
-	int is_disabled;
 	int max_output_num;
 };
 
@@ -59,7 +60,4 @@ int           axiom_test(struct Axiom*);
 void          rule_print(struct Rule*);
 void          axiom_print(struct Axiom*);
 
-struct optr_node *exact_rule_apply(struct Rule*, struct optr_node*);
-
-int axiom_level_apply(struct Axiom*, struct optr_node*, struct optr_node **);
-int axiom_onetime_apply(struct Axiom*, struct optr_node*, struct optr_node **);
+int axiom_apply(struct Axiom*, struct optr_node*, struct optr_node **);
