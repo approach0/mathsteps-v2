@@ -98,11 +98,17 @@ static void test__next_steps(void *scanner)
 	int max_results = 12;
 	struct Step steps[max_results];
 
-	struct optr_node *tree = parser_parse(scanner, "1 + 2 + 3 + 4 \\cdot 2");
+	char original_tex[] = "1 + 2 + 3 + 4 \\cdot 2";
+	struct optr_node *tree = parser_parse(scanner, original_tex);
 	int n = possible_next_steps(tree, axioms, m, steps, max_results);
 
+	printf("origin: %s\n", original_tex);
+	printf("%d possible_next_steps: \n", n);
 	for (int i = 0; i < n; i++) {
-		optr_print(steps[i].tree);
+		// optr_print(steps[i].tree);
+		char tex[MAX_TEX_LEN];
+		optr_write_tex(tex, steps[i].tree);
+		printf("%s\n", tex);
 		optr_release(steps[i].tree);
 	}
 
