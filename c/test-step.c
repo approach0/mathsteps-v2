@@ -95,7 +95,7 @@ static void test__state_value()
 
 int main()
 {
-	test__state_value();
+	//test__state_value();
 
 	mhook_print_unfree();
 	return 0;

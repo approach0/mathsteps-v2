@@ -10,5 +10,4 @@ struct Step {
 };
 
 float state_value__neg_complexity(struct optr_node*);
-
-int possible_next_steps(struct optr_node*, struct Axiom *axioms[], int, struct Step **);
+int   possible_next_steps(struct optr_node*, struct Axiom *axioms[], int, struct Step*, int);

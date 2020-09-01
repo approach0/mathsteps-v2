@@ -156,16 +156,74 @@ float state_value__neg_complexity(struct optr_node *tree)
 	return -complexity;
 }
 
+static int _less_than(struct Step *s1, struct Step *s2)
+{
+	return 0;
+}
+
+static int quicksort_parition(struct Step *steps, int lo, int hi)
+{
+	struct Step tmp, *pivot = steps + hi;
+	int i = lo;
+	for (int j = lo; j < hi; j++) {
+		if (_less_than(steps + j, pivot)) {
+			tmp = steps[i];
+			steps[i] = steps[j];
+			steps[j] = tmp;
+			i += 1;
+		}
+	}
+
+	tmp = steps[i];
+	steps[i] = steps[hi];
+	steps[hi] = tmp;
+	return i;
+}
+
+/* sort steps by (axiom_idx, value) tuple */
+static void sort_steps(struct Step *steps, int lo, int hi)
+{
+	if (lo < hi) {
+		int pivot =  quicksort_parition(steps, lo, hi);
+		sort_steps(steps, lo, pivot - 1);
+		sort_steps(steps, pivot + 1, hi);
+	}
+}
+
 int possible_next_steps(
 	struct optr_node *tree, struct Axiom *axioms[], int m,
-	struct Step **results)
+	struct Step *results, int max_results)
 {
 	int n_results = 0;
+	float v0 = state_value__neg_complexity(tree);
+
 	for (int i = 0; i < m; i++) {
 		struct Axiom *a = axioms[i];
 
 		struct optr_node *output[MAX_AXIOM_OUTPUTS];
 		int n = axiom_apply(a, tree, output);
+
+		for (int j = 0; j < n; j++) {
+			struct optr_node *out = output[j];
+
+			if (out && n_results + 1 < max_results) {
+				float value = state_value__neg_complexity(out);
+
+				if (!a->is_allow_complication) {
+					if ((a->is_strict_simplify && value <= v0) ||
+					    value < v0)
+						continue;
+				}
+
+				results[n_results].axiom     = a;
+				results[n_results].axiom_idx = i;
+				results[n_results].tree      = out;
+				results[n_results].value     = value;
+				n_results += 1;
+			}
+		}
 	}
-	return 0;
+
+	sort_steps(results, 0, n_results);
+	return n_results;
 }
