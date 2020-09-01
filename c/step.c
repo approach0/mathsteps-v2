@@ -242,14 +242,18 @@ int mathsteps_baseline(
 	steps[0].tree      = deep_copy(tree);
 	steps[0].value     = state_value__neg_complexity(tree);
 
+	if (max_steps <= 0)
+		goto skip;
+
 	do {
 		struct Step cur = steps[n_steps - 1];
 		n = possible_next_steps(cur.tree, axioms, m, steps + n_steps, max_steps - n_steps);
 		for (int j = n_steps + 1; j < n_steps + n; j++)
 			optr_release(steps[j].tree);
-		n_steps += 1;
+		n_steps += (n > 0) ? 1 : 0;
 	} while (n > 0);
 
+skip:
 	return n_steps;
 }
 
@@ -260,7 +264,13 @@ void print_step(struct Step *step, int print_tree)
 
 	char tex[MAX_TEX_LEN];
 	optr_write_tex(tex, step->tree);
-	printf("%s\n", tex);
+	printf("%s", tex);
+	if (step->axiom) {
+		printf("\t (by axiom#%d `%s')", step->axiom_idx, step->axiom->name);
+	} else {
+		printf("\t (initial)");
+	}
+	printf("\n");
 
 	if (print_tree)
 		optr_print(step->tree);

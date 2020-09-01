@@ -92,15 +92,35 @@ static void test__state_value(void *scanner)
 
 static void test__next_steps(void *scanner, struct Axiom **axioms, int m)
 {
-	int max_results = 5;
-	struct Step steps[max_results];
+	int max_steps = 5;
+	struct Step steps[max_steps];
 
 	char original_tex[] = "1 + 2 + 3 + 4 \\cdot 2";
 	struct optr_node *tree = parser_parse(scanner, original_tex);
-	int n = possible_next_steps(tree, axioms, m, steps, max_results);
+
+	int n = possible_next_steps(tree, axioms, m, steps, max_steps);
 
 	printf("[origin] %s\n", original_tex);
 	printf("%d possible_next_steps: \n", n);
+	for (int i = 0; i < n; i++) {
+		printf("[step %d] ", i);
+		print_step(&steps[i], 0);
+		optr_release(steps[i].tree);
+	}
+
+	optr_release(tree);
+}
+
+static void test__baseline(void *scanner, struct Axiom **axioms, int m)
+{
+	int max_steps = 4;
+	struct Step steps[max_steps];
+
+	char original_tex[] = "1 + 2 + 3 + 4 \\cdot 2";
+	struct optr_node *tree = parser_parse(scanner, original_tex);
+
+	int n = mathsteps_baseline(tree, axioms, m, steps, max_steps);
+
 	for (int i = 0; i < n; i++) {
 		printf("[step %d] ", i);
 		print_step(&steps[i], 0);
@@ -117,7 +137,8 @@ int main()
 	void *scanner = parser_new_scanner();
 
 	//test__state_value(scanner);
-	test__next_steps(scanner, axioms, m);
+	//test__next_steps(scanner, axioms, m);
+	test__baseline(scanner, axioms, m);
 
 	parser_dele_scanner(scanner);
 	common_axioms_free(axioms, m);
