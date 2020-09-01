@@ -210,7 +210,7 @@ int possible_next_steps(
 		for (int j = 0; j < n; j++) {
 			struct optr_node *out = output[j];
 
-			if (out && n_steps + 1 < max_steps) {
+			if (out && n_steps + 1 <= max_steps) {
 				float value = state_value__neg_complexity(out);
 
 				if (!a->is_allow_complication) {
@@ -251,4 +251,17 @@ int mathsteps_baseline(
 	} while (n > 0);
 
 	return n_steps;
+}
+
+void print_step(struct Step *step, int print_tree)
+{
+	if (NULL == step || NULL == step->tree)
+		printf("(empty step)\n");
+
+	char tex[MAX_TEX_LEN];
+	optr_write_tex(tex, step->tree);
+	printf("%s\n", tex);
+
+	if (print_tree)
+		optr_print(step->tree);
 }
