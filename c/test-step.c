@@ -5,6 +5,7 @@
 #include "mhook.h"
 #include "parser.h"
 #include "step.h"
+#include "common-axioms.h"
 
 float g_test_last_val = -FLT_MAX;
 
@@ -31,10 +32,8 @@ static void test(const char *tex, void *scanner)
 	}
 }
 
-static void test__state_value()
+static void test__state_value(void *scanner)
 {
-	void *scanner = parser_new_scanner();
-
 	TEST("13 + 1");
 	TEST("10 + 4");
 	TEST_RESET;
@@ -89,14 +88,37 @@ static void test__state_value()
     TEST("(-\\frac{2}{7}-\\frac{5}{7}) \\times 0.34 + (-\\frac{2}{3} - \\frac{1}{3}) \\times 13");
     TEST("(-1) \\times 0.34 + (-\\frac{2}{3} - \\frac{1}{3}) \\times 13");
     TEST_RESET;
+}
 
-	parser_dele_scanner(scanner);
+static void test__next_steps(void *scanner)
+{
+	int m = 0;
+	struct Axiom **axioms = common_axioms(&m);
+
+	int max_results = 12;
+	struct Step steps[max_results];
+
+	struct optr_node *tree = parser_parse(scanner, "1 + 2 + 3 + 4 \\cdot 2");
+	int n = possible_next_steps(tree, axioms, m, steps, max_results);
+
+	for (int i = 0; i < n; i++) {
+		optr_print(steps[i].tree);
+		optr_release(steps[i].tree);
+	}
+
+	optr_release(tree);
+
+	common_axioms_free(axioms, m);
 }
 
 int main()
 {
-	//test__state_value();
+	void *scanner = parser_new_scanner();
 
+	//test__state_value(scanner);
+	test__next_steps(scanner);
+
+	parser_dele_scanner(scanner);
 	mhook_print_unfree();
 	return 0;
 }

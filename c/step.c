@@ -156,9 +156,13 @@ float state_value__neg_complexity(struct optr_node *tree)
 	return -complexity;
 }
 
-static int _less_than(struct Step *s1, struct Step *s2)
+static int _prior_than(struct Step *s1, struct Step *s2)
 {
-	return 0;
+	if (s1->axiom_idx != s2->axiom_idx) {
+		return s1->axiom_idx < s2->axiom_idx;
+	} else {
+		return s1->value > s2->value;
+	}
 }
 
 static int quicksort_parition(struct Step *steps, int lo, int hi)
@@ -166,7 +170,7 @@ static int quicksort_parition(struct Step *steps, int lo, int hi)
 	struct Step tmp, *pivot = steps + hi;
 	int i = lo;
 	for (int j = lo; j < hi; j++) {
-		if (_less_than(steps + j, pivot)) {
+		if (_prior_than(steps + j, pivot)) {
 			tmp = steps[i];
 			steps[i] = steps[j];
 			steps[j] = tmp;
@@ -225,5 +229,26 @@ int possible_next_steps(
 	}
 
 	sort_steps(results, 0, n_results);
+	return n_results;
+}
+
+int mathsteps_baseline(
+	struct optr_node *tree, struct Axiom *axioms[], int m,
+	struct Step *results, int max_steps)
+{
+	int n, n_results = 1;
+	results[0].axiom     = NULL;
+	results[0].axiom_idx = -1;
+	results[0].tree      = deep_copy(tree);
+	results[0].value     = state_value__neg_complexity(tree);
+
+	do {
+		struct Step cur = results[n_results - 1];
+		n = possible_next_steps(cur.tree, axioms, m, results + n_results, max_steps - n_results);
+		for (int j = n_results + 1; j < n_results + n; j++)
+			optr_release(results[j].tree);
+		n_results += 1;
+	} while (n > 0);
+
 	return n_results;
 }

@@ -9,7 +9,7 @@ LDLIBS := -lfl -lpthread -lm -latomic -lmcheck
 TEST_SRCS := $(wildcard test-*.c)
 TEST_BINS := $(TEST_SRCS:.c=.out)
 
-ALL_OBJS := mhook.o optr.o lex.yy.o y.tab.o parser.o alpha-equiv.o axiom.o dynamic-axioms.o step.o mcts.o
+ALL_OBJS := mhook.o optr.o lex.yy.o y.tab.o parser.o alpha-equiv.o axiom.o dynamic-axioms.o common-axioms.o step.o mcts.o
 ALL_BINS := $(TEST_BINS)
 
 all: $(ALL_OBJS) $(ALL_BINS)
