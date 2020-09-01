@@ -113,10 +113,10 @@ static void test__next_steps(void *scanner, struct Axiom **axioms, int m)
 
 static void test__baseline(void *scanner, struct Axiom **axioms, int m)
 {
-	int max_steps = 4;
+	int max_steps = 12;
 	struct Step steps[max_steps];
 
-	char original_tex[] = "1 + 2 + 3 + 4 \\cdot 2";
+	char original_tex[] = "3 + 2 + 7 + 4 \\cdot 2";
 	struct optr_node *tree = parser_parse(scanner, original_tex);
 
 	int n = mathsteps_baseline(tree, axioms, m, steps, max_steps);
