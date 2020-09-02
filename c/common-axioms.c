@@ -91,6 +91,34 @@ struct Axiom **common_axioms(int *n)
 		ret[cnt++] = a;
 	}
 
+	{
+		struct Axiom *a = axiom_new("Negative squared is its positive squared");
+
+		axiom_add_rule(a, "#(-a)^{2}", "#1 a^{2}", NULL);
+
+		axiom_add_test(a, "(-3)^{2} - (6 \\div (-\\frac{2}{3})^{2}) -  (-2)^{2}");
+
+		a->is_root_sign_reduce = 1;
+#ifdef FULL_COMMON_AXIOMS
+		a->is_strict_simplify = 1;
+#endif
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Division to fraction form");
+
+		axiom_add_rule(a, "# (#x) \\div (#y)", "#0 \\frac{x}{y}", NULL);
+
+		axiom_add_test(a, "-1 \\div 2x + 3");
+
+		a->is_root_sign_reduce = 1;
+		a->is_allow_complication = 1;
+
+		ret[cnt++] = a;
+	}
+
 //	{
 //		struct Axiom *a = axiom_add();
 //		ret[cnt++] = a;

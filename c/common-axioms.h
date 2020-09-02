@@ -1,5 +1,6 @@
 #pragma once
 #define MAX_AXIOMS 200
+#define FULL_COMMON_AXIOMS
 
 #include "axiom.h"
 

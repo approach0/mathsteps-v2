@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdint.h>
 
 #include "parser.h"
 #include "axiom.h"
@@ -139,11 +140,14 @@ void axiom_free(struct Axiom *a)
 	free(a);
 }
 
-int pound2signed(char *dest, const char *src, int bits, int n_pounds)
+int pound2signed(char *dest, const char *src, uint64_t bits, int n_pounds)
 {
 	int reduce_sign = 1;
 	strcpy(dest, src);
 	for (int i = 1; i <= n_pounds; i++) {
+		/* reduce sign */
+		reduce_sign *= (bits & 0x1) ? +1 : -1;
+
 		/* find named pound... */
 		char named_pound[16];
 		sprintf(named_pound, "#%d", i);
@@ -155,9 +159,6 @@ int pound2signed(char *dest, const char *src, int bits, int n_pounds)
 		*(pound_pos + 0) = ' ';
 		*(pound_pos + 1) = (bits & 0x1) ? '+' : '-';
 
-		/* reduce sign */
-		reduce_sign *= (bits & 0x1) ? +1 : -1;
-
 		/* continue to get next sign bit */
 		bits = bits >> 1;
 	}
@@ -167,6 +168,8 @@ int pound2signed(char *dest, const char *src, int bits, int n_pounds)
 		*(pound_pos + 0) = ' ';
 		*(pound_pos + 1) = (reduce_sign == 1) ? '+' : '-';
 	}
+
+	return 0;
 }
 
 struct Axiom *axiom_add_rule(
@@ -205,7 +208,7 @@ struct Axiom *axiom_add_rule(
 	}
 
 	/* setup output cache */
-	for (int k = 0; k < ipow(2, n_pounds); k++) {
+	for (uint64_t k = 0; k < ipow(2, n_pounds); k++) {
 		char tmp[MAX_RULE_STR_LEN];
 		pound2signed(tmp, output, k, n_pounds);
 		//printf("%s => %s => %s\n", pattern, output, tmp);
@@ -244,10 +247,10 @@ void rule_print(struct Rule *rule)
 	optr_print(rule->pattern_cache);
 
 	printf("[template]\n%s\n", rule->output);
-	for (int k = 0; k < ipow(2, rule->n_pounds); k++) {
+	for (uint64_t k = 0; k < ipow(2, rule->n_pounds); k++) {
 		for (int j = 0; j < MAX_RULE_OUTPUTS; j++) {
 			if (rule->output_cache[k][j]) {
-				printf("{%d, %d}:\n", k, j);
+				printf("{%lu, %d}:\n", k, j);
 				optr_print(rule->output_cache[k][j]);
 			}
 		}
@@ -273,7 +276,7 @@ struct optr_node *exact_rule_apply(struct Rule *rule, struct optr_node *tree)
 		return NULL;
 	}
 
-	int k = 0;
+	uint64_t k = 0;
 	for (int i = 0; i < rule->n_pounds; i++) {
 		int pound_ID = i + 1;
 		if (signs[pound_ID] > 0) {
