@@ -64,14 +64,29 @@ struct Axiom **common_axioms(int *n)
 	}
 
 	{
-		struct Axiom *a = axiom_add();
+		struct Axiom *a = axiom_new("Square-power cancels out");
+
+		axiom_add_rule(a, "#(#\\sqrt{x})^{2}", "#1 x", NULL);
+
+		axiom_add_test(a, "-(\\sqrt{x})^{2}");
+		axiom_add_test(a, "+(-\\sqrt{x})^{2}");
+		axiom_add_test(a, "(\\sqrt{x})^{2}");
+		axiom_add_test(a, "-(-\\sqrt{x})^{2}");
+
+		a->is_root_sign_reduce = 1;
+
 		ret[cnt++] = a;
 	}
 
-	{
-		struct Axiom *a = axiom_mul();
-		ret[cnt++] = a;
-	}
+//	{
+//		struct Axiom *a = axiom_add();
+//		ret[cnt++] = a;
+//	}
+//
+//	{
+//		struct Axiom *a = axiom_mul();
+//		ret[cnt++] = a;
+//	}
 
 	*n = cnt;
 	return ret;
