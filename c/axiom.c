@@ -81,15 +81,15 @@ int axiom_test(struct Axiom* a)
 
 		/* do testing */
 		int n_output = axiom_apply(a, tree, output);
-		printf("applied in %d places.\n", n_output);
+		printf("%d applied results:\n", n_output);
 
 		for (int i = 0; i < n_output; i++) {
 			struct optr_node *out = output[i];
-			char outtex[MAX_TEX_LEN];
 
-			printf("place#%d: ", i);
-			optr_write_tex(outtex, out);
-			printf("%s\n", outtex);
+			printf("#%d: ", i);
+
+			optr_print_tex(out);
+			printf("\n");
 
 			//optr_print(out);
 
@@ -362,11 +362,16 @@ int axiom_level_apply(
 			/* in commutative tree, make children pair permutations */
 			for (int i = 0; i < n; i++) {
 				for (int j = i + 1; j < n; j++) {
+					//rule_print(rule);
 					if (1) {
 						hanger = *tree;
 						hanger.n_children = 0;
 						optr_attach(&hanger, tree->children[i]);
 						optr_attach(&hanger, tree->children[j]);
+
+						//printf("ij:\n");
+						//optr_print(&hanger);
+
 						reduced = exact_rule_apply(rule, &hanger);
 						if (reduced) {
 							results[cnt++] = merge_brothers(tree, reduced, i, j, n, rsr);
@@ -379,6 +384,10 @@ int axiom_level_apply(
 						hanger.n_children = 0;
 						optr_attach(&hanger, tree->children[j]);
 						optr_attach(&hanger, tree->children[i]);
+
+						//printf("ji:\n");
+						//optr_print(&hanger);
+
 						reduced = exact_rule_apply(rule, &hanger);
 						if (reduced) {
 							results[cnt++] = merge_brothers(tree, reduced, j, i, n, rsr);

@@ -401,3 +401,10 @@ int optr_write_tex(char* dest, struct optr_node* optr)
 {
 	return __optr_write_tex(dest, optr, NULL);
 }
+
+void optr_print_tex(struct optr_node* optr)
+{
+	char tex[MAX_TEX_LEN];
+	optr_write_tex(tex, optr);
+	printf("%s", tex);
+}

@@ -10,6 +10,30 @@ struct Axiom **common_axioms(int *n)
 	int cnt = 0;
 
 	{
+		struct Axiom *a = axiom_new("Remove zero term");
+
+		axiom_add_rule(a, "# (n - n)", "0", NULL);
+		axiom_add_rule(a, "# (a - \\frac{a}{1})", "0", NULL);
+		axiom_add_rule(a, "# (-a + \\frac{a}{1})", "0", NULL);
+
+		axiom_add_test(a, "-(2 - 2)");
+		axiom_add_test(a, "\\frac{a^{2}}{1} - a^{2}");
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Multiplying zero result in zero");
+
+		axiom_add_rule(a, "# 0 \\cdot *{a}", "0", NULL);
+		axiom_add_rule(a, "#\\frac{#0}{x}", "0", NULL);
+
+		axiom_add_test(a, "0 \\times a \\times c^{2}");
+
+		ret[cnt++] = a;
+	}
+
+	{
 		struct Axiom *a = axiom_add();
 		ret[cnt++] = a;
 	}

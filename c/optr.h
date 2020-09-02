@@ -51,4 +51,5 @@ void optr_release(struct optr_node *);
 float            optr_get_node_val(struct optr_node*);
 struct optr_node optr_gen_val_node(float);
 
-int optr_write_tex(char*, struct optr_node*);
+int  optr_write_tex(char*, struct optr_node*);
+void optr_print_tex(struct optr_node*);
