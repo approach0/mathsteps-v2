@@ -352,7 +352,7 @@ int axiom_level_apply(
 		struct optr_node *reduced, hanger;
 
 		if (n == 1) {
-			/* in unary or wildcards tree, invok exact_rule_apply() directly */
+			/* in unary tree, invok exact_rule_apply() directly */
 			reduced = exact_rule_apply(rule, tree);
 			if (reduced) {
 				results[cnt++] = merge_brothers(tree, reduced, 0, 0, 0, rsr);
@@ -360,6 +360,7 @@ int axiom_level_apply(
 			}
 
 		} else if (rule->contain_toplevel_wildcards) {
+			/* in top-level wildcards, try exact_rule_apply() for n choices */
 			for (int i = 0; i < n; i++) {
 				hanger = *tree;
 				hanger.n_children = 0;
