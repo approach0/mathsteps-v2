@@ -8,13 +8,13 @@
 #include "parser.h"
 #include "axiom.h"
 
-char *_ltrim(char *s)
+static char *_ltrim(char *s)
 {
     while(isspace(*s)) s++;
     return s;
 }
 
-char *_rtrim(char *s)
+static char *_rtrim(char *s)
 {
     char* back = s + strlen(s);
     while(isspace(*--back));
@@ -22,12 +22,12 @@ char *_rtrim(char *s)
     return s;
 }
 
-char *trim(char *s)
+static char *trim(char *s)
 {
     return _rtrim(_ltrim(s));
 }
 
-int cnt_char_occurrence(const char *s, char t)
+static int cnt_char_occurrence(const char *s, char t)
 {
 	int count = 0;
 	while ((s = strchr(s, t)) != NULL) {
@@ -37,7 +37,7 @@ int cnt_char_occurrence(const char *s, char t)
 	return count;
 }
 
-int ipow(int base, int exp)
+static int ipow(int base, int exp)
 {
 	int result = 1;
 	for (;;)
