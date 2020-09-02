@@ -27,6 +27,9 @@ struct Rule {
 
 	struct optr_node *pattern_cache;
 	struct optr_node *output_cache[MAX_SIGN_PERMUTATIONS][MAX_RULE_OUTPUTS];
+
+	/* contain_toplevel_wildcards determines if we do children permutation */
+	int  contain_toplevel_wildcards;
 };
 
 struct Axiom {

@@ -201,6 +201,7 @@ struct Axiom *axiom_add_rule(
 		goto skip;
 	} else {
 		rule->pattern_cache = root;
+		rule->contain_toplevel_wildcards = root->n_wildcards_children;
 	}
 
 	/* setup output cache */
@@ -242,7 +243,7 @@ void rule_print(struct Rule *rule)
 	printf("[pattern]\n%s\n", rule->pattern);
 	optr_print(rule->pattern_cache);
 
-	printf("[output]\n%s\n", rule->output);
+	printf("[template]\n%s\n", rule->output);
 	for (int k = 0; k < ipow(2, rule->n_pounds); k++) {
 		for (int j = 0; j < MAX_RULE_OUTPUTS; j++) {
 			if (rule->output_cache[k][j]) {
@@ -350,12 +351,30 @@ int axiom_level_apply(
 		struct Rule *rule = axiom->rules + i;
 		struct optr_node *reduced, hanger;
 
-		if (n == 1 || tree->n_wildcards_children > 0) {
+		if (n == 1) {
 			/* in unary or wildcards tree, invok exact_rule_apply() directly */
 			reduced = exact_rule_apply(rule, tree);
 			if (reduced) {
 				results[cnt++] = merge_brothers(tree, reduced, 0, 0, 0, rsr);
 				if (cnt == max_outputs) goto early_stop;
+			}
+
+		} else if (rule->contain_toplevel_wildcards) {
+			for (int i = 0; i < n; i++) {
+				hanger = *tree;
+				hanger.n_children = 0;
+
+				optr_attach(&hanger, tree->children[i]);
+
+				for (int j = 0; j < tree->n_children; j++)
+					if (j != i)
+						optr_attach(&hanger, tree->children[j]);
+
+				reduced = exact_rule_apply(rule, &hanger);
+				if (reduced) {
+					results[cnt++] = merge_brothers(tree, reduced, 0, 0, 0, rsr);
+					goto early_stop;
+				}
 			}
 
 		} else if (tok == TOK_HEX_ADD || tok == TOK_HEX_TIMES) {

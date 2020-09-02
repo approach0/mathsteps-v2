@@ -28,7 +28,9 @@ struct Axiom **common_axioms(int *n)
 		axiom_add_rule(a, "# 0 \\cdot *{a}", "0", NULL);
 		axiom_add_rule(a, "#\\frac{#0}{x}", "0", NULL);
 
-		axiom_add_test(a, "0 \\times a \\times c^{2}");
+		axiom_add_test(a, "\\frac{0 \\times b^{2} \\times a}{2}");
+		axiom_add_test(a, "a \\times b^{2} \\times 0");
+		axiom_add_test(a, "a \\times 0 \\times b^{2}");
 
 		ret[cnt++] = a;
 	}
