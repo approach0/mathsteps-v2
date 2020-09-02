@@ -94,15 +94,18 @@ struct optr_node *deep_copy(struct optr_node *src)
 static int plug_sign_apply(struct optr_node *e, float sign)
 {
 	if (e->sign < 0) {
+		/* since this case outter sign is negative, just reverse it to positive */
 		e->sign *= sign;
 
-	} else if (e->type == OPTR_NODE_TOKEN || e->token == TOK_HEX_ADD) {
+	} else if (e->type == OPTR_NODE_TOKEN && e->token == TOK_HEX_ADD) {
+		/* this case we need to distribute signs */
 		for (int i = 0; i < e->n_children; i++) {
 			struct optr_node *child = e->children[i];
 			child->sign *= sign;
 		}
 
 	} else {
+		/* otherwise just apply the sign */
 		e->sign *= sign;
 	}
 
@@ -156,22 +159,30 @@ static int __test_alpha_equiv(
 
 		if (c1->is_wildcards) {
 			int key = alphabet_order(c1->var, 1);
-			/* allocate placeholder operator */
-			struct optr_node *placeholder = shallow_copy(e2);
 
-			/*
-			 * Wildcard matches should not include root sign,
-			 * e.g., pattern `# 1 \cdot *{x}' and `- 1 \cdot 2 \cdot 3'
-			 * will map `*{x} = 2 \cdot 3', not `*{x} = - 2 \cdot 3'.
-			 */
-			placeholder->sign = +1.f;
+			if (e2->n_children - i == 1) {
+				/* wildcards only wrap one operand, use it directly */
+				map[key] = deep_copy(e2->children[i]);
 
-			for (int j = i; j < e2->n_children; j++) {
-				struct optr_node *copy = deep_copy(e2->children[j]);
-				optr_attach(placeholder, copy);
+			} else {
+				/* allocate placeholder operator */
+				struct optr_node *placeholder = shallow_copy(e2);
+
+				/*
+				 * Wildcard matches should not include root sign,
+				 * e.g., pattern `# 1 \cdot *{x}' and `- 1 \cdot 2 \cdot 3'
+				 * will map `*{x} = 2 \cdot 3', not `*{x} = - 2 \cdot 3'.
+				 */
+				placeholder->sign = +1.f;
+
+				for (int j = i; j < e2->n_children; j++) {
+					struct optr_node *copy = deep_copy(e2->children[j]);
+					optr_attach(placeholder, copy);
+				}
+
+				map[key] = placeholder;
 			}
 
-			map[key] = placeholder;
 			length_unmatch = 0;
 			break;
 		}

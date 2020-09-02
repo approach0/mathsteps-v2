@@ -53,10 +53,10 @@ struct Axiom **common_axioms(int *n)
 
 		axiom_add_rule(a, "# 1 \\times *{x}", "#1 *{x}", NULL);
 
-		//axiom_add_test(a, "1 \\cdot 4");
+		axiom_add_test(a, "1 \\cdot 4");
 		axiom_add_test(a, "-4 \\times 1");
-		//axiom_add_test(a, "- (a+b) \\cdot 1");
-		//axiom_add_test(a, "- 1 \\cdot 4 \\cdot 1");
+		axiom_add_test(a, "- (a+b) \\cdot 1");
+		axiom_add_test(a, "- 1 \\cdot 4 \\cdot 1");
 
 		a->is_root_sign_reduce = 1;
 
