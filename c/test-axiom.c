@@ -20,7 +20,7 @@ int main()
 
 	for (int i = 0; i < m; i++) {
 		struct Axiom *a = axioms[i];
-		if (strcmp(a->name, "Multiplying zero result in zero") == 0) {
+		if (strcmp(a->name, "Eliminate unit factor") == 0) {
 			axiom_test(a);
 		}
 	}

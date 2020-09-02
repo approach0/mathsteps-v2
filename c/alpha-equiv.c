@@ -159,6 +159,13 @@ static int __test_alpha_equiv(
 			/* allocate placeholder operator */
 			struct optr_node *placeholder = shallow_copy(e2);
 
+			/*
+			 * Wildcard matches should not include root sign,
+			 * e.g., pattern `# 1 \cdot *{x}' and `- 1 \cdot 2 \cdot 3'
+			 * will map `*{x} = 2 \cdot 3', not `*{x} = - 2 \cdot 3'.
+			 */
+			placeholder->sign = +1.f;
+
 			for (int j = i; j < e2->n_children; j++) {
 				struct optr_node *copy = deep_copy(e2->children[j]);
 				optr_attach(placeholder, copy);

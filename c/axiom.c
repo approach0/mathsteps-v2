@@ -287,6 +287,9 @@ struct optr_node *exact_rule_apply(struct Rule *rule, struct optr_node *tree)
 		output = (*rule->dynamic_procedure)(rule, tree, map, signs, k);
 	} else {
 		output = rewrite_by_alpha(outputs[0], map);
+		//alpha_map_print(map);
+		//optr_print(outputs[0]);
+		//optr_print(output);
 	}
 
 	alpha_map_free(map);

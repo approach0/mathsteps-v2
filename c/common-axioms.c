@@ -10,7 +10,7 @@ struct Axiom **common_axioms(int *n)
 	int cnt = 0;
 
 	{
-		struct Axiom *a = axiom_new("Remove zero term");
+		struct Axiom *a = axiom_new("Cancel term");
 
 		axiom_add_rule(a, "# (n - n)", "0", NULL);
 		axiom_add_rule(a, "# (a - \\frac{a}{1})", "0", NULL);
@@ -30,7 +30,35 @@ struct Axiom **common_axioms(int *n)
 
 		axiom_add_test(a, "\\frac{0 \\times b^{2} \\times a}{2}");
 		axiom_add_test(a, "a \\times b^{2} \\times 0");
-		axiom_add_test(a, "a \\times 0 \\times b^{2}");
+		axiom_add_test(a, "- a \\times 0 \\times b^{2}");
+
+		a->is_root_sign_reduce = 1;
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Eliminate zero terms");
+
+		axiom_add_rule(a, "#(#0 + n)", "n", NULL);
+
+		axiom_add_test(a, "0+3+2");
+		axiom_add_test(a, "-(0+3+2)");
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Eliminate unit factor");
+
+		axiom_add_rule(a, "# 1 \\times *{x}", "#1 *{x}", NULL);
+
+		//axiom_add_test(a, "1 \\cdot 4");
+		axiom_add_test(a, "-4 \\times 1");
+		//axiom_add_test(a, "- (a+b) \\cdot 1");
+		//axiom_add_test(a, "- 1 \\cdot 4 \\cdot 1");
+
+		a->is_root_sign_reduce = 1;
 
 		ret[cnt++] = a;
 	}
