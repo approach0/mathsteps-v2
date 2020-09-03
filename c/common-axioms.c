@@ -107,14 +107,110 @@ struct Axiom **common_axioms(int *n)
 	}
 
 	{
+		struct Axiom *a = axiom_new("Division to inverse multiplication");
+
+		axiom_add_rule(a, "# (#\\frac{w}{x}) \\div (# \\frac{y}{z})", "#0 \\frac{wz}{xy}", NULL);
+		axiom_add_rule(a, "# x \\div (# \\frac{y}{z})", "#0 \\frac{xz}{y}", NULL);
+
+		axiom_add_test(a, "- 3 \\div (-\\frac{1}{2})");
+		axiom_add_test(a, "\\frac{2}{3} \\div \\frac{4}{5}");
+
+		a->is_root_sign_reduce = 1;
+		a->is_allow_complication = 1;
+
+		ret[cnt++] = a;
+	}
+
+	{
 		struct Axiom *a = axiom_new("Division to fraction form");
 
 		axiom_add_rule(a, "# (#x) \\div (#y)", "#0 \\frac{x}{y}", NULL);
 
 		axiom_add_test(a, "-1 \\div 2x + 3");
+		axiom_add_test(a, "6 \\div (-3)");
 
 		a->is_root_sign_reduce = 1;
 		a->is_allow_complication = 1;
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Cancel factor with denominator");
+
+		axiom_add_rule(a, "# x \\times \\frac{a}{x}", "#1 a", NULL);
+
+		axiom_add_test(a, "-3 \\times \\frac{-2}{3}");
+		axiom_add_test(a, "3 \\times \\frac{-2}{3}");
+
+		a->is_root_sign_reduce = 1;
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Absolute operator distribution");
+
+		axiom_add_rule(a,
+			"# \\left| # \\frac{a}{b} \\right|",
+			"#1 \\frac{\\left| a \\right|}{\\left| b \\right|}",
+		NULL);
+
+		axiom_add_test(a, "\\left| - \\frac{1}{2} \\right|");
+
+		a->is_root_sign_reduce = 1;
+		a->is_allow_complication = 1;
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Square root distribution");
+
+		axiom_add_rule(a,
+			"# \\sqrt{\\frac{a}{b}}",
+			"#1 \\frac{\\sqrt{a}}{\\sqrt{b}}",
+		NULL);
+
+		axiom_add_test(a, "- \\sqrt{\\frac{1}{2}}");
+
+		a->is_root_sign_reduce = 1;
+		a->is_allow_complication = 1;
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Cancel common factor in a fraction");
+
+		axiom_add_rule(a,
+			"# \\frac{# x *{i} }{# x *{j} }",
+			"#1 \\frac{#2 *{i}}{#3 *{j}}",
+		NULL);
+		//axiom_add_rule(a,
+		//	"# \\frac{# x }{# x *{i} }",
+		//	"#0 \\frac{1}{*{i}}",
+		//NULL);
+		//axiom_add_rule(a,
+		//	"# \\frac{# x *{i} }{# x }",
+		//	"#0 *{i}",
+		//NULL);
+		axiom_add_rule(a,
+			"# \\frac{# x}{# x}",
+			"#0 1",
+		NULL);
+
+		axiom_add_test(a, "- \\frac{bx}{ax}");
+		//axiom_add_test(a, "- \\frac{-bx}{xa}");
+		//axiom_add_test(a, "- \\frac{-bxy}{-xay}");
+		//axiom_add_test(a, "- \\frac{-x}{ax}");
+		//axiom_add_test(a, "\\frac{-x}{xay}");
+		//axiom_add_test(a, "\\frac{3xy}{-xy}");
+		//axiom_add_test(a, "-\\frac{-a}{-a}");
+		//axiom_add_test(a, "\\frac{-(a + b)}{a + b}");
+		//axiom_add_test(a, "\\frac{-3 - \\frac{1}{3}}{-(3 + \\frac{1}{3}) \\times x}");
+
+		a->is_root_sign_reduce = 1;
 
 		ret[cnt++] = a;
 	}
