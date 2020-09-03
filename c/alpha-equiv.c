@@ -286,7 +286,8 @@ static int __test_alpha_equiv__wildcards(
 	float sign1 = e1->sign, sign2 = e2->sign;
 
 	if (type1 == OPTR_NODE_NUM) {
-		return test_node_identical__wildcards(e1, e2, su, nu);
+		int identical = test_node_identical__wildcards(e1, e2, su, nu);
+		return identical ? nu : 0;
 
 	} else if (type1 == OPTR_NODE_VAR) {
 		int key = alphabet_order(e1->var, e1->is_wildcards);
@@ -383,7 +384,7 @@ struct optr_node
 	map_universe_t   mu = (map_universe_t)_1;
 	signs_universe_t su = (signs_universe_t)_2;
 
-	int is_equiv = __test_alpha_equiv__wildcards(e1, e2, mu, su, 0);
+	int is_equiv = __test_alpha_equiv__wildcards(e1, e2, mu, su, 1);
 	if (is_equiv) {
 		struct optr_node **map = calloc(26 * 2 * 2, sizeof(struct optr_node*));
 		memcpy(map, mu[0], 26 * 2 * 2 * sizeof(struct optr_node*));
