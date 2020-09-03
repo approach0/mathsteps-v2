@@ -4,7 +4,6 @@
 #define MAX_AXIOM_RULES    32
 
 #define MAX_SIGN_PERMUTATIONS 32 /* 2^5 */
-#define MAX_NUM_POUNDS        12
 #define MAX_RULE_OUTPUTS      6
 
 #define MAX_AXIOM_TESTS       128

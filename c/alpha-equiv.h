@@ -1,6 +1,8 @@
 #pragma once
 #include "optr.h"
 
+#define MAX_NUM_POUNDS 12
+
 int alphabet_order(int, int);
 
 struct optr_node *shallow_copy(struct optr_node*);

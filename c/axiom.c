@@ -358,31 +358,12 @@ int axiom_level_apply(
 		struct Rule *rule = axiom->rules + i;
 		struct optr_node *reduced, hanger;
 
-		if (n == 1) {
+		if (n == 1 || rule->contain_toplevel_wildcards) {
 			/* in unary tree, invok exact_rule_apply() directly */
 			reduced = exact_rule_apply(rule, tree);
 			if (reduced) {
 				results[cnt++] = merge_brothers(tree, reduced, 0, 0, 0, rsr);
 				if (cnt == max_outputs) goto early_stop;
-			}
-
-		} else if (rule->contain_toplevel_wildcards) {
-			/* in top-level wildcards, try exact_rule_apply() for n choices */
-			for (int i = 0; i < n; i++) {
-				hanger = *tree;
-				hanger.n_children = 0;
-
-				optr_attach(&hanger, tree->children[i]);
-
-				for (int j = 0; j < tree->n_children; j++)
-					if (j != i)
-						optr_attach(&hanger, tree->children[j]);
-
-				reduced = exact_rule_apply(rule, &hanger);
-				if (reduced) {
-					results[cnt++] = merge_brothers(tree, reduced, 0, 0, 0, rsr);
-					goto early_stop;
-				}
 			}
 
 		} else if (tok == TOK_HEX_ADD || tok == TOK_HEX_TIMES) {
