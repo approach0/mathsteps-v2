@@ -284,11 +284,11 @@ struct optr_node *exact_rule_apply(struct Rule *rule, struct optr_node *tree)
 		}
 	}
 
-	struct optr_node **outputs = rule->output_cache[k];
 	struct optr_node *output;
 	if (rule->dynamic_procedure) {
 		output = (*rule->dynamic_procedure)(rule, tree, map, signs, k);
 	} else {
+		struct optr_node **outputs = rule->output_cache[k];
 		output = rewrite_by_alpha(outputs[0], map);
 
 		//alpha_map_print(map);

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "parser.h"
+#include "alpha-equiv.h"
 
 int test_node_identical(struct optr_node *n1, struct optr_node *n2, float signs[])
 {
