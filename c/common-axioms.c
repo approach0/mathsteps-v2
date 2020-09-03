@@ -195,10 +195,10 @@ struct Axiom **common_axioms(int *n)
 		//	"# \\frac{# x *{i} }{# x }",
 		//	"#0 *{i}",
 		//NULL);
-		axiom_add_rule(a,
-			"# \\frac{# x}{# x}",
-			"#0 1",
-		NULL);
+		//axiom_add_rule(a,
+		//	"# \\frac{# x}{# x}",
+		//	"#0 1",
+		//NULL);
 
 		axiom_add_test(a, "- \\frac{bx}{ax}");
 		//axiom_add_test(a, "- \\frac{-bx}{xa}");

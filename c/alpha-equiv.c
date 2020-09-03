@@ -195,6 +195,40 @@ static int __test_alpha_equiv(
 	return !length_unmatch;
 }
 
+void alpha_map_print(struct optr_node *map[])
+{
+	if (NULL == map)
+		return;
+
+	for (int i = 0; i < 26 * 2 * 2; i++) {
+		struct optr_node *nd;
+		if ((nd = map[i])) {
+			printf("[%d] => \n", i);
+			optr_print(nd);
+		}
+	}
+}
+
+static void alpha_map_free__items(struct optr_node *map[])
+{
+	for (int i = 0; i < 26 * 2 * 2; i++) {
+		struct optr_node *nd;
+		if ((nd = map[i])) {
+			printf("free item @ %d\n", i);
+			optr_release(map[i]);
+		}
+	}
+}
+
+void alpha_map_free(struct optr_node *map[])
+{
+	if (NULL == map)
+		return;
+
+	alpha_map_free__items(map);
+	free(map);
+}
+
 #define MAX_UNIVERSE 10
 
 typedef struct optr_node* (*map_universe_t)[26 * 2 * 2];
@@ -264,6 +298,7 @@ int universe_add_constraint(int key, struct optr_node* map_new,
 
 			if (!identical) {
 				if (i + 1 < nu) {
+					alpha_map_free__items(map);
 					memcpy(mu[i], mu[i + 1], (nu - i - 1) * (26 * 2 * 2) * sizeof(struct optr_node*));
 					memcpy(su[i], su[i + 1], (nu - i - 1) * MAX_NUM_POUNDS * sizeof(float));
 				}
@@ -285,8 +320,15 @@ static int __test_alpha_equiv__wildcards(
 	int   type1 = e1->type, type2 = e2->type;
 	float sign1 = e1->sign, sign2 = e2->sign;
 
+	//printf("LINE %d\n", __LINE__);
+	//printf("=========\n");
+	//optr_print(e1);
+	//printf("---------\n");
+	//optr_print(e2);
+
 	if (type1 == OPTR_NODE_NUM) {
 		int identical = test_node_identical__wildcards(e1, e2, su, nu);
+
 		return identical ? nu : 0;
 
 	} else if (type1 == OPTR_NODE_VAR) {
@@ -320,16 +362,16 @@ static int __test_alpha_equiv__wildcards(
 		signs_universe_t su_copy = (signs_universe_t)_2;
 
 		/* switch a case */
-		struct optr_node *reduced, hanger;
+		struct optr_node hanger, sub_hanger;
 		hanger = *e2;
 		hanger.n_children = 0;
 
 		optr_attach(&hanger, e2->children[t]);
-		for (int u = 0; u < e2->n_children; u++) {
-			if (u != t)
-				optr_attach(&hanger, e2->children[u]);
+		for (int i = 0; i < e2->n_children; i++) {
+			if (i != t)
+				optr_attach(&hanger, e2->children[i]);
 		}
-	
+
 		/* matching */
 		int i;
 		for (i = 0; i < e1->n_children; i++) {
@@ -341,7 +383,9 @@ static int __test_alpha_equiv__wildcards(
 
 			} else if (c1->is_wildcards && hanger.n_children - i != 1) {
 				/* allocate placeholder operator */
-				c2 = shallow_copy(&hanger);
+				sub_hanger = hanger;
+				sub_hanger.n_children = 0;
+				c2 = &sub_hanger;
 
 				/*
 				 * Wildcard matches should not include root sign,
@@ -361,8 +405,11 @@ static int __test_alpha_equiv__wildcards(
 				c2 = hanger.children[i];
 			}
 
-			if (!__test_alpha_equiv__wildcards(c1, c2, mu_copy, su_copy, nu_copy))
+			int nu_tmp = __test_alpha_equiv__wildcards(c1, c2, mu_copy, su_copy, nu_copy);
+			if (!nu_tmp)
 				break;
+			else
+				nu_copy = nu_tmp;
 		}
 
 		if (i == e1->n_children) {
@@ -377,54 +424,6 @@ static int __test_alpha_equiv__wildcards(
 }
 
 struct optr_node
-**test_alpha_equiv__wildcards(struct optr_node *e1, struct optr_node *e2, float signs[])
-{
-	struct optr_node *_1[26 * 2 * 2 * MAX_UNIVERSE];
-	float             _2[MAX_NUM_POUNDS * MAX_UNIVERSE];
-	map_universe_t   mu = (map_universe_t)_1;
-	signs_universe_t su = (signs_universe_t)_2;
-
-	int is_equiv = __test_alpha_equiv__wildcards(e1, e2, mu, su, 1);
-	if (is_equiv) {
-		struct optr_node **map = calloc(26 * 2 * 2, sizeof(struct optr_node*));
-		memcpy(map, mu[0], 26 * 2 * 2 * sizeof(struct optr_node*));
-		memcpy(signs, su[0], MAX_NUM_POUNDS * sizeof(float));
-		return map;
-	} else {
-		return NULL;
-	}
-}
-
-void alpha_map_print(struct optr_node *map[])
-{
-	if (NULL == map)
-		return;
-
-	for (int i = 0; i < 26 * 2 * 2; i++) {
-		struct optr_node *nd;
-		if ((nd = map[i])) {
-			printf("[%d] => \n", i);
-			optr_print(nd);
-		}
-	}
-}
-
-void alpha_map_free(struct optr_node *map[])
-{
-	if (NULL == map)
-		return;
-
-	for (int i = 0; i < 26 * 2 * 2; i++) {
-		struct optr_node *nd;
-		if ((nd = map[i])) {
-			optr_release(map[i]);
-		}
-	}
-
-	free(map);
-}
-
-struct optr_node
 **test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, float signs[])
 {
 	struct optr_node **map = calloc(26 * 2 * 2, sizeof(struct optr_node*));
@@ -434,6 +433,29 @@ struct optr_node
 		return map;
 	} else {
 		alpha_map_free(map);
+		return NULL;
+	}
+}
+
+struct optr_node
+**test_alpha_equiv__wildcards(struct optr_node *e1, struct optr_node *e2, float signs[])
+{
+	struct optr_node *_1[26 * 2 * 2 * MAX_UNIVERSE] = {0};
+	float             _2[MAX_NUM_POUNDS * MAX_UNIVERSE];
+	map_universe_t   mu = (map_universe_t)_1;
+	signs_universe_t su = (signs_universe_t)_2;
+
+	int is_equiv = __test_alpha_equiv__wildcards(e1, e2, mu, su, 1);
+	printf("========> %d\n", is_equiv);
+	if (is_equiv) {
+//		for (int i = 0; i < is_equiv; i++) {
+//			alpha_map_free__items(mu[i]);
+//		}
+		struct optr_node **map = calloc(26 * 2 * 2, sizeof(struct optr_node*));
+		memcpy(map, mu[0], 26 * 2 * 2 * sizeof(struct optr_node*));
+		memcpy(signs, su[0], MAX_NUM_POUNDS * sizeof(float));
+		return map;
+	} else {
 		return NULL;
 	}
 }
