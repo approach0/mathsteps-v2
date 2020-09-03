@@ -270,7 +270,7 @@ void axiom_print(struct Axiom *a)
 struct optr_node *exact_rule_apply(struct Rule *rule, struct optr_node *tree)
 {
 	float signs[MAX_NUM_POUNDS];
-	struct optr_node **map = test_alpha_equiv(rule->pattern_cache, tree, signs);
+	struct optr_node **map = test_alpha_equiv__wildcards(rule->pattern_cache, tree, signs);
 
 	if (NULL == map) {
 		return NULL;

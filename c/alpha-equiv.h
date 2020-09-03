@@ -9,6 +9,7 @@ struct optr_node *shallow_copy(struct optr_node*);
 struct optr_node *deep_copy(struct optr_node*);
 
 struct optr_node **test_alpha_equiv(struct optr_node*, struct optr_node*, float*);
+struct optr_node **test_alpha_equiv__wildcards(struct optr_node*, struct optr_node*, float signs[]);
 
 void alpha_map_print(struct optr_node *map[]);
 void alpha_map_free(struct optr_node *map[]);

@@ -264,8 +264,8 @@ int universe_add_constraint(int key, struct optr_node* map_new,
 
 			if (!identical) {
 				if (i + 1 < nu) {
-					memcpy(mu[i], mu[i + 1], (nu - i - 1) * (26 * 2 * 2));
-					memcpy(su[i], su[i + 1], (nu - i - 1) * MAX_NUM_POUNDS);
+					memcpy(mu[i], mu[i + 1], (nu - i - 1) * (26 * 2 * 2) * sizeof(struct optr_node*));
+					memcpy(su[i], su[i + 1], (nu - i - 1) * MAX_NUM_POUNDS * sizeof(float));
 				}
 				nu = nu - 1;
 			}
@@ -313,8 +313,8 @@ static int __test_alpha_equiv__wildcards(
 		struct optr_node *_1[26 * 2 * 2 * MAX_UNIVERSE];
 		float             _2[MAX_NUM_POUNDS * MAX_UNIVERSE];
 		int nu_copy = nu;
-		memcpy(_1, mu, 26 * 2 * 2 * nu);
-		memcpy(_2, su, MAX_NUM_POUNDS * nu);
+		memcpy(_1, mu, 26 * 2 * 2 * sizeof(struct optr_node*) * nu);
+		memcpy(_2, su, MAX_NUM_POUNDS * sizeof(float) * nu);
 		map_universe_t  mu_copy = (map_universe_t)_1;
 		signs_universe_t su_copy = (signs_universe_t)_2;
 
@@ -366,8 +366,8 @@ static int __test_alpha_equiv__wildcards(
 
 		if (i == e1->n_children) {
 			// append
-			memcpy(mu_new[nu_new], mu_copy, 26 * 2 * 2 * nu_copy);
-			memcpy(su_new[nu_new], su_copy, MAX_NUM_POUNDS * nu_copy);
+			memcpy(mu_new[nu_new], mu_copy, 26 * 2 * 2 * sizeof(struct optr_node*) * nu_copy);
+			memcpy(su_new[nu_new], su_copy, MAX_NUM_POUNDS * sizeof(float) * nu_copy);
 			nu_new += nu_copy;
 		}
 	}
@@ -386,8 +386,8 @@ struct optr_node
 	int is_equiv = __test_alpha_equiv__wildcards(e1, e2, mu, su, 0);
 	if (is_equiv) {
 		struct optr_node **map = calloc(26 * 2 * 2, sizeof(struct optr_node*));
-		memcpy(map, mu[0], 26 * 2 * 2);
-		memcpy(signs, su[0], MAX_NUM_POUNDS);
+		memcpy(map, mu[0], 26 * 2 * 2 * sizeof(struct optr_node*));
+		memcpy(signs, su[0], MAX_NUM_POUNDS * sizeof(float));
 		return map;
 	} else {
 		return NULL;
