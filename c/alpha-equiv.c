@@ -327,13 +327,12 @@ void print_map_universe(map_universe_t mu, int nu)
 int universe_add_constraint(int key, struct optr_node* map_new,
 	map_universe_t mu, signs_universe_t su, int nu)
 {
-	printf("\n");
-	printf("insert [%c] ==> ", order2alphabet(key));
-	optr_print_tex(map_new);
-	printf("\n");
-	printf("BEFORE universe_add_constraint()\n");
-	print_map_universe(mu, nu);
-
+//	printf("\n");
+//	printf("insert [%c] ==> ", order2alphabet(key));
+//	optr_print_tex(map_new);
+//	printf("\n");
+//	printf("BEFORE universe_add_constraint()\n");
+//	print_map_universe(mu, nu);
 
 	int inserted = 0;
 
@@ -350,6 +349,8 @@ int universe_add_constraint(int key, struct optr_node* map_new,
 //			printf("result: %d (nu=%d)\n", identical, nu);
 
 			if (!identical) {
+				alpha_map_refcnt(mu[i], -1);
+
 				if (i + 1 < nu) {
 					memcpy(mu[i], mu[i + 1], (nu - i - 1) * (26 * 2 * 2) * sizeof(struct optr_node*));
 					memcpy(su[i], su[i + 1], (nu - i - 1) * MAX_NUM_POUNDS * sizeof(float));
@@ -366,8 +367,8 @@ int universe_add_constraint(int key, struct optr_node* map_new,
 		}
 	}
 
-	printf("AFTER universe_add_constraint()\n");
-	print_map_universe(mu, nu);
+//	printf("AFTER universe_add_constraint()\n");
+//	print_map_universe(mu, nu);
 
 	if (!inserted)
 		optr_release(map_new);
@@ -381,10 +382,17 @@ static int __test_alpha_equiv__wildcards(
 	int   type1 = e1->type, type2 = e2->type;
 	float sign1 = e1->sign, sign2 = e2->sign;
 
-	//printf("LINE %d\n", __LINE__);
+	printf("LINE %d\n", __LINE__);
+	print_map_universe(mu, nu);
+	printf("\n");
 
 	if (type1 == OPTR_NODE_NUM) {
 		int identical = test_node_identical__wildcards(e1, e2, su, nu);
+		if (identical == 0) {
+			for (int k = 0; k < nu; k++) {
+				alpha_map_refcnt(mu[k], -1);
+			}
+		}
 		return identical ? nu : 0;
 
 	} else if (type1 == OPTR_NODE_VAR) {
@@ -397,6 +405,9 @@ static int __test_alpha_equiv__wildcards(
 		return universe_add_constraint(key, map_new, mu, su, nu);
 
 	} else if (!test_node_identical__wildcards(e1, e2, su, nu)) {
+		for (int k = 0; k < nu; k++) {
+			alpha_map_refcnt(mu[k], -1);
+		}
 		return 0;
 	}
 
@@ -419,6 +430,10 @@ static int __test_alpha_equiv__wildcards(
 			memcpy(_2, su, MAX_NUM_POUNDS * sizeof(float) * nu);
 			map_universe_t  mu_copy = (map_universe_t)_1;
 			signs_universe_t su_copy = (signs_universe_t)_2;
+
+			for (int k = 0; k < nu_copy; k++) {
+				alpha_map_refcnt(mu_copy[k], +1);
+			}
 
 			/* switch a case */
 			struct optr_node hanger;
@@ -458,26 +473,20 @@ static int __test_alpha_equiv__wildcards(
 					}
 
 					i = e1->n_children;
-					break;
 
 				} else {
 					c2 = hanger.children[i];
 				}
 
-				int tmp = __test_alpha_equiv__wildcards(c1, c2, mu_copy, su_copy, nu_copy);
+				nu_copy = __test_alpha_equiv__wildcards(c1, c2, mu_copy, su_copy, nu_copy);
+				if (nu_copy == 0)
+					break;
 
 //				printf("equiv?\t");
 //				optr_print_tex(c1);
 //				printf("  :::  ");
 //				optr_print_tex(c2);
 //				printf("\t res=%d\n", tmp);
-
-				if (0 == tmp) {
-					nu_copy = 0;
-					break;
-				} else {
-					nu_copy = tmp;
-				}
 			}
 
 			if (i == e1->n_children) {
@@ -485,8 +494,20 @@ static int __test_alpha_equiv__wildcards(
 				memcpy(mu_new[nu_new], mu_copy, 26 * 2 * 2 * sizeof(struct optr_node*) * nu_copy);
 				memcpy(su_new[nu_new], su_copy, MAX_NUM_POUNDS * sizeof(float) * nu_copy);
 				nu_new += nu_copy;
+			} else {
+				for (int k = 0; k < nu_copy; k++) {
+					alpha_map_refcnt(mu_copy[k], -1);
+				}
 			}
 		}
+
+		for (int k = 0; k < nu; k++) {
+			alpha_map_refcnt(mu[k], -1);
+		}
+
+		memcpy(mu, mu_new, 26 * 2 * 2 * sizeof(struct optr_node*) * nu_new);
+		memcpy(su, su_new, MAX_NUM_POUNDS * sizeof(float) * nu_new);
+		nu = nu_new;
 
 	} else {
 		/* matching */
@@ -517,32 +538,22 @@ static int __test_alpha_equiv__wildcards(
 				}
 
 				i = e1->n_children;
-				break;
 
 			} else {
 				c2 = e2->children[i];
 			}
 
-			int tmp = __test_alpha_equiv__wildcards(c1, c2, mu, su, nu);
-			if (0 == tmp) {
-				nu = 0;
+			nu = __test_alpha_equiv__wildcards(c1, c2, mu, su, nu);
+			if (0 == nu) {
 				break;
-			} else {
-				nu = tmp;
 			}
 		}
 
 		if (i == e1->n_children) {
-			// append
-			memcpy(mu_new[nu_new], mu, 26 * 2 * 2 * sizeof(struct optr_node*) * nu);
-			memcpy(su_new[nu_new], su, MAX_NUM_POUNDS * sizeof(float) * nu);
-			nu_new += 1;
+		} else {
+			printf("aaaaaaaaa\n");;
 		}
 	}
-
-	memcpy(mu, mu_new, 26 * 2 * 2 * sizeof(struct optr_node*) * nu_new);
-	memcpy(su, su_new, MAX_NUM_POUNDS * sizeof(float) * nu_new);
-	nu = nu_new;
 
 	printf("=========\n");
 	optr_print(e1);
