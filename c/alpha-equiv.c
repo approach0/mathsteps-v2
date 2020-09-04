@@ -5,54 +5,6 @@
 #include "parser.h"
 #include "alpha-equiv.h"
 
-int test_node_identical(struct optr_node *n1, struct optr_node *n2, float signs[])
-{
-	if (n1->type != n2->type ||
-	    (n1->sign != n2->sign && n1->pound_ID == 0))
-		return 0;
-
-	int is_match = 0;
-	switch (n1->type) {
-	case OPTR_NODE_VAR:
-		is_match = (n1->var == n2->var);
-		break;
-	case OPTR_NODE_NUM:
-		is_match = (n1->num == n2->num);
-		break;
-	case OPTR_NODE_TOKEN:
-		is_match = (n1->token == n2->token);
-		break;
-	default:
-		fprintf(stderr, "invalid node type\n");
-		abort();
-	}
-
-	if (is_match) {
-		signs[n1->pound_ID] = n2->sign;
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-int test_optr_identical(struct optr_node *e1, struct optr_node *e2, float signs[])
-{
-	if (!test_node_identical(e1, e2, signs))
-		return 0;
-	else if (e1->n_children != e2->n_children)
-		return 0;
-
-	for (int i = 0; i < e1->n_children; i++) {
-		struct optr_node *c1, *c2;
-		c1 = e1->children[i];
-		c2 = e2->children[i];
-		if (!test_optr_identical(c1, c2, signs))
-			return 0;
-	}
-
-	return 1;
-}
-
 int alphabet_order(int var, int is_wildcards)
 {
 	int base = is_wildcards ? 26 * 2 : 0;
@@ -108,7 +60,7 @@ struct optr_node *deep_copy(struct optr_node *src)
 	return copy_root;
 }
 
-static int plug_sign_apply(struct optr_node *e, float sign)
+static struct optr_node *pre_plugin_sign_apply(struct optr_node *e, float sign)
 {
 	if (e->sign < 0) {
 		/* since this case outter sign is negative, just reverse it to positive */
@@ -126,88 +78,7 @@ static int plug_sign_apply(struct optr_node *e, float sign)
 		e->sign *= sign;
 	}
 
-	return 0;
-}
-
-static int __test_alpha_equiv(
-	struct optr_node *e1, struct optr_node *e2,
-	struct optr_node *map[], float signs[])
-{
-	int   type1 = e1->type, type2 = e2->type;
-	float sign1 = e1->sign, sign2 = e2->sign;
-
-	if (type1 == OPTR_NODE_NUM) {
-		return test_node_identical(e1, e2, signs);
-
-	} else if (type1 == OPTR_NODE_VAR) {
-		int key = alphabet_order(e1->var, e1->is_wildcards);
-		struct optr_node *e_map_old, *e_map_new = deep_copy(e2);
-
-		/* if for example `-x' matches `a+b', then `x=-a-b' */
-		plug_sign_apply(e_map_new, sign1);
-
-		if ((e_map_old = map[key])) {
-			int save = test_optr_identical(e_map_old, e_map_new, signs);
-			optr_release(e_map_new);
-			return save;
-
-		} else {
-			map[key] = e_map_new;
-			return 1;
-		}
-
-	} else if (!test_node_identical(e1, e2, signs)) {
-		return 0;
-	}
-
-	int length_unmatch = !(e1->n_children == e2->n_children);
-
-	for (int i = 0; i < e1->n_children; i++) {
-		struct optr_node *c1, *c2;
-		c1 = e1->children[i];
-
-		if (i >= e2->n_children) {
-			length_unmatch = 1;
-			break;
-		} else {
-			c2 = e2->children[i];
-		}
-
-		if (c1->is_wildcards) {
-			int key = alphabet_order(c1->var, 1);
-
-			if (e2->n_children - i == 1) {
-				/* wildcards only wrap one operand, use it directly */
-				map[key] = deep_copy(e2->children[i]);
-
-			} else {
-				/* allocate placeholder operator */
-				struct optr_node *placeholder = shallow_copy(e2);
-
-				/*
-				 * Wildcard matches should not include root sign,
-				 * e.g., pattern `# 1 \cdot *{x}' and `- 1 \cdot 2 \cdot 3'
-				 * will map `*{x} = 2 \cdot 3', not `*{x} = - 2 \cdot 3'.
-				 */
-				placeholder->sign = +1.f;
-
-				for (int j = i; j < e2->n_children; j++) {
-					struct optr_node *copy = deep_copy(e2->children[j]);
-					optr_attach(placeholder, copy);
-				}
-
-				map[key] = placeholder;
-			}
-
-			length_unmatch = 0;
-			break;
-		}
-
-		if (!__test_alpha_equiv(c1, c2, map, signs))
-			return 0;
-	}
-
-	return !length_unmatch;
+	return e;
 }
 
 void alpha_map_print(struct optr_node *map[])
@@ -225,17 +96,6 @@ void alpha_map_print(struct optr_node *map[])
 	}
 }
 
-static void alpha_map_free__items(struct optr_node *map[])
-{
-	for (int i = 0; i < 26 * 2 * 2; i++) {
-		struct optr_node *nd;
-		if ((nd = map[i])) {
-			printf("free item @ %d\n", i);
-			optr_release(nd);
-		}
-	}
-}
-
 static void alpha_map_refcnt(struct optr_node *map[], int cnt)
 {
 	for (int i = 0; i < 26 * 2 * 2; i++) {
@@ -244,7 +104,7 @@ static void alpha_map_refcnt(struct optr_node *map[], int cnt)
 			nd->refcnt += cnt;
 			if (nd->refcnt <= 0) {
 				printf("garbage free @ %d\n", i);
-				optr_release(nd);
+				//optr_release(nd);
 			}
 		}
 	}
@@ -255,11 +115,28 @@ void alpha_map_free(struct optr_node *map[])
 	if (NULL == map)
 		return;
 
-	alpha_map_free__items(map);
+	for (int i = 0; i < 26 * 2 * 2; i++) {
+		struct optr_node *nd;
+		if ((nd = map[i])) {
+			optr_release(nd);
+		}
+	}
 	free(map);
 }
 
-#define MAX_UNIVERSE 10
+#define MAX_UNIVERSE  10
+#define MAX_SIGNS_SPACE_SZ  (MAX_NUM_POUNDS * sizeof(float))
+#define MAX_MAP_SPACE       (26 * 2 * 2)
+#define MAX_MAP_SPACE_SZ    (MAX_MAP_SPACE * sizeof(struct optr_node*))
+
+#define CAST(_to, _type, _from) \
+	_type _to = (_type)(_from)
+
+#define UNIVERSE_MAP_REFCNT(_mu, _start, _end, _cnt) \
+	do{ \
+		for (int __k = _start; __k < _end; __k++) \
+			alpha_map_refcnt(_mu[__k], _cnt); \
+	} while (0)
 
 typedef struct optr_node* (*map_universe_t)[26 * 2 * 2];
 typedef float (*signs_universe_t)[MAX_NUM_POUNDS];
@@ -315,7 +192,7 @@ int test_optr_identical__wildcards(
 	return 1;
 }
 
-void print_map_universe(map_universe_t mu, int nu)
+static void print_map_universe(map_universe_t mu, int nu)
 {
 	for (int i = 0; i < nu; i++) {
 		struct optr_node** map = mu[i];
@@ -327,282 +204,202 @@ void print_map_universe(map_universe_t mu, int nu)
 int universe_add_constraint(int key, struct optr_node* map_new,
 	map_universe_t mu, signs_universe_t su, int nu)
 {
-//	printf("\n");
-//	printf("insert [%c] ==> ", order2alphabet(key));
-//	optr_print_tex(map_new);
-//	printf("\n");
-//	printf("BEFORE universe_add_constraint()\n");
-//	print_map_universe(mu, nu);
-
-	int inserted = 0;
-
 	for (int i = 0; i < nu; i++) {
 		struct optr_node **map = mu[i];
-
 		struct optr_node *map_old = map[key];
 		if (map_old) {
-			int identical = test_optr_identical__wildcards(map_old, map_new, su, nu);
-//			printf("cmp: ");
-//			optr_print_tex(map_old);
-//			printf(" ||| ");
-//			optr_print_tex(map_new);
-//			printf("result: %d (nu=%d)\n", identical, nu);
-
-			if (!identical) {
+			if (!test_optr_identical__wildcards(map_old, map_new, su, nu)) {
+				/* now, unref and delete this possibility */
 				alpha_map_refcnt(mu[i], -1);
 
+				/* overwrite i by following items (if any) */
 				if (i + 1 < nu) {
-					memcpy(mu[i], mu[i + 1], (nu - i - 1) * (26 * 2 * 2) * sizeof(struct optr_node*));
-					memcpy(su[i], su[i + 1], (nu - i - 1) * MAX_NUM_POUNDS * sizeof(float));
+					memcpy(mu[i], mu[i + 1], (nu - i - 1) * MAX_MAP_SPACE_SZ);
+					memcpy(su[i], su[i + 1], (nu - i - 1) * MAX_SIGNS_SPACE_SZ);
+					/* redo this loop iteration */
 					i = i - 1;
 				}
 
+				/* update universe number */
 				nu = nu - 1;
 			}
 
 		} else {
+			/* insert into this possibility */
 			map[key] = map_new;
 			map_new->refcnt += 1;
-			inserted = 1;
 		}
 	}
 
-//	printf("AFTER universe_add_constraint()\n");
-//	print_map_universe(mu, nu);
-
-	if (!inserted)
+	/* release `map_new' if it has not ever been inserted */
+	if (map_new->refcnt == 0)
 		optr_release(map_new);
+
 	return nu;
 }
 
-static int __test_alpha_equiv__wildcards(
-	struct optr_node *e1, struct optr_node *e2,
-	map_universe_t mu, signs_universe_t su, int nu)
+static struct optr_node
+permute_children_by_one_leader(struct optr_node *T, int t)
 {
-	int   type1 = e1->type, type2 = e2->type;
-	float sign1 = e1->sign, sign2 = e2->sign;
+	struct optr_node perm_T = *T;
+	/* t == 0 indicates no permutation needed */
+	if (t == 0)
+		goto skip;
+	/* construct a new tree with permuted children led by child at t */
+	perm_T.n_children = 0;
+	optr_attach(&perm_T, T->children[t]);
+	for (int i = 0; i < T->n_children; i++) {
+		if (i != t) optr_attach(&perm_T, T->children[i]);
+	}
+skip:
+	return perm_T;
+}
 
-	printf("LINE %d\n", __LINE__);
-	print_map_universe(mu, nu);
-	printf("\n");
+static struct optr_node
+children_following(struct optr_node *T, int i)
+{
+	struct optr_node cf = *T;
+	cf.n_children = 0;
 
-	if (type1 == OPTR_NODE_NUM) {
-		int identical = test_node_identical__wildcards(e1, e2, su, nu);
-		if (identical == 0) {
-			for (int k = 0; k < nu; k++) {
-				alpha_map_refcnt(mu[k], -1);
-			}
-		}
-		return identical ? nu : 0;
+	/*
+	 * Wildcard matches should not include root sign,
+	 * e.g., pattern `# 1 \cdot *{x}' and `- 1 \cdot 2 \cdot 3'
+	 * will map `*{x} = 2 \cdot 3', not `*{x} = - 2 \cdot 3'.
+	 */
+	cf.sign = +1.f;
 
-	} else if (type1 == OPTR_NODE_VAR) {
-		int key = alphabet_order(e1->var, e1->is_wildcards);
-		struct optr_node *map_new = deep_copy(e2);
+	for (int j = i; j < T->n_children; j++) {
+		optr_attach(&cf, T->children[j]);
+	}
+
+	return cf;
+}
+
+static int
+test_alpha_equiv__recur(struct optr_node *T1, struct optr_node *T2,
+                        map_universe_t mu, signs_universe_t su, int nu)
+{
+	/* testing on this node ... */
+	if (T1->type == OPTR_NODE_VAR) {
+		int key = alphabet_order(T1->var, T1->is_wildcards);
 
 		/* if for example `-x' matches `a+b', then `x=-a-b' */
-		plug_sign_apply(map_new, sign1);
+		struct optr_node *map_new = pre_plugin_sign_apply(deep_copy(T2), T1->sign);
 
 		return universe_add_constraint(key, map_new, mu, su, nu);
 
-	} else if (!test_node_identical__wildcards(e1, e2, su, nu)) {
-		for (int k = 0; k < nu; k++) {
-			alpha_map_refcnt(mu[k], -1);
+	} else {
+		/* NUMBER or OPERATOR (TOKEN) */
+		int identical = test_node_identical__wildcards(T1, T2, su, nu);
+
+		if (!identical) {
+			/* stop at umatched node */
+			UNIVERSE_MAP_REFCNT(mu, 0, nu, -1);
+			return 0;
+		} else if (T1->type == OPTR_NODE_NUM) {
+			/* stop at terminal */
+			return nu;
 		}
-		return 0;
 	}
 
-	struct optr_node *_1__[26 * 2 * 2 * MAX_UNIVERSE];
-	float             _2__[MAX_NUM_POUNDS * MAX_UNIVERSE];
+	/* allocate possibilities space to be returned */
+	struct optr_node *_mu[MAX_MAP_SPACE * MAX_UNIVERSE];
+	float             _su[MAX_NUM_POUNDS * MAX_UNIVERSE];
+	CAST(mu_new, map_universe_t, _mu);
+	CAST(su_new, signs_universe_t, _su);
 	int nu_new = 0;
 
-	map_universe_t   mu_new = (map_universe_t)_1__;
-	signs_universe_t su_new = (signs_universe_t)_2__;
+	/* testing on permuted children ... */
+	int child_perm_end = (T1->n_wildcards_children > 0) ? T2->n_children : 1;
+	for (int t = 0; t < child_perm_end; t++) {
 
-	if (e1->n_wildcards_children > 0) {
-		printf("GO 1\n");
+		/* allocate inherited (copied) sub-universe to be appended to `new' universe */
+		struct optr_node *__mu[MAX_MAP_SPACE * MAX_UNIVERSE];
+		float             __su[MAX_NUM_POUNDS * MAX_UNIVERSE];
+		CAST(mu_copy, map_universe_t, _mu);
+		CAST(su_copy, signs_universe_t, _su);
+		int nu_copy = nu;
+		/* make a copy */
+		memcpy(__mu, mu, MAX_MAP_SPACE_SZ * nu);
+		memcpy(__su, su, MAX_SIGNS_SPACE_SZ * nu);
+		UNIVERSE_MAP_REFCNT(mu_copy, 0, nu_copy, +1);
 
-		for (int t = 0; t < e2->n_children; t++) {
-			/* make a copy */
-			struct optr_node *_1[26 * 2 * 2 * MAX_UNIVERSE];
-			float             _2[MAX_NUM_POUNDS * MAX_UNIVERSE];
-			int nu_copy = nu;
-			memcpy(_1, mu, 26 * 2 * 2 * sizeof(struct optr_node*) * nu);
-			memcpy(_2, su, MAX_NUM_POUNDS * sizeof(float) * nu);
-			map_universe_t  mu_copy = (map_universe_t)_1;
-			signs_universe_t su_copy = (signs_universe_t)_2;
+		/* make a permuted T2 to be matched against */
+		struct optr_node perm_T2 = permute_children_by_one_leader(T2, t);
 
-			for (int k = 0; k < nu_copy; k++) {
-				alpha_map_refcnt(mu_copy[k], +1);
-			}
-
-			/* switch a case */
-			struct optr_node hanger;
-			hanger = *e2;
-			hanger.n_children = 0;
-
-			optr_attach(&hanger, e2->children[t]);
-			for (int i = 0; i < e2->n_children; i++) {
-				if (i != t)
-					optr_attach(&hanger, e2->children[i]);
-			}
-
-			/* matching */
-			int i;
-			for (i = 0; i < e1->n_children; i++) {
-				struct optr_node *c1, *c2;
-				c1 = e1->children[i];
-
-				if (i >= hanger.n_children) {
-					break;
-
-				} else if (c1->is_wildcards && hanger.n_children - i != 1) {
-					/* allocate placeholder operator */
-					struct optr_node sub_hanger = hanger;
-					sub_hanger.n_children = 0;
-					c2 = &sub_hanger;
-
-					/*
-					 * Wildcard matches should not include root sign,
-					 * e.g., pattern `# 1 \cdot *{x}' and `- 1 \cdot 2 \cdot 3'
-					 * will map `*{x} = 2 \cdot 3', not `*{x} = - 2 \cdot 3'.
-					 */
-					c2->sign = +1.f;
-
-					for (int j = i; j < hanger.n_children; j++) {
-						optr_attach(c2, hanger.children[j]);
-					}
-
-					i = e1->n_children;
-
-				} else {
-					c2 = hanger.children[i];
-				}
-
-				nu_copy = __test_alpha_equiv__wildcards(c1, c2, mu_copy, su_copy, nu_copy);
-				if (nu_copy == 0)
-					break;
-
-//				printf("equiv?\t");
-//				optr_print_tex(c1);
-//				printf("  :::  ");
-//				optr_print_tex(c2);
-//				printf("\t res=%d\n", tmp);
-			}
-
-			if (i == e1->n_children) {
-				// append
-				memcpy(mu_new[nu_new], mu_copy, 26 * 2 * 2 * sizeof(struct optr_node*) * nu_copy);
-				memcpy(su_new[nu_new], su_copy, MAX_NUM_POUNDS * sizeof(float) * nu_copy);
-				nu_new += nu_copy;
-			} else {
-				for (int k = 0; k < nu_copy; k++) {
-					alpha_map_refcnt(mu_copy[k], -1);
-				}
-			}
-		}
-
-		for (int k = 0; k < nu; k++) {
-			alpha_map_refcnt(mu[k], -1);
-		}
-
-		memcpy(mu, mu_new, 26 * 2 * 2 * sizeof(struct optr_node*) * nu_new);
-		memcpy(su, su_new, MAX_NUM_POUNDS * sizeof(float) * nu_new);
-		nu = nu_new;
-
-	} else {
-		/* matching */
-		printf("GO 2\n");
+		/* matching T1 against permuted T2 */
 		int i;
-		for (i = 0; i < e1->n_children; i++) {
+		for (i = 0; i < T1->n_children; i++) {
+			/* test matching between each child pair from this T1-perm_T2 pair */
 			struct optr_node *c1, *c2;
-			c1 = e1->children[i];
 
-			if (i >= e2->n_children) {
+			/* choose child from T1 */
+			c1 = T1->children[i];
+
+			/* choose child from permuted T2 */
+			if (i >= perm_T2.n_children) {
+				/* permuted T2 has not enough children to match T1 */
 				break;
 
-			} else if (c1->is_wildcards && e2->n_children - i != 1) {
-				/* allocate placeholder operator */
-				struct optr_node sub_hanger = *e2;
-				sub_hanger.n_children = 0;
-				c2 = &sub_hanger;
+			} else if (c1->is_wildcards && perm_T2.n_children - i != 1) {
+				/* followed here are multiple number of children (not single) */
+				struct optr_node cf = children_following(&perm_T2, i);
+				c2 = &cf;
 
-				/*
-				 * Wildcard matches should not include root sign,
-				 * e.g., pattern `# 1 \cdot *{x}' and `- 1 \cdot 2 \cdot 3'
-				 * will map `*{x} = 2 \cdot 3', not `*{x} = - 2 \cdot 3'.
-				 */
-				c2->sign = +1.f;
-
-				for (int j = i; j < e2->n_children; j++) {
-					optr_attach(c2, e2->children[j]);
-				}
-
-				i = e1->n_children;
+				/* no need to go further */
+				i = perm_T2.n_children;
 
 			} else {
-				c2 = e2->children[i];
+				c2 = perm_T2.children[i];
 			}
 
-			nu = __test_alpha_equiv__wildcards(c1, c2, mu, su, nu);
-			if (0 == nu) {
+			/* append new constraints to (copied) sub-universe */
+			nu_copy = test_alpha_equiv__recur(c1, c2, mu_copy, su_copy, nu_copy);
+
+			/* if this T1-perm_T2 pair does not match ... */
+			if (nu_copy == 0)
 				break;
-			}
 		}
 
-		if (i == e1->n_children) {
+		/* this T1-perm_T2 pair can be matched? */
+		if (nu_copy > 0 && i < perm_T2.n_children) {
+			/* append */
+			memcpy(mu_new[nu_new], mu_copy, MAX_MAP_SPACE_SZ * nu_copy);
+			memcpy(su_new[nu_new], su_copy, MAX_SIGNS_SPACE_SZ * nu_copy);
+			nu_new += nu_copy;
 		} else {
-			printf("aaaaaaaaa\n");;
+			UNIVERSE_MAP_REFCNT(mu_copy, 0, nu_copy, -1);
 		}
 	}
 
-	printf("=========\n");
-	optr_print(e1);
-	printf("---------\n");
-	optr_print(e2);
-	print_map_universe(mu, nu);
-	printf("\n");
+	/* write back to original universe */ 
+	UNIVERSE_MAP_REFCNT(mu, 0, nu, -1);
+	memcpy(mu, mu_new, MAX_MAP_SPACE_SZ * nu_new);
+	memcpy(su, su_new, MAX_SIGNS_SPACE_SZ * nu_new);
+	nu = nu_new;
 
 	return nu;
 }
 
 struct optr_node
-**test_alpha_equiv(struct optr_node *e1, struct optr_node *e2, float signs[])
+**test_alpha_equiv(struct optr_node *T1, struct optr_node *T2, float signs[])
 {
-	struct optr_node **map = calloc(26 * 2 * 2, sizeof(struct optr_node*));
+	/* allocate node-mapping and sign-mapping possibilities */
+	struct optr_node *_mu[MAX_MAP_SPACE * MAX_UNIVERSE] = {0};
+	float             _su[MAX_NUM_POUNDS * MAX_UNIVERSE];
+	CAST(mu, map_universe_t, _mu);
+	CAST(su, signs_universe_t, _su);
 
-	int is_equiv = __test_alpha_equiv(e1, e2, map, signs);
-	if (is_equiv) {
-		return map;
-	} else {
-		alpha_map_free(map);
-		return NULL;
-	}
-}
+	/* invoke the recursive version */
+	int nu = test_alpha_equiv__recur(T1, T2, mu, su, 1);
+	if (nu > 0) {
+		/* only return the first one */
+		struct optr_node **map = calloc(MAX_MAP_SPACE, sizeof(struct optr_node*));
+		memcpy(map, mu[0], MAX_MAP_SPACE_SZ);
+		memcpy(signs, su[0], MAX_SIGNS_SPACE_SZ);
 
-struct optr_node
-**test_alpha_equiv__wildcards(struct optr_node *e1, struct optr_node *e2, float signs[])
-{
-	struct optr_node *_1[26 * 2 * 2 * MAX_UNIVERSE] = {0};
-	float             _2[MAX_NUM_POUNDS * MAX_UNIVERSE];
-	map_universe_t   mu = (map_universe_t)_1;
-	signs_universe_t su = (signs_universe_t)_2;
-
-	int nu = __test_alpha_equiv__wildcards(e1, e2, mu, su, 1);
-//	printf("=== BEFORE ===\n");
-//	print_map_universe(mu, nu);
-	if (nu) {
-//		for (int i = 1; i < nu; i++) {
-//			alpha_map_refcnt(mu[i], -1);
-//		}
-//		nu = 1;
-//		printf("=== AFTER ===\n");
-//		print_map_universe(mu, nu);
-//
-		//abort();
-
-		struct optr_node **map = calloc(26 * 2 * 2, sizeof(struct optr_node*));
-		memcpy(map, mu[0], 26 * 2 * 2 * sizeof(struct optr_node*));
-		memcpy(signs, su[0], MAX_NUM_POUNDS * sizeof(float));
+		/* free other possibilities */
+		UNIVERSE_MAP_REFCNT(mu, 1, nu, -1);
 		return map;
 	} else {
 		return NULL;
@@ -621,7 +418,7 @@ struct optr_node *rewrite_by_alpha(struct optr_node *root, struct optr_node *map
 		subst = deep_copy(subst);
 
 		/* if for example `x=a+b' plugs into `-x` will become `-a-b' */
-		plug_sign_apply(subst, sign);
+		pre_plugin_sign_apply(subst, sign);
 		return subst;
 
 	} else if (root->type == OPTR_NODE_NUM) {

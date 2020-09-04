@@ -270,7 +270,7 @@ void axiom_print(struct Axiom *a)
 struct optr_node *exact_rule_apply(struct Rule *rule, struct optr_node *tree)
 {
 	float signs[MAX_NUM_POUNDS];
-	struct optr_node **map = test_alpha_equiv__wildcards(rule->pattern_cache, tree, signs);
+	struct optr_node **map = test_alpha_equiv(rule->pattern_cache, tree, signs);
 
 	if (NULL == map) {
 		return NULL;
@@ -354,8 +354,7 @@ int axiom_level_apply(
 	if (tree->type != OPTR_NODE_TOKEN || max_outputs <= 0)
 		return 0;
 
-	//for (int i = 0; i < axiom->n_rules; i++) {
-	for (int i = 0; i < 1; i++) {
+	for (int i = 0; i < axiom->n_rules; i++) {
 		struct Rule *rule = axiom->rules + i;
 		struct optr_node *reduced, hanger;
 
