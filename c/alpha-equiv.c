@@ -231,7 +231,21 @@ static void alpha_map_free__items(struct optr_node *map[])
 		struct optr_node *nd;
 		if ((nd = map[i])) {
 			printf("free item @ %d\n", i);
-			optr_release(map[i]);
+			optr_release(nd);
+		}
+	}
+}
+
+static void alpha_map_refcnt(struct optr_node *map[], int cnt)
+{
+	for (int i = 0; i < 26 * 2 * 2; i++) {
+		struct optr_node *nd;
+		if ((nd = map[i])) {
+			nd->refcnt += cnt;
+			if (nd->refcnt <= 0) {
+				printf("garbage free @ %d\n", i);
+				optr_release(nd);
+			}
 		}
 	}
 }
@@ -323,7 +337,7 @@ int universe_add_constraint(int key, struct optr_node* map_new,
 
 			if (!identical) {
 				if (i + 1 < nu) {
-					//alpha_map_free__items(map);
+					alpha_map_refcnt(map, -1);
 					memcpy(mu[i], mu[i + 1], (nu - i - 1) * (26 * 2 * 2) * sizeof(struct optr_node*));
 					memcpy(su[i], su[i + 1], (nu - i - 1) * MAX_NUM_POUNDS * sizeof(float));
 				}
@@ -332,6 +346,7 @@ int universe_add_constraint(int key, struct optr_node* map_new,
 
 		} else {
 			map[key] = map_new;
+			map_new->refcnt += 1;
 		}
 	}
 

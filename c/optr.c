@@ -14,6 +14,7 @@ struct optr_node *optr_alloc(int type)
 	nd->pound_ID = 0;
 	nd->n_children = 0;
 	nd->n_wildcards_children = 0;
+	nd->refcnt = 0;
 	return nd;
 }
 
