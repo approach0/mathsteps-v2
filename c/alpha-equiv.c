@@ -57,7 +57,7 @@ int alphabet_order(int var, int is_wildcards)
 {
 	int base = is_wildcards ? 26 * 2 : 0;
 	if ('A' <= var && var <= 'Z') {
-		return base + 26 + var - 'a';
+		return base + 26 + var - 'A';
 
 	} else if ('a' <= var && var <= 'z') {
 		return base + var - 'a';
@@ -66,6 +66,21 @@ int alphabet_order(int var, int is_wildcards)
 		fprintf(stderr, "invalid var value\n");
 		abort();
 		return 0;
+	}
+}
+
+char order2alphabet(int order)
+{
+	int is_wildcards = 0;
+	if (order >= 26 * 2) {
+		is_wildcards = 1;
+		order = order - 26;
+	}
+
+	if (order >= 26) {
+		return 'A' + order - 26;
+	} else {
+		return 'a' + order;
 	}
 }
 
@@ -203,8 +218,9 @@ void alpha_map_print(struct optr_node *map[])
 	for (int i = 0; i < 26 * 2 * 2; i++) {
 		struct optr_node *nd;
 		if ((nd = map[i])) {
-			printf("[%d] => \n", i);
-			optr_print(nd);
+			printf("[%c] => ", order2alphabet(i));
+			optr_print_tex(nd);
+			printf("\n");
 		}
 	}
 }
@@ -285,6 +301,15 @@ int test_optr_identical__wildcards(
 	return 1;
 }
 
+void print_map_universe(map_universe_t mu, int nu)
+{
+	for (int i = 0; i < nu; i++) {
+		struct optr_node** map = mu[i];
+		printf("Universe #%d\n", i);
+		alpha_map_print(map);
+	}
+}
+
 int universe_add_constraint(int key, struct optr_node* map_new,
 	map_universe_t mu, signs_universe_t su, int nu)
 {
@@ -298,7 +323,7 @@ int universe_add_constraint(int key, struct optr_node* map_new,
 
 			if (!identical) {
 				if (i + 1 < nu) {
-					alpha_map_free__items(map);
+					//alpha_map_free__items(map);
 					memcpy(mu[i], mu[i + 1], (nu - i - 1) * (26 * 2 * 2) * sizeof(struct optr_node*));
 					memcpy(su[i], su[i + 1], (nu - i - 1) * MAX_NUM_POUNDS * sizeof(float));
 				}
@@ -321,10 +346,12 @@ static int __test_alpha_equiv__wildcards(
 	float sign1 = e1->sign, sign2 = e2->sign;
 
 	//printf("LINE %d\n", __LINE__);
-	//printf("=========\n");
-	//optr_print(e1);
-	//printf("---------\n");
-	//optr_print(e2);
+	printf("=========\n");
+	optr_print(e1);
+	printf("---------\n");
+	optr_print(e2);
+	print_map_universe(mu, nu);
+	printf("\n");
 
 	if (type1 == OPTR_NODE_NUM) {
 		int identical = test_node_identical__wildcards(e1, e2, su, nu);
@@ -348,7 +375,7 @@ static int __test_alpha_equiv__wildcards(
 	float             _2__[MAX_NUM_POUNDS * MAX_UNIVERSE];
 	int nu_new = 0;
 
-	map_universe_t  mu_new = (map_universe_t)_1__;
+	map_universe_t   mu_new = (map_universe_t)_1__;
 	signs_universe_t su_new = (signs_universe_t)_2__;
 
 	for (int t = 0; t < e2->n_children; t++) {
@@ -420,6 +447,8 @@ static int __test_alpha_equiv__wildcards(
 		}
 	}
 
+	memcpy(mu, mu_new, 26 * 2 * 2 * sizeof(struct optr_node*) * nu_new);
+	memcpy(su, su_new, MAX_NUM_POUNDS * sizeof(float) * nu_new);
 	return nu_new;
 }
 
@@ -446,7 +475,8 @@ struct optr_node
 	signs_universe_t su = (signs_universe_t)_2;
 
 	int is_equiv = __test_alpha_equiv__wildcards(e1, e2, mu, su, 1);
-	printf("========> %d\n", is_equiv);
+	print_map_universe(mu, is_equiv);
+	abort();
 	if (is_equiv) {
 //		for (int i = 0; i < is_equiv; i++) {
 //			alpha_map_free__items(mu[i]);
