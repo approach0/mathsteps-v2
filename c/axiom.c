@@ -354,7 +354,8 @@ int axiom_level_apply(
 	if (tree->type != OPTR_NODE_TOKEN || max_outputs <= 0)
 		return 0;
 
-	for (int i = 0; i < axiom->n_rules; i++) {
+	//for (int i = 0; i < axiom->n_rules; i++) {
+	for (int i = 0; i < 1; i++) {
 		struct Rule *rule = axiom->rules + i;
 		struct optr_node *reduced, hanger;
 

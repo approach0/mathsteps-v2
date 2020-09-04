@@ -200,7 +200,7 @@ struct Axiom **common_axioms(int *n)
 		//	"#0 1",
 		//NULL);
 
-		axiom_add_test(a, "- \\frac{bx}{ax}");
+		axiom_add_test(a, "- \\frac{by}{ay}");
 		//axiom_add_test(a, "- \\frac{-bx}{xa}");
 		//axiom_add_test(a, "- \\frac{-bxy}{-xay}");
 		//axiom_add_test(a, "- \\frac{-x}{ax}");
