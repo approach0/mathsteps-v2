@@ -103,8 +103,8 @@ static void alpha_map_refcnt(struct optr_node *map[], int cnt)
 		if ((nd = map[i])) {
 			nd->refcnt += cnt;
 			if (nd->refcnt <= 0) {
-				printf("garbage free @ %d\n", i);
-				//optr_release(nd);
+				//printf("garbage collect @ %d\n", i);
+				optr_release(nd);
 			}
 		}
 	}
@@ -231,6 +231,16 @@ int universe_add_constraint(int key, struct optr_node* map_new,
 		}
 	}
 
+#if 0
+	printf("\n");
+	printf("insert [%c] ==> ", order2alphabet(key));
+	optr_print_tex(map_new);
+	printf("\n");
+	printf("AFTER universe_add_constraint()\n");
+	print_map_universe(mu, nu);
+	printf("\n");
+#endif
+
 	/* release `map_new' if it has not ever been inserted */
 	if (map_new->refcnt == 0)
 		optr_release(map_new);
@@ -316,8 +326,8 @@ test_alpha_equiv__recur(struct optr_node *T1, struct optr_node *T2,
 		/* allocate inherited (copied) sub-universe to be appended to `new' universe */
 		struct optr_node *__mu[MAX_MAP_SPACE * MAX_UNIVERSE];
 		float             __su[MAX_NUM_POUNDS * MAX_UNIVERSE];
-		CAST(mu_copy, map_universe_t, _mu);
-		CAST(su_copy, signs_universe_t, _su);
+		CAST(mu_copy, map_universe_t, __mu);
+		CAST(su_copy, signs_universe_t, __su);
 		int nu_copy = nu;
 		/* make a copy */
 		memcpy(__mu, mu, MAX_MAP_SPACE_SZ * nu);
@@ -328,10 +338,10 @@ test_alpha_equiv__recur(struct optr_node *T1, struct optr_node *T2,
 		struct optr_node perm_T2 = permute_children_by_one_leader(T2, t);
 
 		/* matching T1 against permuted T2 */
-		int i;
-		for (i = 0; i < T1->n_children; i++) {
+		int match_failed = 0;
+		for (int i = 0; i < T1->n_children; i++) {
 			/* test matching between each child pair from this T1-perm_T2 pair */
-			struct optr_node *c1, *c2;
+			struct optr_node *c1, *c2, cf;
 
 			/* choose child from T1 */
 			c1 = T1->children[i];
@@ -339,11 +349,12 @@ test_alpha_equiv__recur(struct optr_node *T1, struct optr_node *T2,
 			/* choose child from permuted T2 */
 			if (i >= perm_T2.n_children) {
 				/* permuted T2 has not enough children to match T1 */
+				match_failed = 1;
 				break;
 
 			} else if (c1->is_wildcards && perm_T2.n_children - i != 1) {
 				/* followed here are multiple number of children (not single) */
-				struct optr_node cf = children_following(&perm_T2, i);
+				cf = children_following(&perm_T2, i);
 				c2 = &cf;
 
 				/* no need to go further */
@@ -357,18 +368,20 @@ test_alpha_equiv__recur(struct optr_node *T1, struct optr_node *T2,
 			nu_copy = test_alpha_equiv__recur(c1, c2, mu_copy, su_copy, nu_copy);
 
 			/* if this T1-perm_T2 pair does not match ... */
-			if (nu_copy == 0)
+			if (nu_copy == 0) {
+				match_failed = 1;
 				break;
+			}
 		}
 
 		/* this T1-perm_T2 pair can be matched? */
-		if (nu_copy > 0 && i < perm_T2.n_children) {
+		if (match_failed) {
+			UNIVERSE_MAP_REFCNT(mu_copy, 0, nu_copy, -1);
+		} else {
 			/* append */
 			memcpy(mu_new[nu_new], mu_copy, MAX_MAP_SPACE_SZ * nu_copy);
 			memcpy(su_new[nu_new], su_copy, MAX_SIGNS_SPACE_SZ * nu_copy);
 			nu_new += nu_copy;
-		} else {
-			UNIVERSE_MAP_REFCNT(mu_copy, 0, nu_copy, -1);
 		}
 	}
 
@@ -378,6 +391,14 @@ test_alpha_equiv__recur(struct optr_node *T1, struct optr_node *T2,
 	memcpy(su, su_new, MAX_SIGNS_SPACE_SZ * nu_new);
 	nu = nu_new;
 
+#if 0
+	printf("=== test_alpha_equiv ===\n");
+	optr_print(T1);
+	printf("---\n");
+	optr_print(T2);
+	print_map_universe(mu, nu);
+	printf("\n");
+#endif
 	return nu;
 }
 
