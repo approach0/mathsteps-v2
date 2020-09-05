@@ -122,6 +122,7 @@ static void alpha_map_refcnt(struct optr_node *map[], int cnt)
 			if (nd->refcnt <= 0) {
 				//printf("garbage collect @ %d\n", i);
 				optr_release(nd);
+				map[i] = NULL;
 			}
 		}
 	}
@@ -136,6 +137,7 @@ void alpha_map_free(struct optr_node *map[])
 		struct optr_node *nd;
 		if ((nd = map[i])) {
 			optr_release(nd);
+			map[i] = NULL;
 		}
 	}
 	free(map);
