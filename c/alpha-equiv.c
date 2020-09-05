@@ -9,7 +9,6 @@
 typedef struct optr_node* (*map_universe_t)[26 * 2 * 2];
 typedef float (*signs_universe_t)[MAX_NUM_POUNDS];
 
-#define MAX_UNIVERSE  10
 #define MAX_SIGNS_SPACE_SZ  (MAX_NUM_POUNDS * sizeof(float))
 #define MAX_MAP_SPACE       (26 * 2 * 2)
 #define MAX_MAP_SPACE_SZ    (MAX_MAP_SPACE * sizeof(struct optr_node*))

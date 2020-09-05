@@ -2,6 +2,7 @@
 #include "optr.h"
 
 #define MAX_NUM_POUNDS 12
+#define MAX_UNIVERSE   16
 
 int alphabet_order(int, int);
 
