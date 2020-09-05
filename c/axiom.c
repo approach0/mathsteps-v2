@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <stdint.h>
 
+#include "vt100-code.h"
 #include "parser.h"
 #include "axiom.h"
 
@@ -145,19 +146,19 @@ int pound2signed(char *dest, const char *src, uint64_t bits, int n_pounds)
 	int reduce_sign = 1;
 	strcpy(dest, src);
 	for (int i = 1; i <= n_pounds; i++) {
-		/* reduce sign */
-		reduce_sign *= (bits & 0x1) ? +1 : -1;
-
 		/* find named pound... */
 		char named_pound[16];
 		sprintf(named_pound, "#%d", i);
 		char *pound_pos = strstr(dest, named_pound);
 		if (NULL == pound_pos)
-			continue;
+			goto skip;
 
 		/* replace named pound */
 		*(pound_pos + 0) = ' ';
 		*(pound_pos + 1) = (bits & 0x1) ? '+' : '-';
+skip:
+		/* reduce sign */
+		reduce_sign *= (bits & 0x1) ? +1 : -1;
 
 		/* continue to get next sign bit */
 		bits = bits >> 1;
@@ -250,8 +251,11 @@ void rule_print(struct Rule *rule)
 	for (uint64_t k = 0; k < ipow(2, rule->n_pounds); k++) {
 		for (int j = 0; j < MAX_RULE_OUTPUTS; j++) {
 			if (rule->output_cache[k][j]) {
-				printf("{%lu, %d}:\n", k, j);
-				optr_print(rule->output_cache[k][j]);
+				struct optr_node *c = rule->output_cache[k][j];
+				printf(C_GRAY "{%lu, %d} " C_RST, k, j);
+				optr_print_tex(c);
+				printf("\n");
+				optr_print(c);
 			}
 		}
 	}

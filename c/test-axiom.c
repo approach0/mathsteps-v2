@@ -21,9 +21,9 @@ int main()
 
 	for (int i = 0; i < m; i++) {
 		struct Axiom *a = axioms[i];
-		if (1) {
+		//if (1) {
 		//if (strcmp(a->name, "Square-power cancels out") == 0) {
-		//if (i + 1 == m) {
+		if (i + 1 == m) {
 			printf(C_BLUE "Testing axiom `%s'\n" C_RST, a->name);
 			axiom_test(a);
 		}

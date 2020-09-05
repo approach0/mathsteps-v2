@@ -208,7 +208,7 @@ struct Axiom **common_axioms(int *n)
 		axiom_add_test(a, "\\frac{3xy}{-xy}");
 		axiom_add_test(a, "-\\frac{-a}{-a}");
 		axiom_add_test(a, "\\frac{-(a + b)}{a + b}");
-		axiom_add_test(a, "\\frac{-3 - \\frac{1}{3}}{-(3 + \\frac{1}{3}) \\times x}");
+		axiom_add_test(a, "-\\frac{-(3 + \\frac{1}{3})}{-(3 + \\frac{1}{3}) \\times x}");
 
 		a->is_root_sign_reduce = 1;
 

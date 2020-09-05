@@ -67,7 +67,7 @@ struct optr_node optr_gen_val_node(float val)
 	return ret;
 }
 
-static void __print_node(struct optr_node *nd)
+void optr_print_node(struct optr_node *nd)
 {
 	if (nd->sign < 0)
 		printf(" -");
@@ -134,7 +134,7 @@ static void __optr_print(struct optr_node *nd, int level, int *depth_flags)
 		}
 	}
 
-	__print_node(nd);
+	optr_print_node(nd);
 
 	for (int i = 0; i < nd->n_children; i++) {
 		struct optr_node *c = nd->children[i];
@@ -296,8 +296,8 @@ int need_outter_fence(struct optr_node* nd, struct optr_node *parent)
 
 #if 0
 	printf("need_outter_fence ?\n");
-	__print_node(parent);
-	__print_node(nd);
+	optr_print_node(parent);
+	optr_print_node(nd);
 	printf("ret = %d!\n", ret);
 #endif
 	return (ret >= 0) ? 1 : 0;

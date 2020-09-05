@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "parser.h"
 #include "alpha-equiv.h"
@@ -20,6 +21,12 @@ typedef float (*signs_universe_t)[MAX_NUM_POUNDS];
 	do { \
 		for (int __k = _start; __k < _end; __k++) \
 			alpha_map_refcnt(_mu[__k], _cnt); \
+	} while (0)
+
+#define UNIVERSE_ASSIGN_POUND_SIGNS(_su, _nu, _poundID, _sign) \
+	do { \
+		for (int __i = 0; __i < _nu; __i++) \
+			_su[__i][_poundID] = _sign; \
 	} while (0)
 
 int alphabet_order(int var, int is_wildcards)
@@ -167,8 +174,7 @@ int test_node_identical__wildcards(
 	}
 
 	if (is_match) {
-		for (int i = 0; i < nu; i++)
-			su[i][n1->pound_ID] = n2->sign;
+		UNIVERSE_ASSIGN_POUND_SIGNS(su, nu, n1->pound_ID, n2->sign);
 		return 1;
 	} else {
 		return 0;
@@ -294,10 +300,22 @@ test_alpha_equiv__recur(struct optr_node *T1, struct optr_node *T2,
 	/* testing on this node ... */
 	if (T1->type == OPTR_NODE_VAR) {
 		int key = alphabet_order(T1->var, T1->is_wildcards);
+		struct optr_node *map_new = deep_copy(T2);
 
-		/* if for example `-x' matches `a+b', then `x=-a-b' */
-		struct optr_node *map_new = pre_plugin_sign_apply(deep_copy(T2), T1->sign);
-
+		if (T1->pound_ID > 0) {
+			/* the pound will absorb T2 sign */
+			UNIVERSE_ASSIGN_POUND_SIGNS(su, nu, T1->pound_ID, T2->sign);
+			if (T2->sign < 0)
+				pre_plugin_sign_apply(map_new, -1);
+		} else {
+			/* if for example `-x' matches `a+b', then `x=-a-b' */
+			pre_plugin_sign_apply(map_new, T1->sign);
+		}
+#if 0
+		optr_print_node(T1);
+		optr_print_node(T2);
+		optr_print(map_new);
+#endif
 		return universe_add_constraint(key, map_new, mu, su, nu);
 
 	} else {
@@ -425,6 +443,10 @@ struct optr_node
 
 		/* free other possibilities */
 		UNIVERSE_MAP_REFCNT(mu, 1, nu, -1);
+
+		//printf("pound#1 = %f\n", signs[1]);
+		//printf("pound#2 = %f\n", signs[2]);
+		//printf("pound#3 = %f\n", signs[3]);
 		return map;
 	} else {
 		return NULL;
@@ -436,14 +458,14 @@ struct optr_node *rewrite_by_alpha(struct optr_node *root, struct optr_node *map
 	if (NULL == map)
 		return deep_copy(root);
 
-	float sign = root->sign;
 	if (root->type == OPTR_NODE_VAR) {
 		int key = alphabet_order(root->var, root->is_wildcards);
-		struct optr_node *subst = map[key] ? map[key] : root;
+		struct optr_node *subst = map[key];
+		assert(subst != NULL);
 		subst = deep_copy(subst);
 
 		/* if for example `x=a+b' plugs into `-x` will become `-a-b' */
-		pre_plugin_sign_apply(subst, sign);
+		pre_plugin_sign_apply(subst, root->sign);
 		return subst;
 
 	} else if (root->type == OPTR_NODE_NUM) {

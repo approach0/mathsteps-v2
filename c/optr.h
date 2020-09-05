@@ -47,6 +47,7 @@ struct optr_node *optr_alloc(int);
 struct optr_node *optr_pass_children(struct optr_node *, struct optr_node *);
 struct optr_node *optr_attach(struct optr_node *, struct optr_node *);
 
+void optr_print_node(struct optr_node*);
 void optr_print(struct optr_node*);
 void optr_release(struct optr_node *);
 
