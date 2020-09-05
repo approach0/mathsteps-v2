@@ -5,6 +5,23 @@
 #include "parser.h"
 #include "alpha-equiv.h"
 
+typedef struct optr_node* (*map_universe_t)[26 * 2 * 2];
+typedef float (*signs_universe_t)[MAX_NUM_POUNDS];
+
+#define MAX_UNIVERSE  10
+#define MAX_SIGNS_SPACE_SZ  (MAX_NUM_POUNDS * sizeof(float))
+#define MAX_MAP_SPACE       (26 * 2 * 2)
+#define MAX_MAP_SPACE_SZ    (MAX_MAP_SPACE * sizeof(struct optr_node*))
+
+#define CAST(_to, _type, _from) \
+	_type _to = (_type)(_from)
+
+#define UNIVERSE_MAP_REFCNT(_mu, _start, _end, _cnt) \
+	do { \
+		for (int __k = _start; __k < _end; __k++) \
+			alpha_map_refcnt(_mu[__k], _cnt); \
+	} while (0)
+
 int alphabet_order(int var, int is_wildcards)
 {
 	int base = is_wildcards ? 26 * 2 : 0;
@@ -86,7 +103,7 @@ void alpha_map_print(struct optr_node *map[])
 	if (NULL == map)
 		return;
 
-	for (int i = 0; i < 26 * 2 * 2; i++) {
+	for (int i = 0; i < MAX_MAP_SPACE; i++) {
 		struct optr_node *nd;
 		if ((nd = map[i])) {
 			printf("[%c] => ", order2alphabet(i));
@@ -98,7 +115,7 @@ void alpha_map_print(struct optr_node *map[])
 
 static void alpha_map_refcnt(struct optr_node *map[], int cnt)
 {
-	for (int i = 0; i < 26 * 2 * 2; i++) {
+	for (int i = 0; i < MAX_MAP_SPACE; i++) {
 		struct optr_node *nd;
 		if ((nd = map[i])) {
 			nd->refcnt += cnt;
@@ -115,7 +132,7 @@ void alpha_map_free(struct optr_node *map[])
 	if (NULL == map)
 		return;
 
-	for (int i = 0; i < 26 * 2 * 2; i++) {
+	for (int i = 0; i < MAX_MAP_SPACE; i++) {
 		struct optr_node *nd;
 		if ((nd = map[i])) {
 			optr_release(nd);
@@ -123,23 +140,6 @@ void alpha_map_free(struct optr_node *map[])
 	}
 	free(map);
 }
-
-#define MAX_UNIVERSE  10
-#define MAX_SIGNS_SPACE_SZ  (MAX_NUM_POUNDS * sizeof(float))
-#define MAX_MAP_SPACE       (26 * 2 * 2)
-#define MAX_MAP_SPACE_SZ    (MAX_MAP_SPACE * sizeof(struct optr_node*))
-
-#define CAST(_to, _type, _from) \
-	_type _to = (_type)(_from)
-
-#define UNIVERSE_MAP_REFCNT(_mu, _start, _end, _cnt) \
-	do{ \
-		for (int __k = _start; __k < _end; __k++) \
-			alpha_map_refcnt(_mu[__k], _cnt); \
-	} while (0)
-
-typedef struct optr_node* (*map_universe_t)[26 * 2 * 2];
-typedef float (*signs_universe_t)[MAX_NUM_POUNDS];
 
 int test_node_identical__wildcards(
 	struct optr_node *n1, struct optr_node *n2, signs_universe_t su, int nu)
