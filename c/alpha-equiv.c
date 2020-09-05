@@ -380,10 +380,12 @@ test_alpha_equiv__recur(struct optr_node *T1, struct optr_node *T2,
 		if (match_failed) {
 			UNIVERSE_MAP_REFCNT(mu_copy, 0, nu_copy, -1);
 		} else {
-			/* append */
-			memcpy(mu_new[nu_new], mu_copy, MAX_MAP_SPACE_SZ * nu_copy);
-			memcpy(su_new[nu_new], su_copy, MAX_SIGNS_SPACE_SZ * nu_copy);
-			nu_new += nu_copy;
+			/* append (and spill possible overflow) */
+			int nu_fill = (nu_new + nu_copy > MAX_UNIVERSE) ? MAX_UNIVERSE - nu_new: nu_copy;
+			memcpy(mu_new[nu_new], mu_copy, MAX_MAP_SPACE_SZ * nu_fill);
+			memcpy(su_new[nu_new], su_copy, MAX_SIGNS_SPACE_SZ * nu_fill);
+			UNIVERSE_MAP_REFCNT(mu_copy, nu_fill, nu_copy, -1);
+			nu_new += nu_fill;
 		}
 	}
 
