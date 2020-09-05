@@ -187,28 +187,28 @@ struct Axiom **common_axioms(int *n)
 			"# \\frac{# x *{i} }{# x *{j} }",
 			"#1 \\frac{#2 *{i}}{#3 *{j}}",
 		NULL);
-		//axiom_add_rule(a,
-		//	"# \\frac{# x }{# x *{i} }",
-		//	"#0 \\frac{1}{*{i}}",
-		//NULL);
-		//axiom_add_rule(a,
-		//	"# \\frac{# x *{i} }{# x }",
-		//	"#0 *{i}",
-		//NULL);
-		//axiom_add_rule(a,
-		//	"# \\frac{# x}{# x}",
-		//	"#0 1",
-		//NULL);
+		axiom_add_rule(a,
+			"# \\frac{# x }{# x *{i} }",
+			"#0 \\frac{1}{*{i}}",
+		NULL);
+		axiom_add_rule(a,
+			"# \\frac{# x *{i} }{# x }",
+			"#0 *{i}",
+		NULL);
+		axiom_add_rule(a,
+			"# \\frac{# x}{# x}",
+			"#0 1",
+		NULL);
 
 		axiom_add_test(a, "- \\frac{by}{ay}");
-		//axiom_add_test(a, "- \\frac{-bx}{xa}");
-		//axiom_add_test(a, "- \\frac{-bxy}{-xay}");
-		//axiom_add_test(a, "- \\frac{-x}{ax}");
-		//axiom_add_test(a, "\\frac{-x}{xay}");
-		//axiom_add_test(a, "\\frac{3xy}{-xy}");
-		//axiom_add_test(a, "-\\frac{-a}{-a}");
-		//axiom_add_test(a, "\\frac{-(a + b)}{a + b}");
-		//axiom_add_test(a, "\\frac{-3 - \\frac{1}{3}}{-(3 + \\frac{1}{3}) \\times x}");
+		axiom_add_test(a, "- \\frac{-bx}{xa}");
+		axiom_add_test(a, "- \\frac{-bxy}{-xay}");
+		axiom_add_test(a, "- \\frac{-x}{ax}");
+		axiom_add_test(a, "\\frac{-x}{xay}");
+		axiom_add_test(a, "\\frac{3xy}{-xy}");
+		axiom_add_test(a, "-\\frac{-a}{-a}");
+		axiom_add_test(a, "\\frac{-(a + b)}{a + b}");
+		axiom_add_test(a, "\\frac{-3 - \\frac{1}{3}}{-(3 + \\frac{1}{3}) \\times x}");
 
 		a->is_root_sign_reduce = 1;
 
