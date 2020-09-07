@@ -200,8 +200,17 @@ static struct optr_node *_calc_sqrt(CALLBK_ARGS)
 	if (x->type == OPTR_NODE_NUM) {
 		float x_val = optr_get_node_val(x);
 
-		if (x_val > 0 && (int)x_val == x_val) {
+		if (x_val >= 0 && (int)x_val == x_val) {
 			int n_val, m_val;
+
+			if (x_val == 0) {
+				struct optr_node c = optr_gen_val_node(0);
+				MAP_NODE(map, 'c') = &c;
+				rewritten = rewrite_by_alpha(rule->output_cache[signbits][0], map);
+				MAP_NODE(map, 'c') = NULL;
+				return rewritten;
+			}
+
 			sqrt_draw(x_val, &n_val, &m_val);
 
 			if (n_val == 1) {
@@ -237,11 +246,57 @@ struct Axiom *axiom_sqrt()
 	axiom_add_test(a, "-\\sqrt{2}");
 	axiom_add_test(a, "-\\sqrt{27}");
 	axiom_print(a);
-	//axiom_add_test(a, "-\\sqrt{59049}");
-	//axiom_add_test(a, "-\\sqrt{0}");
-	//axiom_add_test(a, "-\\sqrt{9}");
-	//axiom_add_test(a, "-\\sqrt{8}");
-	//axiom_add_test(a, "\\sqrt{16}");
+	axiom_add_test(a, "-\\sqrt{59049}");
+	axiom_add_test(a, "-\\sqrt{0}");
+	axiom_add_test(a, "-\\sqrt{1}");
+	axiom_add_test(a, "-\\sqrt{-1}");
+	axiom_add_test(a, "-\\sqrt{9}");
+	axiom_add_test(a, "-\\sqrt{8}");
+	axiom_add_test(a, "\\sqrt{16}");
 
 	return a;
 }
+
+///*
+// * axiom_pow
+// */
+//static struct optr_node *_calc_pow(CALLBK_ARGS)
+//{
+//	struct optr_node *a = MAP_NODE(map, 'a');
+//	struct optr_node *b = MAP_NODE(map, 'b');
+//
+//	if (a->type == OPTR_NODE_NUM &&
+//	    b->type == OPTR_NODE_NUM) {
+//		struct optr_node c, *rewritten;
+//
+//		float a_val = optr_get_node_val(a);
+//		float b_val = optr_get_node_val(b);
+//		float c_val = powf(a_val, b_val);
+//		if (c_val > 2000)
+//			return NULL;
+//
+//		c = optr_gen_val_node(c_val);
+//
+//		MAP_NODE(map, 'c') = &c;
+//		rewritten = rewrite_by_alpha(rule->output_cache[signbits][0], map);
+//		MAP_NODE(map, 'c') = NULL;
+//		return rewritten;
+//	}
+//	return NULL;
+//}
+//
+//struct Axiom *axiom_pow()
+//{
+//	struct Axiom *a = axiom_new("Calculate Power");
+//
+//	axiom_add_rule(a, "# a^{b}", "#1 c", &_calc_pow);
+//	a->is_root_sign_reduce = 1;
+//
+//	axiom_add_test(a, "2^{3}");
+//	axiom_add_test(a, "-2^{3}");
+//	axiom_add_test(a, "-2^{-2}");
+//	axiom_add_test(a, "-(-2)^{2}");
+//	axiom_add_test(a, "(-2)^{2}");
+//
+//	return a;
+//}
