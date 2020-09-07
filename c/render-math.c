@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "optr.h"
 #include "step.h"
@@ -17,7 +19,20 @@ int render_tex_to_html_file(const char *tex, const char *output)
 		NULL
 	};
 
-	return execvp(argv[0], argv);
+	pid_t tmp_pid, child_pid = fork();
+
+	if (child_pid == 0) {
+		/* child process */
+		execvp(argv[0], argv);
+		exit(0);
+	} else {
+		/* parent process */
+		int child_status;
+		do {
+			tmp_pid = wait(&child_status);
+		} while(tmp_pid != child_pid);
+		return child_pid;
+	}
 }
 
 #define STRING_APPEND(_p, _left, _fmt, ...) \

@@ -91,13 +91,13 @@ static void test__state_value(void *scanner)
     TEST_RESET;
 }
 
-#define MAX_STEPS 12
+#define MAX_STEPS 10
 
 static void test__next_steps(void *scanner, struct Axiom **axioms, int m)
 {
 	struct Step steps[MAX_STEPS] = {0};
 
-	char original_tex[] = "1 + 2 + 3 + 4 \\cdot 2";
+	char original_tex[] = "1 + 2 + 3 + 4 \\cdot 2 + 0";
 	struct optr_node *tree = parser_parse(scanner, original_tex);
 
 	steps[0] = tex2step(original_tex);
