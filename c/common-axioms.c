@@ -242,6 +242,16 @@ struct Axiom **common_axioms(int *n)
 		ret[cnt++] = a;
 	}
 
+	{
+		struct Axiom *a = axiom_pow();
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_sqrt();
+		ret[cnt++] = a;
+	}
+
 	*n = cnt;
 	return ret;
 }
