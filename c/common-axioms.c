@@ -257,6 +257,11 @@ struct Axiom **common_axioms(int *n)
 		ret[cnt++] = a;
 	}
 
+	{
+		struct Axiom *a = axiom_simplify_fraction();
+		ret[cnt++] = a;
+	}
+
 	*n = cnt;
 	return ret;
 }

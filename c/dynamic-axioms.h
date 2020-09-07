@@ -5,3 +5,4 @@ struct Axiom *axiom_mul();
 struct Axiom *axiom_pow();
 struct Axiom *axiom_sqrt();
 struct Axiom *axiom_abs();
+struct Axiom *axiom_simplify_fraction();

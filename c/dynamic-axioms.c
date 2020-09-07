@@ -292,3 +292,72 @@ struct Axiom *axiom_abs()
 
 	return a;
 }
+
+/*
+ * axiom_simplify_fraction
+ */
+
+int Euclidean_gcd(int x, int y)
+{
+    while (y) {
+		int save = y;
+		y = x % y;
+		x = save;
+	}
+
+    return x;
+}
+
+static struct optr_node *_simplify_fraction(CALLBK_ARGS)
+{
+	struct optr_node *rewritten;
+	struct optr_node *a = MAP_NODE(map, 'a');
+	struct optr_node *b = MAP_NODE(map, 'b');
+
+	if (a->type == OPTR_NODE_NUM &&
+	    b->type == OPTR_NODE_NUM) {
+		float a_val = optr_get_node_val(a);
+		float b_val = optr_get_node_val(b);
+
+		if (a_val == (int)a_val && b_val == (int)b_val) {
+			int gcd = Euclidean_gcd(a_val, b_val);
+			if (gcd != 0 && gcd != 1) {
+				a_val = a_val / gcd;
+				b_val = b_val / gcd;
+				if (b_val == 1) {
+					struct optr_node c = optr_gen_val_node(a_val);
+					MAP_NODE(map, 'c') = &c;
+					rewritten = rewrite_by_alpha(rule->output_cache[signbits][0], map);
+					MAP_NODE(map, 'c') = NULL;
+					return rewritten;
+				} else if (b != 0) {
+					struct optr_node c = optr_gen_val_node(a_val);
+					struct optr_node d = optr_gen_val_node(b_val);
+					MAP_NODE(map, 'c') = &c;
+					MAP_NODE(map, 'd') = &d;
+					rewritten = rewrite_by_alpha(rule->output_cache[signbits][1], map);
+					MAP_NODE(map, 'c') = NULL;
+					MAP_NODE(map, 'd') = NULL;
+					return rewritten;
+				}
+			}
+		}
+
+	}
+	return NULL;
+}
+
+struct Axiom *axiom_simplify_fraction()
+{
+	struct Axiom *a = axiom_new("Simplify fraction");
+
+	axiom_add_rule(a, "#\\frac{a}{b}", "'#1 c \n #1 \\frac{c}{d}'", &_simplify_fraction);
+	a->is_root_sign_reduce = 1;
+
+	axiom_add_test(a, "-\\frac{-14}{-4}");
+	axiom_add_test(a, "\\frac{9}{-6}");
+	axiom_add_test(a, "-\\frac{-12}{6}");
+	axiom_add_test(a, "\\frac{-12}{6}");
+
+	return a;
+}
