@@ -215,15 +215,32 @@ struct Axiom **common_axioms(int *n)
 		ret[cnt++] = a;
 	}
 
-//	{
-//		struct Axiom *a = axiom_add();
-//		ret[cnt++] = a;
-//	}
-//
-//	{
-//		struct Axiom *a = axiom_mul();
-//		ret[cnt++] = a;
-//	}
+	{
+		struct Axiom *a = axiom_new("Multiplication to square form");
+
+		axiom_add_rule(a,
+			"#(#X)(#X)",
+			"#0 X^{2}",
+		NULL);
+
+		axiom_add_test(a, "xx");
+
+		a->is_root_sign_reduce = 1;
+		a->is_symmetric_reduce = 1;
+		a->is_allow_complication = 1;
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_add();
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_mul();
+		ret[cnt++] = a;
+	}
 
 	*n = cnt;
 	return ret;

@@ -88,7 +88,7 @@ int axiom_test(struct Axiom* a)
 		for (int i = 0; i < n_output; i++) {
 			struct optr_node *out = output[i];
 
-			printf("#%d: ", i);
+			printf(C_CYAN "#%d: " C_RST, i);
 
 			optr_print_tex(out);
 			printf("\n");
