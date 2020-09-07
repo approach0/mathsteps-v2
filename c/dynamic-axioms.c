@@ -355,7 +355,7 @@ struct Axiom *axiom_simplify_fraction()
 {
 	struct Axiom *a = axiom_new("Simplify fraction");
 
-	axiom_add_rule(a, "#\\frac{a}{b}", "'#1 c \n #1 \\frac{c}{d}'", &_simplify_fraction);
+	axiom_add_rule(a, "#\\frac{a}{b}", "#1 c \n #1 \\frac{c}{d}", &_simplify_fraction);
 	a->is_root_sign_reduce = 1;
 
 	axiom_add_test(a, "-\\frac{-14}{-4}");
@@ -367,7 +367,7 @@ struct Axiom *axiom_simplify_fraction()
 }
 
 /*
- * axiom_fraction_add_same_denom
+ * axiom_fraction_add
  */
 static struct optr_node *_fraction_numerator_add(CALLBK_ARGS)
 {
@@ -413,7 +413,7 @@ struct Axiom *axiom_fraction_add()
 {
 	struct Axiom *a = axiom_new("Fraction addition in numerator");
 
-	axiom_add_rule(a, "#(#\\frac{a}{c} #\\frac{b}{c})", "'z \n \\frac{z}{c}'",
+	axiom_add_rule(a, "#(#\\frac{a}{c} #\\frac{b}{c})", "z \n \\frac{z}{c}",
 	               &_fraction_numerator_add);
 	axiom_add_rule(a, "#\\frac{a}{b} #\\frac{c}{d}", "\\frac{#1 ad #2 cb}{bd}", NULL);
 
@@ -426,6 +426,45 @@ struct Axiom *axiom_fraction_add()
 	axiom_add_test(a, "-\\frac{1}{3} + \\frac{5}{3}");
 	axiom_add_test(a, "\\frac{1}{3a} - \\frac{5}{3a}");
 	axiom_add_test(a, "-\\frac{1}{-2} - \\frac{-2}{3}");
+
+	return a;
+}
+
+/*
+ * axiom_fraction_add_int
+ */
+static struct optr_node *_fraction_add_int(CALLBK_ARGS)
+{
+	struct optr_node *rewritten;
+	struct optr_node *a = MAP_NODE(map, 'a');
+	struct optr_node *b = MAP_NODE(map, 'b');
+	struct optr_node *c = MAP_NODE(map, 'c');
+
+	if (a->type == OPTR_NODE_NUM) {
+		float a_val = optr_get_node_val(a);
+		/* the key is to test whether a is an integer */
+		if (is_integer(a_val)) {
+			rewritten = rewrite_by_alpha(rule->output_cache[signbits][0], map);
+			return rewritten;
+		}
+
+	}
+
+	return NULL;
+}
+
+struct Axiom *axiom_fraction_add_int()
+{
+	struct Axiom *a = axiom_new("Fraction adds integer");
+
+	axiom_add_rule(a, "#(#a # \\frac{b}{c})", "\\frac{#2 ac #3 b}{c}", &_fraction_add_int);
+
+	a->is_allow_complication = 1;
+
+	axiom_add_test(a, "-(\\frac{1}{3} - \\frac{2}{3} + 2)");
+	axiom_add_test(a, "- 1 - \\frac{-1}{2}");
+	axiom_add_test(a, "- \\frac{-1}{2} + 1");
+	axiom_add_test(a, "\\left| -(5 + \\frac{1}{2})  \\right|");
 
 	return a;
 }

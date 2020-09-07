@@ -267,6 +267,21 @@ struct Axiom **common_axioms(int *n)
 		ret[cnt++] = a;
 	}
 
+	{
+		struct Axiom *a = axiom_fraction_add_int();
+		ret[cnt++] = a;
+	}
+
+//    axioms.append(dynamic_axioms.calc_add)
+//    axioms.append(dynamic_axioms.calc_mul)
+//    axioms.append(dynamic_axioms.calc_pow)
+//    axioms.append(dynamic_axioms.calc_sqrt)
+//    axioms.append(dynamic_axioms.calc_abs)
+//    axioms.append(dynamic_axioms.collapse_fraction_add_float)
+//    axioms.append(dynamic_axioms.simplify_fraction)
+//    axioms.append(dynamic_axioms.collapse_fraction)
+//    axioms.append(dynamic_axioms.calc_sqrt)
+
 	*n = cnt;
 	return ret;
 }
