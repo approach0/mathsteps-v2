@@ -17,6 +17,11 @@
 
 #define ABS(x)  ( (x < 0) ? -(x) : (x) )
 
+static inline int is_integer(float num)
+{
+	return (num == (int)num);
+}
+
 /*
  * axiom_add
  */
@@ -200,7 +205,7 @@ static struct optr_node *_calc_sqrt(CALLBK_ARGS)
 	if (x->type == OPTR_NODE_NUM) {
 		float x_val = optr_get_node_val(x);
 
-		if (x_val >= 0 && (int)x_val == x_val) {
+		if (x_val >= 0 && is_integer(x_val)) {
 			int n_val, m_val;
 
 			if (x_val == 0) {
@@ -245,7 +250,6 @@ struct Axiom *axiom_sqrt()
 
 	axiom_add_test(a, "-\\sqrt{2}");
 	axiom_add_test(a, "-\\sqrt{27}");
-	axiom_print(a);
 	axiom_add_test(a, "-\\sqrt{59049}");
 	axiom_add_test(a, "-\\sqrt{0}");
 	axiom_add_test(a, "-\\sqrt{1}");
@@ -296,7 +300,6 @@ struct Axiom *axiom_abs()
 /*
  * axiom_simplify_fraction
  */
-
 int Euclidean_gcd(int x, int y)
 {
     while (y) {
@@ -319,7 +322,7 @@ static struct optr_node *_simplify_fraction(CALLBK_ARGS)
 		float a_val = optr_get_node_val(a);
 		float b_val = optr_get_node_val(b);
 
-		if (a_val == (int)a_val && b_val == (int)b_val) {
+		if (is_integer(a_val) && is_integer(b_val)) {
 			int gcd = Euclidean_gcd(a_val, b_val);
 			if (gcd != 0 && gcd != 1) {
 				a_val = a_val / gcd;
@@ -344,6 +347,7 @@ static struct optr_node *_simplify_fraction(CALLBK_ARGS)
 		}
 
 	}
+
 	return NULL;
 }
 
@@ -358,6 +362,70 @@ struct Axiom *axiom_simplify_fraction()
 	axiom_add_test(a, "\\frac{9}{-6}");
 	axiom_add_test(a, "-\\frac{-12}{6}");
 	axiom_add_test(a, "\\frac{-12}{6}");
+
+	return a;
+}
+
+/*
+ * axiom_fraction_add_same_denom
+ */
+static struct optr_node *_fraction_numerator_add(CALLBK_ARGS)
+{
+	struct optr_node *rewritten;
+	struct optr_node *a = MAP_NODE(map, 'a');
+	struct optr_node *b = MAP_NODE(map, 'b');
+	struct optr_node *c = MAP_NODE(map, 'c');
+
+	if (a->type == OPTR_NODE_NUM &&
+	    b->type == OPTR_NODE_NUM) {
+		float a_val = optr_get_node_val(a);
+		float b_val = optr_get_node_val(b);
+
+		if (is_integer(a_val) && is_integer(b_val)) {
+			a_val = a_val * signs[2];
+			b_val = b_val * signs[3];
+			float z_val = a_val + b_val;
+
+			if (c->type == OPTR_NODE_NUM) {
+				float c_val = c->num;
+				if (is_integer(c_val) && c_val != 0 && is_integer(z_val / c_val)) {
+					struct optr_node z = optr_gen_val_node(z_val / c_val);
+					MAP_NODE(map, 'z') = &z;
+					rewritten = rewrite_by_alpha(rule->output_cache[signbits][0], map);
+					MAP_NODE(map, 'z') = NULL;
+					return rewritten;
+				}
+			}
+
+			struct optr_node z = optr_gen_val_node(z_val);
+			MAP_NODE(map, 'z') = &z;
+			rewritten = rewrite_by_alpha(rule->output_cache[signbits][1], map);
+			MAP_NODE(map, 'z') = NULL;
+			return rewritten;
+		}
+
+	}
+
+	return NULL;
+}
+
+struct Axiom *axiom_fraction_add()
+{
+	struct Axiom *a = axiom_new("Fraction addition in numerator");
+
+	axiom_add_rule(a, "#(#\\frac{a}{c} #\\frac{b}{c})", "'z \n \\frac{z}{c}'",
+	               &_fraction_numerator_add);
+	axiom_add_rule(a, "#\\frac{a}{b} #\\frac{c}{d}", "\\frac{#1 ad #2 cb}{bd}", NULL);
+
+	a->is_allow_complication = 1;
+	a->is_symmetric_reduce = 1;
+
+	axiom_add_test(a, "-(\\frac{4}{3} - \\frac{1}{3})");
+	axiom_add_test(a, "\\frac{4}{3} - \\frac{1}{3}");
+	axiom_add_test(a, "-\\frac{1}{3} - \\frac{5}{3}");
+	axiom_add_test(a, "-\\frac{1}{3} + \\frac{5}{3}");
+	axiom_add_test(a, "\\frac{1}{3a} - \\frac{5}{3a}");
+	axiom_add_test(a, "-\\frac{1}{-2} - \\frac{-2}{3}");
 
 	return a;
 }

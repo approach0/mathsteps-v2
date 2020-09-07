@@ -465,3 +465,4 @@ int axiom_apply(struct Axiom *axiom, struct optr_node *tree, struct optr_node **
 		return axiom_onetime_apply(axiom, tree, results);
 	}
 }
+
