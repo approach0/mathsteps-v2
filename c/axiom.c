@@ -210,16 +210,13 @@ struct Axiom *axiom_add_rule(
 
 	/* setup output cache */
 	for (uint64_t k = 0; k < ipow(2, n_pounds); k++) {
-		char tmp[MAX_RULE_STR_LEN];
-		pound2signed(tmp, output, k, n_pounds);
-		//printf("%s => %s => %s\n", pattern, output, tmp);
-
 		/* create output cache */
 		char *all, *now, *field;
 		int cnt = 0;
-		all = now = strdup(tmp);
+		all = now = strdup(output);
 		while ((field = strsep(&now, "\n"))) {
-			char *subout = trim(field);
+			char subout[MAX_RULE_STR_LEN];
+			pound2signed(subout, trim(field), k, n_pounds);
 			root = parser_parse(scanner, subout);
 			if (NULL == root) {
 				fprintf(stderr, "cannot add rule due to parser error: %s\n", subout);
