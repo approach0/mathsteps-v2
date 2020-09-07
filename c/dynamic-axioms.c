@@ -257,46 +257,38 @@ struct Axiom *axiom_sqrt()
 	return a;
 }
 
-///*
-// * axiom_pow
-// */
-//static struct optr_node *_calc_pow(CALLBK_ARGS)
-//{
-//	struct optr_node *a = MAP_NODE(map, 'a');
-//	struct optr_node *b = MAP_NODE(map, 'b');
-//
-//	if (a->type == OPTR_NODE_NUM &&
-//	    b->type == OPTR_NODE_NUM) {
-//		struct optr_node c, *rewritten;
-//
-//		float a_val = optr_get_node_val(a);
-//		float b_val = optr_get_node_val(b);
-//		float c_val = powf(a_val, b_val);
-//		if (c_val > 2000)
-//			return NULL;
-//
-//		c = optr_gen_val_node(c_val);
-//
-//		MAP_NODE(map, 'c') = &c;
-//		rewritten = rewrite_by_alpha(rule->output_cache[signbits][0], map);
-//		MAP_NODE(map, 'c') = NULL;
-//		return rewritten;
-//	}
-//	return NULL;
-//}
-//
-//struct Axiom *axiom_pow()
-//{
-//	struct Axiom *a = axiom_new("Calculate Power");
-//
-//	axiom_add_rule(a, "# a^{b}", "#1 c", &_calc_pow);
-//	a->is_root_sign_reduce = 1;
-//
-//	axiom_add_test(a, "2^{3}");
-//	axiom_add_test(a, "-2^{3}");
-//	axiom_add_test(a, "-2^{-2}");
-//	axiom_add_test(a, "-(-2)^{2}");
-//	axiom_add_test(a, "(-2)^{2}");
-//
-//	return a;
-//}
+/*
+ * axiom_abs
+ */
+static struct optr_node *_calc_abs(CALLBK_ARGS)
+{
+	struct optr_node *x = MAP_NODE(map, 'x');
+	struct optr_node *rewritten;
+
+	if (x->type == OPTR_NODE_NUM) {
+		float x_val = optr_get_node_val(x);
+		float c_val = ABS(x_val);
+		struct optr_node c = optr_gen_val_node(c_val);
+
+		MAP_NODE(map, 'c') = &c;
+		rewritten = rewrite_by_alpha(rule->output_cache[signbits][0], map);
+		MAP_NODE(map, 'c') = NULL;
+		return rewritten;
+	}
+	return NULL;
+}
+
+struct Axiom *axiom_abs()
+{
+	struct Axiom *a = axiom_new("Calculate Power");
+
+	axiom_add_rule(a, "#\\left| #x \\right|", "#1 c", &_calc_abs);
+	a->is_root_sign_reduce = 1;
+
+	axiom_add_test(a, "\\left| 8 \\right|");
+	axiom_add_test(a, "-\\left| 8 \\right|");
+	axiom_add_test(a, "\\left| -8 \\right|");
+	axiom_add_test(a, "-\\left| -8 \\right|");
+
+	return a;
+}
