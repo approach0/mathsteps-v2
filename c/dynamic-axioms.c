@@ -19,7 +19,7 @@
 
 static inline int is_integer(float num)
 {
-	return (num == (int)num);
+	return (ABS(num) == (int)ABS(num));
 }
 
 /*
@@ -374,7 +374,6 @@ static struct optr_node *_fraction_numerator_add(CALLBK_ARGS)
 	struct optr_node *rewritten;
 	struct optr_node *a = MAP_NODE(map, 'a');
 	struct optr_node *b = MAP_NODE(map, 'b');
-	struct optr_node *c = MAP_NODE(map, 'c');
 
 	if (a->type == OPTR_NODE_NUM &&
 	    b->type == OPTR_NODE_NUM) {
@@ -382,6 +381,7 @@ static struct optr_node *_fraction_numerator_add(CALLBK_ARGS)
 		float b_val = optr_get_node_val(b);
 
 		if (is_integer(a_val) && is_integer(b_val)) {
+			struct optr_node *c = MAP_NODE(map, 'c');
 			a_val = a_val * signs[2];
 			b_val = b_val * signs[3];
 			float z_val = a_val + b_val;
@@ -438,7 +438,6 @@ static struct optr_node *_fraction_add_int(CALLBK_ARGS)
 	struct optr_node *rewritten;
 	struct optr_node *a = MAP_NODE(map, 'a');
 	struct optr_node *b = MAP_NODE(map, 'b');
-	struct optr_node *c = MAP_NODE(map, 'c');
 
 	if (a->type == OPTR_NODE_NUM) {
 		float a_val = optr_get_node_val(a);
@@ -465,6 +464,62 @@ struct Axiom *axiom_fraction_add_int()
 	axiom_add_test(a, "- 1 - \\frac{-1}{2}");
 	axiom_add_test(a, "- \\frac{-1}{2} + 1");
 	axiom_add_test(a, "\\left| -(5 + \\frac{1}{2})  \\right|");
+
+	return a;
+}
+
+/*
+ * collapse_fraction (collapse fraction containing decimals)
+ */
+static struct optr_node *_fraction_collapse(CALLBK_ARGS)
+{
+	struct optr_node *rewritten;
+	struct optr_node *a = MAP_NODE(map, 'a');
+	struct optr_node *b = MAP_NODE(map, 'b');
+
+	if (a->type == OPTR_NODE_NUM &&
+	    b->type == OPTR_NODE_NUM) {
+		float a_val = optr_get_node_val(a);
+		float b_val = optr_get_node_val(b);
+		if (b_val == 0) goto skip;
+
+		if (!is_integer(a_val) || !is_integer(b_val)) {
+			struct optr_node c = optr_gen_val_node(a_val / b_val);
+			MAP_NODE(map, 'c') = &c;
+			rewritten = rewrite_by_alpha(rule->output_cache[signbits][0], map);
+			MAP_NODE(map, 'c') = NULL;
+			return rewritten;
+		}
+
+	} else if (b->type == OPTR_NODE_NUM) {
+		float b_val = optr_get_node_val(b);
+		if (b_val == 0) goto skip;
+
+		if (!is_integer(b_val)) {
+			struct optr_node c = optr_gen_val_node(1 / b_val);
+			MAP_NODE(map, 'k') = &c;
+			rewritten = rewrite_by_alpha(rule->output_cache[signbits][1], map);
+			MAP_NODE(map, 'k') = NULL;
+			return rewritten;
+		}
+	}
+
+skip:
+	return NULL;
+}
+
+struct Axiom *axiom_fraction_collapse()
+{
+	struct Axiom *a = axiom_new("Fraction collapse");
+
+	axiom_add_rule(a, "#\\frac{a}{b}", "#1 c \n #1 ka", &_fraction_collapse);
+
+	a->is_root_sign_reduce = 1;
+
+	axiom_add_test(a, "-\\frac{-6.4}{3.2}");
+	axiom_add_test(a, "\\frac{9}{-2.5}");
+	axiom_add_test(a, "-\\frac{-10.2}{-6}");
+	axiom_add_test(a, "-\\frac{x}{-0.5}");
 
 	return a;
 }
