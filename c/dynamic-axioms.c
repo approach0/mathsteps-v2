@@ -469,7 +469,7 @@ struct Axiom *axiom_fraction_add_int()
 }
 
 /*
- * collapse_fraction (collapse fraction containing decimals)
+ * axiom_fraction_collapse (collapse fraction containing decimals)
  */
 static struct optr_node *_fraction_collapse(CALLBK_ARGS)
 {
@@ -520,6 +520,49 @@ struct Axiom *axiom_fraction_collapse()
 	axiom_add_test(a, "\\frac{9}{-2.5}");
 	axiom_add_test(a, "-\\frac{-10.2}{-6}");
 	axiom_add_test(a, "-\\frac{x}{-0.5}");
+
+	return a;
+}
+
+/*
+ * axiom_fraction_add_decimal
+ */
+static struct optr_node *_fraction_add_decimal(CALLBK_ARGS)
+{
+	struct optr_node *rewritten;
+	struct optr_node *a = MAP_NODE(map, 'a');
+	struct optr_node *b = MAP_NODE(map, 'b');
+	struct optr_node *c = MAP_NODE(map, 'c');
+
+	if (a->type == OPTR_NODE_NUM &&
+	    b->type == OPTR_NODE_NUM &&
+	    c->type == OPTR_NODE_NUM) {
+		float a_val = optr_get_node_val(a);
+		float b_val = optr_get_node_val(b);
+		float c_val = optr_get_node_val(c);
+
+		if (b_val != 0 && !is_integer(c_val)) {
+			struct optr_node x = optr_gen_val_node(a_val / b_val);
+			MAP_NODE(map, 'x') = &x;
+			rewritten = rewrite_by_alpha(rule->output_cache[signbits][0], map);
+			MAP_NODE(map, 'x') = NULL;
+			return rewritten;
+		}
+
+	}
+
+	return NULL;
+}
+
+struct Axiom *axiom_fraction_add_decimal()
+{
+	struct Axiom *a = axiom_new("Fraction collapse to decimal");
+
+	axiom_add_rule(a, "#(#\\frac{a}{b} # c)", "#2 x #3 c", &_fraction_add_decimal);
+
+	axiom_add_test(a, "3.25 - \\frac{1}{4}");
+	axiom_add_test(a, "-(-3.25 + \\frac{1}{4})");
+	axiom_add_test(a, "-3.25 + \\frac{1}{4}");
 
 	return a;
 }
