@@ -6,6 +6,7 @@
 #include "parser.h"
 #include "step.h"
 #include "common-axioms.h"
+#include "render-math.h"
 
 float g_test_last_val = -FLT_MAX;
 
@@ -116,7 +117,8 @@ static void test__baseline(void *scanner, struct Axiom **axioms, int m)
 	int max_steps = 12;
 	struct Step steps[max_steps];
 
-	char original_tex[] = "3 + 2 + 7 + 4 \\cdot 2";
+	//char original_tex[] = "3 + 2 + 7 + 4 \\cdot 2";
+	char original_tex[] = "\\frac{10 + 1}{2} \\times 2 + 3";
 	struct optr_node *tree = parser_parse(scanner, original_tex);
 
 	int n = mathsteps_baseline(tree, axioms, m, steps, max_steps);
@@ -139,7 +141,8 @@ int main()
 
 	//test__state_value(scanner);
 	//test__next_steps(scanner, axioms, m);
-	test__baseline(scanner, axioms, m);
+	//test__baseline(scanner, axioms, m);
+	render_tex_to_html_file("a + \\frac b c", "output.html");
 
 	parser_dele_scanner(scanner);
 	common_axioms_free(axioms, m);

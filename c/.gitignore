@@ -4,3 +4,4 @@ lex.yy.[ch]
 y.tab.[ch]
 y.output
 tags
+*.html
