@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "parser.h"
 #include "step.h"
 
 #define ABS(x)  ( (x < 0) ? -(x) : (x) )
@@ -281,4 +282,19 @@ void print_step(struct Step *step, int print_tree)
 
 	if (print_tree)
 		optr_print(step->tree);
+}
+
+struct Step tex2step(const char *tex)
+{
+	struct Step step = {0};
+
+	void *scanner = parser_new_scanner();
+	if (NULL == scanner)
+		return step;
+
+	struct optr_node *root = parser_parse(scanner, tex);
+	step.tree = root;
+
+	parser_dele_scanner(scanner);
+	return step;
 }

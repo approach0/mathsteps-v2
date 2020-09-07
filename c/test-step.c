@@ -91,19 +91,23 @@ static void test__state_value(void *scanner)
     TEST_RESET;
 }
 
+#define MAX_STEPS 12
+
 static void test__next_steps(void *scanner, struct Axiom **axioms, int m)
 {
-	int max_steps = 5;
-	struct Step steps[max_steps];
+	struct Step steps[MAX_STEPS] = {0};
 
 	char original_tex[] = "1 + 2 + 3 + 4 \\cdot 2";
 	struct optr_node *tree = parser_parse(scanner, original_tex);
 
-	int n = possible_next_steps(tree, axioms, m, steps, max_steps);
+	steps[0] = tex2step(original_tex);
+	int n = possible_next_steps(tree, axioms, m, steps + 1, MAX_STEPS);
+
+	render_steps_to_html_file(steps, n + 1, 1);
 
 	printf("[origin] %s\n", original_tex);
 	printf("%d possible_next_steps: \n", n);
-	for (int i = 0; i < n; i++) {
+	for (int i = 1; i < n + 1; i++) {
 		printf("[step %d] ", i);
 		print_step(&steps[i], 0);
 		optr_release(steps[i].tree);
@@ -114,14 +118,15 @@ static void test__next_steps(void *scanner, struct Axiom **axioms, int m)
 
 static void test__baseline(void *scanner, struct Axiom **axioms, int m)
 {
-	int max_steps = 12;
-	struct Step steps[max_steps];
+	struct Step steps[MAX_STEPS];
 
 	//char original_tex[] = "3 + 2 + 7 + 4 \\cdot 2";
 	char original_tex[] = "\\frac{10 + 1}{2} \\times 2 + 3";
 	struct optr_node *tree = parser_parse(scanner, original_tex);
 
-	int n = mathsteps_baseline(tree, axioms, m, steps, max_steps);
+	int n = mathsteps_baseline(tree, axioms, m, steps, MAX_STEPS);
+
+	render_steps_to_html_file(steps, n, 0);
 
 	for (int i = 0; i < n; i++) {
 		printf("[step %d] ", i);
@@ -139,10 +144,10 @@ int main()
 	struct Axiom **axioms = common_axioms(&m);
 	void *scanner = parser_new_scanner();
 
+	//render_tex_to_html_file("a + \\frac b c", "output.html");
 	//test__state_value(scanner);
-	//test__next_steps(scanner, axioms, m);
+	test__next_steps(scanner, axioms, m);
 	//test__baseline(scanner, axioms, m);
-	render_tex_to_html_file("a + \\frac b c", "output.html");
 
 	parser_dele_scanner(scanner);
 	common_axioms_free(axioms, m);

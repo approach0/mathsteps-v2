@@ -15,3 +15,5 @@ int   possible_next_steps(struct optr_node*, struct Axiom *axioms[], int, struct
 int   mathsteps_baseline (struct optr_node*, struct Axiom *axioms[], int, struct Step*, int);
 
 void  print_step(struct Step*, int);
+
+struct Step tex2step(const char *tex);
