@@ -273,14 +273,71 @@ struct Axiom **common_axioms(int *n)
 	}
 
 	{
-		struct Axiom *a = axiom_fraction_add();
+		struct Axiom *a = axiom_new("Equation shifting");
+
+		axiom_add_rule(a,
+			"x = z",
+			"x - z = 0",
+		NULL);
+
+		axiom_add_test(a, "1 - 2 = -3 + 5");
+		axiom_add_test(a, "ax = bx");
+
+		a->is_root_sign_reduce = 1;
+
 		ret[cnt++] = a;
 	}
 
 	{
-		struct Axiom *a = axiom_fraction_add_int();
+		struct Axiom *a = axiom_new("Merge term");
+		struct Rule *r;
+
+#ifdef FULL_COMMON_AXIOMS
+#endif
+		r = axiom_add_rule(a,
+			"#(x + x)",
+			"2x",
+		NULL);
+		r->is_symmetric_reduce = 1;
+
+		axiom_add_rule(a,
+			"#(#x # kx)",
+			"(#2 1 #3 k) x",
+		NULL);
+
+		axiom_add_rule(a,
+			"#(#x # xk)",
+			"(#2 1 #3 k) x",
+		NULL);
+
+		axiom_add_rule(a,
+			"#(#x *{1} # x *{2})",
+			"(#2 *{1} #3 *{2}) x",
+		NULL);
+
+		axiom_add_test(a, "a + a");
+		axiom_add_test(a, "-a - a");
+		axiom_add_test(a, "x^{2} + x^{2}");
+		axiom_add_test(a, "-(-x + 3x)");
+		axiom_add_test(a, "-x + 3x - 1x");
+		axiom_add_test(a, "-(-x + 3x - 1x)");
+		axiom_add_test(a, "x - 3 \\cdot x");
+
+		a->is_root_sign_reduce = 0;
+		a->is_allow_complication = 1;
+
 		ret[cnt++] = a;
 	}
+
+//	{
+//		struct Axiom *a = axiom_fraction_add();
+//		ret[cnt++] = a;
+//	}
+//
+//	{
+//		struct Axiom *a = axiom_fraction_add_int();
+//		ret[cnt++] = a;
+//	}
 
 	*n = cnt;
 	return ret;

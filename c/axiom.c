@@ -173,7 +173,7 @@ skip:
 	return 0;
 }
 
-struct Axiom *axiom_add_rule(
+struct Rule *axiom_add_rule(
 	struct Axiom *a,
 	const char *pattern,
 	const char *output,
@@ -236,7 +236,7 @@ struct Axiom *axiom_add_rule(
 skip:
 	/* de-allocate scanner */
 	parser_dele_scanner(scanner);
-	return a;
+	return rule;
 }
 
 void rule_print(struct Rule *rule)
@@ -388,7 +388,7 @@ int axiom_level_apply(
 						}
 					}
 
-					if (!axiom->is_symmetric_reduce) {
+					if (!axiom->is_symmetric_reduce && !rule->is_symmetric_reduce) {
 						hanger = *tree;
 						hanger.n_children = 0;
 						optr_attach(&hanger, tree->children[j]);

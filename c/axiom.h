@@ -29,6 +29,9 @@ struct Rule {
 
 	/* contain_toplevel_wildcards determines if we do children permutation */
 	int  contain_toplevel_wildcards;
+
+	/* rule-level flag */
+	int is_symmetric_reduce;
 };
 
 struct Axiom {
@@ -55,7 +58,7 @@ struct Axiom {
 struct Axiom *axiom_new(const char*);
 void          axiom_free(struct Axiom*);
 
-struct Axiom *axiom_add_rule(struct Axiom*, const char*, const char*, apply_callbk_t);
+struct Rule  *axiom_add_rule(struct Axiom*, const char*, const char*, apply_callbk_t);
 int           axiom_add_test(struct Axiom*, const char*);
 int           axiom_test(struct Axiom*);
 
