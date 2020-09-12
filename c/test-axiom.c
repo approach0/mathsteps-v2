@@ -18,6 +18,7 @@ int main()
 
 	int m;
 	struct Axiom **axioms = common_axioms(&m);
+	printf("There are %d axioms in total.\n", m);
 
 	for (int i = 0; i < m; i++) {
 		struct Axiom *a = axioms[i];

@@ -99,7 +99,7 @@ struct Axiom **common_axioms(int *n)
 		axiom_add_test(a, "(-3)^{2} - (6 \\div (-\\frac{2}{3})^{2}) -  (-2)^{2}");
 
 		a->is_root_sign_reduce = 1;
-#ifdef FULL_COMMON_AXIOMS
+#ifndef FULL_COMMON_AXIOMS
 		a->is_strict_simplify = 1;
 #endif
 
@@ -292,8 +292,6 @@ struct Axiom **common_axioms(int *n)
 		struct Axiom *a = axiom_new("Merge term");
 		struct Rule *r;
 
-#ifdef FULL_COMMON_AXIOMS
-#endif
 		r = axiom_add_rule(a,
 			"#(x + x)",
 			"2x",
@@ -311,8 +309,8 @@ struct Axiom **common_axioms(int *n)
 		NULL);
 
 		axiom_add_rule(a,
-			"#(#x *{1} # x *{2})",
-			"(#2 *{1} #3 *{2}) x",
+			"#(#x *{a} # x *{b})",
+			"(#2 *{a} #3 *{b}) x",
 		NULL);
 
 		axiom_add_test(a, "a + a");
@@ -322,18 +320,163 @@ struct Axiom **common_axioms(int *n)
 		axiom_add_test(a, "-x + 3x - 1x");
 		axiom_add_test(a, "-(-x + 3x - 1x)");
 		axiom_add_test(a, "x - 3 \\cdot x");
+		axiom_add_test(a, "yx^{2} - x^{3}y");
 
 		a->is_root_sign_reduce = 0;
+		a->is_allow_complication = 1;
+#ifndef FULL_COMMON_AXIOMS
+		a->is_disabled = 1;
+#endif
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Reverse the sign");
+
+		axiom_add_rule(a, "+(x + *{a})", "-(-x - *{a})", NULL);
+
+		axiom_add_test(a, "1 + 2 + 3");
+		axiom_add_test(a, "(-a - b) x");
+		axiom_add_test(a, "(-a + b)x");
+		axiom_add_test(a, "(-a - b - c) x");
+		axiom_add_test(a, "-3-\\frac{4}{17}");
+		axiom_add_test(a, "(-3-\\frac{4}{17}) x");
+		axiom_add_test(a, "(-3-\\frac{4}{17}) x + y");
+		axiom_add_test(a, "(a - b - c) x");
+
+		a->is_root_sign_reduce = 1;
+		a->is_strict_simplify = 1;
+#ifndef FULL_COMMON_AXIOMS
+		a->is_disabled = 1;
+#endif
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Simplify nested fraction");
+
+		axiom_add_rule(a, "#\\frac{#\\frac{x}{y}}{#\\frac{a}{b}}", "#0 \\frac{bx}{ay}", NULL);
+		axiom_add_rule(a, "#\\frac{#1}{#\\frac{x}{y}}", "#0 \\frac{y}{x}", NULL);
+		axiom_add_rule(a, "#\\frac{#\\frac{x}{y}}{#1}", "#0 \\frac{x}{y}", NULL);
+		axiom_add_rule(a, "#\\frac{a}{#\\frac{x}{y}}", "#0 \\frac{ay}{x}", NULL);
+		axiom_add_rule(a, "#\\frac{#\\frac{x}{y}}{a}", "#0 \\frac{x}{ay}", NULL);
+
+		axiom_add_test(a, "-\\frac{-\\frac{4}{3}}{-\\frac{4}{3}}");
+		axiom_add_test(a, "-\\frac{-\\frac{4}{3}}{\\frac{1}{2}}");
+		axiom_add_test(a, "-\\frac{-\\frac{4}{3}}{x}");
+		axiom_add_test(a, "-\\frac{4}{-\\frac{4}{3}}");
+		axiom_add_test(a, "\\frac{-8}{\\frac{1}{4}}");
+
+		a->is_root_sign_reduce = 1;
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_fraction_add();
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Fraction multiplication");
+		struct Rule *r;
+
+		r = axiom_add_rule(a, "#\\frac{#1}{x} \\frac{#1}{y}", "#0 \\frac{1}{xy}", NULL);
+		r->is_symmetric_reduce = 1;
+
+		axiom_add_rule(a, "#\\frac{#1}{x} \\frac{y}{#1}", "#0 \\frac{y}{x}", NULL);
+
+		r = axiom_add_rule(a, "#\\frac{x}{#1} \\frac{y}{#1}", "#0 xy", NULL);
+		r->is_symmetric_reduce = 1;
+
+		r = axiom_add_rule(a, "#\\frac{a}{c} \\frac{b}{d}", "#1 \\frac{ab}{cd}", NULL);
+		r->is_symmetric_reduce = 1;
+
+		axiom_add_test(a, "-\\frac{1}{-2} \\cdot \\frac{-1}{2}");
+		axiom_add_test(a, "-\\frac{1}{-2} \\cdot \\frac{-2}{1}");
+		axiom_add_test(a, "-\\frac{2}{1} \\cdot \\frac{-2}{1}");
+
+		a->is_root_sign_reduce = 1;
 		a->is_allow_complication = 1;
 
 		ret[cnt++] = a;
 	}
 
-//	{
-//		struct Axiom *a = axiom_fraction_add();
-//		ret[cnt++] = a;
-//	}
-//
+	{
+		struct Axiom *a = axiom_new("Ignore divided-by-one");
+
+		axiom_add_rule(a, "#\\frac{k}{#1}", "#0 k", NULL);
+
+		axiom_add_test(a, "\\frac{3}{-1}");
+
+		a->is_root_sign_reduce = 1;
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Distribute power to factors");
+
+		axiom_add_rule(a, "# (# a *{b})^{k}", "#1 (#2 a)^{k} \\times (*{b})^{k}", NULL);
+
+		axiom_add_test(a, "-(-3xy)^{2}");
+
+		a->is_root_sign_reduce = 1;
+		a->is_allow_complication = 1;
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Distribute power to fraction numbers");
+
+		axiom_add_rule(a, "#(-\\frac{#a}{#b})^{k}", "#1 (-1)^{k} \\frac{(#2 a)^{k}}{(#3 b)^{k}}", NULL);
+		axiom_add_rule(a, "#(+\\frac{#a}{#b})^{k}", "#1 \\frac{(#2 a)^{k}}{(#3 b)^{k}}", NULL);
+
+		axiom_add_test(a, "(-\\frac{-2}{3})^{2}");
+		axiom_add_test(a, "-(\\frac{-2}{3})^{2}");
+
+		a->is_root_sign_reduce = 1;
+		a->is_allow_complication = 1;
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Multiply factor into numerator");
+
+		axiom_add_rule(a, "# a \\times \\frac{# 1}{b}", "#0 \\frac{a}{b}", NULL);
+		axiom_add_rule(a, "# a \\times \\frac{# c}{b}", "#0 \\frac{ac}{b}", NULL);
+
+		axiom_add_test(a, "-\\frac{-1}{3} \\times 12");
+		axiom_add_test(a, "12 \\cdot \\frac{3}{2}");
+		axiom_add_test(a, "\\frac{9}{4} \\times (1 - \\frac{3}{4})");
+
+		a->is_root_sign_reduce = 1;
+		a->is_allow_complication = 1;
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Multiplication distributive law");
+
+		axiom_add_rule(a, "#a(x + *{w})", "#1 ax #1 a *{w}", NULL);
+
+		axiom_add_test(a, "3(a + b)");
+		axiom_add_test(a, "3(a + b + c) + 1");
+		axiom_add_test(a, "(a - b)(-2)");
+		axiom_add_test(a, "2(a + 3(b + c))");
+
+		a->is_root_sign_reduce = 1;
+		a->is_allow_complication = 1;
+		a->max_output_num = 4;
+
+		ret[cnt++] = a;
+	}
+
 //	{
 //		struct Axiom *a = axiom_fraction_add_int();
 //		ret[cnt++] = a;
