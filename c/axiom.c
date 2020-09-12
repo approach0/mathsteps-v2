@@ -147,16 +147,15 @@ int pound2signed(char *dest, const char *src, uint64_t bits, int n_pounds)
 	strcpy(dest, src);
 	for (int i = 1; i <= n_pounds; i++) {
 		/* find named pound... */
-		char named_pound[16];
+		char *pound_pos, named_pound[8];
 		sprintf(named_pound, "#%d", i);
-		char *pound_pos = strstr(dest, named_pound);
-		if (NULL == pound_pos)
-			goto skip;
 
-		/* replace named pound */
-		*(pound_pos + 0) = ' ';
-		*(pound_pos + 1) = (bits & 0x1) ? '+' : '-';
-skip:
+		while ((pound_pos = strstr(dest, named_pound))) {
+			/* replace named pound */
+			*(pound_pos + 0) = ' ';
+			*(pound_pos + 1) = (bits & 0x1) ? '+' : '-';
+		}
+
 		/* reduce sign */
 		reduce_sign *= (bits & 0x1) ? +1 : -1;
 
