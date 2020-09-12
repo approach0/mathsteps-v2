@@ -245,9 +245,10 @@ atom: NUM {
 ;
 %%
 
+#include "vt100-code.h"
 int yyerror(void *scanner, struct optr_node **root, int *_, const char *msg)
 {
-	fprintf(stderr, "[Error] %s\n", msg);
+	fprintf(stderr, C_RED "[Error] %s\n" C_RST, msg);
 	*root = NULL;
 	return 0;
 }

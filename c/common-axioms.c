@@ -335,6 +335,7 @@ struct Axiom **common_axioms(int *n)
 		struct Axiom *a = axiom_new("Reverse the sign");
 
 		axiom_add_rule(a, "+(x + *{a})", "-(-x - *{a})", NULL);
+		axiom_add_rule(a, "-(x + *{a}) *{b}", "(-x - *{a}) *{b}", NULL);
 
 		axiom_add_test(a, "1 + 2 + 3");
 		axiom_add_test(a, "(-a - b) x");
@@ -344,6 +345,7 @@ struct Axiom **common_axioms(int *n)
 		axiom_add_test(a, "(-3-\\frac{4}{17}) x");
 		axiom_add_test(a, "(-3-\\frac{4}{17}) x + y");
 		axiom_add_test(a, "(a - b - c) x");
+		axiom_add_test(a, "-(3 - 2)x");
 
 		a->is_root_sign_reduce = 1;
 		a->is_strict_simplify = 1;
@@ -477,10 +479,39 @@ struct Axiom **common_axioms(int *n)
 		ret[cnt++] = a;
 	}
 
-//	{
-//		struct Axiom *a = axiom_fraction_add_int();
-//		ret[cnt++] = a;
-//	}
+	{
+		struct Axiom *a = axiom_fraction_add_int();
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Square of additions");
+
+		axiom_add_rule(a, "#(#a + *{w})^{2}", "#1 ( a^{2} #2 2 a *{w} + (*{w})^{2} )", NULL);
+		axiom_add_rule(a, "# \\left| #a + *{w} \\right|^{2}", "#1 ( a^{2} #2 2 a *{w} + (*{w})^{2} )", NULL);
+
+		axiom_add_test(a, "-(3 - 2)^{2}");
+
+		a->is_root_sign_reduce = 1;
+		a->is_allow_complication = 1;
+
+		ret[cnt++] = a;
+	}
+
+	{
+		struct Axiom *a = axiom_new("Difference of squares");
+
+		axiom_add_rule(a, "#(a + *{w})(a - *{w})", "#1( a^{2} - (*{w})^{2} )", NULL);
+		axiom_add_rule(a, "", "", NULL);
+
+		axiom_add_test(a, "-(b+a)(a-b)");
+		axiom_add_test(a, "(3 + a + b)(-a - b + 3)");
+
+		a->is_root_sign_reduce = 1;
+		a->is_allow_complication = 1;
+
+		ret[cnt++] = a;
+	}
 
 	*n = cnt;
 	return ret;
