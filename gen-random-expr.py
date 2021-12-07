@@ -7,12 +7,17 @@ from expression import Tree2NestedArr
 tr2narr = Tree2NestedArr()
 
 
-def random_tok(only_number=False, small_number=False):
+def random_tok(only_number=False, small_number=False, only_int=False):
     """
     按照非均匀分布生成随机 token
     """
 
-    if only_number:
+    if only_int:
+        t = nonUniformChoice(
+            ['INT'],
+            [1]
+        )
+    elif only_number:
         t = nonUniformChoice(
             ['INT', 'FLOAT'],
             [0.9, 0.1]
@@ -72,7 +77,7 @@ def random_operator(commutative=False):
         (0.4, 2, tr2narr.minus),
 
         (0.05, 2, tr2narr.div),
-        (0.05, 1, tr2narr.abs)
+        #(0.05, 1, tr2narr.abs)
     ]
 
     if commutative:
@@ -112,7 +117,7 @@ def random_exp(complexity=2):
             always_t12 = False
 
             if tr2narr.sup == build_op:
-                t2 = random_tok(only_number=True, small_number=True)
+                t2 = random_tok(only_int=True, small_number=True)
                 always_t12 = True
 
             elif 'simple' == nonUniformChoice(
@@ -162,7 +167,7 @@ def random_polynomial_term():
             t0 = tr2narr.null_reduce([])
             t1 = tr2narr.minus([t0, t1])
 
-        t2 = random_tok(only_number=True, small_number=True)
+        t2 = random_tok(only_int=True, small_number=True)
         t1 = build_op([t1, t2])
 
     try:
@@ -186,13 +191,13 @@ def random_terms():
     n_terms = bounded_guassian_sample(3, 6)
 
     for _ in range(n_terms):
-        if 'nested' == nonUniformChoice(
-            ['nested', 'polynomial'],
-            [0.2, 0.8]
-        ):
-            tex_t2, err = random_exp()
-        else:
-            tex_t2, err = random_polynomial_term()
+        #if 'nested' == nonUniformChoice(
+        #    ['nested', 'polynomial'],
+        #    [0.2, 0.8]
+        #):
+        tex_t2, err = random_exp()
+        #else:
+        #    tex_t2, err = random_polynomial_term()
 
         if err:
             continue
@@ -236,10 +241,12 @@ def random_equations():
 
 
 if __name__ == '__main__':
-    #for _ in range(16000):
-    for _ in range(100):
+    for _ in range(1000):
+    #for _ in range(100):
         expr, err = random_terms()
-        expr, err = random_polynomial_term()
-        expr, err = random_equations()
+        #expr, err = #random_polynomial_term()
+        #expr, err = #random_equations()
         if err: continue
+        if len(expr) < 20:
+            continue
         print(expr, end='\n')
